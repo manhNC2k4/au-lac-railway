@@ -16,6 +16,17 @@ def _clean(d):
     return {k: v for k, v in d.items() if not k.startswith("_")}
 
 
+# Enum CSXH KHỚP DEV (backend/seed/pricing_policy.json). Là nguồn duy nhất cho tên đối
+# tượng + mức giảm — mọi module (waitlist/pricing/merge) dùng chung, tránh lệch với dev.
+CSXH_DEV_MUC_GIAM = {
+    "NGUOI_CAO_TUOI": 0.15,
+    "NGUOI_KHUYET_TAT": 0.25,
+    "TRE_EM": 0.10,
+    "NGUOI_CO_CONG": 0.30,
+    "KHONG": 0.0,
+}
+
+
 # ---------------- Hồ sơ khách & yêu cầu ----------------
 @dataclass
 class PassengerProfile:
@@ -23,13 +34,23 @@ class PassengerProfile:
     khuyet_tat: bool = False
     tre_di_mot_minh: bool = False
     can_ho_tro: bool = False
-    doi_tuong_csxh: str = "KHONG"       # NGUOI_CAO_TUOI/TRE_6_10/HSSV/THUONG_BINH_CDHH/ME_VNAH...
+    doi_tuong_csxh: str = "KHONG"       # KHỚP DEV: NGUOI_CAO_TUOI/NGUOI_KHUYET_TAT/TRE_EM/NGUOI_CO_CONG
     muc_giam_csxh: float = 0.0          # 0..1, quyền lợi giảm giá (áp SAU CÙNG)
 
     @property
     def thuoc_nhom_uu_tien(self) -> bool:
-        """Nhóm được LOẠI TRỪ đổi chỗ (YC4)."""
+        """Nhóm được LOẠI TRỪ đổi chỗ (YC4) — ánh xạ với PassengerSafetyContext của dev."""
         return self.cao_tuoi or self.khuyet_tat or self.tre_di_mot_minh or self.can_ho_tro
+
+    def csxh_dev(self) -> tuple[str, float]:
+        """(doi_tuong, muc_giam) theo enum DEV, suy từ cờ an toàn nếu chưa set tường minh."""
+        if self.doi_tuong_csxh != "KHONG":
+            return self.doi_tuong_csxh, CSXH_DEV_MUC_GIAM.get(self.doi_tuong_csxh, self.muc_giam_csxh)
+        if self.cao_tuoi:
+            return "NGUOI_CAO_TUOI", CSXH_DEV_MUC_GIAM["NGUOI_CAO_TUOI"]
+        if self.khuyet_tat:
+            return "NGUOI_KHUYET_TAT", CSXH_DEV_MUC_GIAM["NGUOI_KHUYET_TAT"]
+        return "KHONG", 0.0
 
     def to_dict(self):
         return {**asdict(self), "thuoc_nhom_uu_tien": self.thuoc_nhom_uu_tien}

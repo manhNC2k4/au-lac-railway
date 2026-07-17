@@ -12,3 +12,6 @@ models/artifacts/forecast_output_contract.csv
 models/artifacts/forecast_backtest_contract.csv
 models/artifacts/*.log
 demo/eda_out/
+
+# Folder gói nộp (bản sao của integration/ + note để zip gửi — không commit trùng)
+DELIVERY_algomodel/
