@@ -1,6 +1,9 @@
 generated_data/data/
 demo/features
 generated_data/_ground_truth/
+__pycache__/
+*.pyc
+.venv/
 # Word lock files
 ~$*
 docs/~$*
