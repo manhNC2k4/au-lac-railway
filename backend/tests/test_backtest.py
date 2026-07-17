@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from src.backtest import engine, events
-from src.forecast import network
+from src.forecast import forecast, network
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
@@ -63,6 +63,32 @@ class TestBacktestEngine(unittest.TestCase):
         t0 = time.time()
         engine.run_seed(self.events_a)
         self.assertLess(time.time() - t0, 10.0)
+
+
+class TestEvidenceRunner(unittest.TestCase):
+    def test_committed_events_match_generator(self):
+        """Runner H14-H18 đọc seed/backtest/*.jsonl đã commit; phải KHỚP generate_events
+        (deterministic) — nếu lệch, event stream commit đã cũ so với code."""
+        for seed in events.SEEDS:
+            self.assertEqual(events.checksum(engine.load_events(seed)),
+                             events.checksum(events.generate_events(seed)))
+
+    def test_report_from_committed_events_no_failed_seed(self):
+        report = engine.run_backtest(engine.load_all_events())
+        self.assertEqual(report["seeds_run"], sorted(events.SEEDS))
+        self.assertEqual(report["failed_seeds"], [])
+
+
+class TestForecastRefresh(unittest.TestCase):
+    def test_refresh_bumps_version_keeps_run_id(self):
+        sold = {s: 10 for s in network.all_segment_ids()}
+        cap = {s: network.N_SEATS for s in network.all_segment_ids()}
+        prev = forecast.compute_forecast(sold, cap, 30.0, forecast_version=3,
+                                         service_run_id=network.SERVICE_RUN_ID, che_do_gia="AI")
+        new = forecast.refresh_forecast(prev, sold, cap, 20.0)
+        self.assertEqual(new["forecast_version"], 4)
+        self.assertEqual(new["service_run_id"], prev["service_run_id"])
+        self.assertEqual(new["che_do_gia"], "AI")
 
 
 class TestNoGroundTruth(unittest.TestCase):

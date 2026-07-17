@@ -55,3 +55,16 @@ def compute_forecast(sold_by_segment: dict[int, int], capacity_by_segment: dict[
         "days_to_departure": days_to_departure,
         "segments": segments,
     }
+
+
+def refresh_forecast(prev_forecast: dict, sold_by_segment: dict[int, int],
+                     capacity_by_segment: dict[int, int], days_to_departure: float,
+                     **kw) -> dict:
+    """Logic của `POST /demo/forecasts/refresh` (route: BE1 trong src/api/) — DEV2 §Bạn sở hữu.
+    Tính lại forecast từ trạng thái hiện tại, BUMP `forecast_version` (+1) so với bản trước.
+    Giữ nguyên `service_run_id`/`che_do_gia` của bản trước nếu bên gọi không override —
+    bất biến trung tâm (Master §7.1): một offer dùng cùng bộ version, refresh chỉ tạo bản MỚI."""
+    kw.setdefault("service_run_id", prev_forecast["service_run_id"])
+    kw.setdefault("che_do_gia", prev_forecast.get("che_do_gia", "AI"))
+    return compute_forecast(sold_by_segment, capacity_by_segment, days_to_departure,
+                            forecast_version=prev_forecast["forecast_version"] + 1, **kw)

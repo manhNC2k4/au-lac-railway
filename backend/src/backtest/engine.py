@@ -182,3 +182,26 @@ def report_checksum(report: dict) -> str:
     body = {k: v for k, v in report.items() if k != "checksum"}
     canon = json.dumps(body, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canon.encode("utf-8")).hexdigest()
+
+
+# --- Evidence runner (DEV2 §H14-H18): chạy backtest trên event stream ĐÃ COMMIT
+# (seed/backtest/*.jsonl, do BE1 duyệt) và xuất report median+min/max+raw+checksum ---
+from pathlib import Path  # noqa: E402 — gom import phụ trợ của runner ở cuối cho gọn
+
+SEED_BACKTEST_DIR = Path(__file__).resolve().parents[2] / "seed" / "backtest"
+
+
+def load_events(seed: int, seed_dir: Path | None = None) -> list[dict]:
+    path = (seed_dir or SEED_BACKTEST_DIR) / f"events-seed-{seed}.jsonl"
+    with path.open(encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+
+def load_all_events(seeds: list[int] | None = None, seed_dir: Path | None = None) -> dict[int, list[dict]]:
+    from src.backtest.events import SEEDS  # tránh vòng import ở top-level
+    return {s: load_events(s, seed_dir) for s in (seeds or SEEDS)}
+
+
+if __name__ == "__main__":
+    report = run_backtest(load_all_events())
+    print(json.dumps(report, ensure_ascii=False, indent=2, default=str))
