@@ -23,6 +23,7 @@ import yaml
 from src.forecast import network
 
 REPO_ROOT = Path(__file__).resolve().parents[3]  # backend/src/backtest -> backend/src -> backend -> repo root
+BACKEND_ROOT = Path(__file__).resolve().parents[2]  # backend/src/backtest -> backend/src -> backend
 YAML_PATH = (REPO_ROOT / "generated_data" / "Synthetic_DATA_guide"
              / "04_THAM_SO_CAU_HINH_MO_PHONG.yaml")
 SEEDS = [20260717, 20260718, 20260719, 20260720, 20260721]
@@ -118,7 +119,7 @@ def checksum(events: list[dict]) -> str:
 
 
 def write_all(out_dir: Path | None = None) -> dict[int, str]:
-    out_dir = out_dir or (REPO_ROOT / "seed" / "backtest")
+    out_dir = out_dir or (BACKEND_ROOT / "seed" / "backtest")
     out_dir.mkdir(parents=True, exist_ok=True)
     checksums = {}
     for seed in SEEDS:

@@ -11,7 +11,7 @@ from src.state.db import get_connection
 from src.state.errors import DomainError, HoldExpired, StaleSnapshot
 from src.state.seat_state_manager import SeatStateManager
 
-from conftest import SERVICE_RUN_ID, insert_test_offer
+from tests.conftest import SERVICE_RUN_ID, insert_test_offer
 
 GOLDEN_SEAT = "C01-S017"
 GOLDEN_SEGMENTS = [3, 4]
