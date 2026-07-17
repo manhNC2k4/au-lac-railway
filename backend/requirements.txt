@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pydantic
+psycopg[binary]
+numpy
+pandas
+pyarrow
+pyyaml
+lunardate
+scipy
+pytest
+pytest-asyncio
+httpx

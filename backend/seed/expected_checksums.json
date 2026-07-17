@@ -1,0 +1,7 @@
+{
+  "scenario_checksum": "fb307368be82383d6f8f67d5d36405e8b727c58d7b7579d30179034805867dd2",
+  "initial_bookings_checksum": "3e45b1da315f4aff3823aba57196a4dacc945bea73f5a04d43ba82d24ec20cf2",
+  "fare_products_checksum": "726bb32a8ef1a624afb074900a6d7609059465a4a4f8fcb48d90b4294aa8f418",
+  "pricing_policy_checksum": "b36ed32211360adaa9eab719ecbc7cc642c176bd98477635233f73045ebaa885",
+  "forecast_checksum": "83b2cc5bed4e092c562bcdd41da0b7ef54756880d62b91a0696058f325ffc295"
+}

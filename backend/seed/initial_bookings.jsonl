@@ -1,0 +1,41 @@
+{"seat_id": "C01-S017", "from": "HNO", "to": "THO", "segments": [1, 2], "status": "SOLD"}
+{"seat_id": "C01-S017", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S001", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S002", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S003", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S004", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S005", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S006", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S007", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S008", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S009", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S010", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S011", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S012", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S013", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S014", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S015", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S016", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S018", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S019", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S020", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S021", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S022", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S023", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S024", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S025", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S026", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S027", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S028", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S029", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S030", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S031", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S032", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S033", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S034", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S035", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S036", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S037", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}
+{"seat_id": "C01-S038", "from": "HNO", "to": "VIN", "segments": [1, 2, 3], "status": "SOLD"}
+{"seat_id": "C01-S039", "from": "THO", "to": "DHO", "segments": [3, 4], "status": "SOLD"}
+{"seat_id": "C01-S040", "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"}

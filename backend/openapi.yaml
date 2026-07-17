@@ -1,0 +1,584 @@
+openapi: 3.0.3
+info:
+  title: Âu Lạc Railway API v1
+  version: "1.0.0"
+  description: >
+    MVP demo API — leg-splitting, gap-merging, flexible pricing.
+    Source of truth per plan/00_MASTER_PLAN.md §7 và docs/API_Contract.md.
+    Money = int64 VND, rounded to 1000. Timestamps = ISO-8601 UTC on the demo
+    scenario clock (2026-06-15), not wall time. segment_id is 1-based (L1..L7).
+servers:
+  - url: /api/v1
+
+paths:
+  /demo/scenarios/{scenario_id}/reset:
+    post:
+      summary: Reset demo scenario (load seed/, all-or-nothing)
+      operationId: resetScenario
+      tags: [demo]
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema: { type: string }
+          example: golden_scenario_1
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reset_clock: { type: boolean }
+                apply_golden_gap: { type: boolean }
+            example: { reset_clock: true, apply_golden_gap: true }
+      responses:
+        "200":
+          description: Scenario reset successfully (deterministic — same seed same checksum)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResetResponse" }
+              example:
+                data:
+                  service_run_id: SE1_2026-06-15_LE
+                  matrix_version: 1
+                  forecast_version: 1
+                  policy_version: 1
+                  checksum: abc123xyz
+                message: Scenario reset successfully
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /demo/forecasts/refresh:
+    post:
+      summary: Refresh forecast for a service run
+      operationId: refreshForecast
+      tags: [demo]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [service_run_id]
+              properties:
+                service_run_id: { type: string }
+            example: { service_run_id: SE1_2026-06-15_LE }
+      responses:
+        "200":
+          description: Forecast updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      forecast_version: { type: integer }
+              example:
+                message: Forecast updated
+                data: { forecast_version: 2 }
+
+  /demo/overview:
+    get:
+      summary: Ops overview dashboard (read-only)
+      operationId: getOverview
+      tags: [demo]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OverviewResponse" }
+
+  /demo/seatmap:
+    get:
+      summary: Seat x segment heatmap (read-only)
+      operationId: getSeatmap
+      tags: [demo]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SeatmapResponse" }
+
+  /demo/analytics:
+    get:
+      summary: Forecast + segment load + bid-price analytics (read-only)
+      operationId: getAnalytics
+      tags: [demo]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnalyticsResponse" }
+
+  /decisions/{decision_id}:
+    get:
+      summary: Decision detail / audit trail
+      operationId: getDecision
+      tags: [decisions]
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionDetailResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /offers:
+    post:
+      summary: Create an offer (same-seat gap search + pricing, no seat held)
+      operationId: createOffer
+      tags: [booking]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OfferRequest" }
+            example:
+              service_run_id: SE1_2026-06-15_LE
+              origin_station_id: THO
+              dest_station_id: DHO
+              seat_class: NGOI_MEM_DH
+              quantity: 1
+      responses:
+        "201":
+          description: Offer created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OfferResponse" }
+        "422":
+          description: NO_SAME_SEAT_OPTION | SOLD_OUT_TRUE | ALLOCATION_REJECTED
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error_code: ALLOCATION_REJECTED
+                message: "Giá vé không bù đủ chi phí cơ hội các đoạn chiếm dụng"
+                details: { final_price_vnd: 380000, bid_price_total_vnd: 420000, decision_record_id: dr_8900 }
+        "503": { $ref: "#/components/responses/PolicyUnavailable" }
+
+  /holds:
+    post:
+      summary: Atomic hold on the offer's seat plan
+      operationId: createHold
+      tags: [booking]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HoldRequest" }
+            example:
+              offer_id: offer_9981
+              expected_matrix_version: 5
+              passenger_name: "Nguyễn Văn A"
+      responses:
+        "201":
+          description: Hold active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HoldResponse" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "410": { $ref: "#/components/responses/Gone" }
+
+  /bookings/{hold_id}/confirm:
+    post:
+      summary: Confirm hold (HELD -> SOLD), never re-prices, idempotent
+      operationId: confirmBooking
+      tags: [booking]
+      parameters:
+        - name: hold_id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfirmResponse" }
+        "410": { $ref: "#/components/responses/Gone" }
+
+  /backtests:
+    post:
+      summary: Start a backtest run (>=5 seeds)
+      operationId: createBacktest
+      tags: [backtest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_stream_id, seeds]
+              properties:
+                event_stream_id: { type: string }
+                seeds: { type: array, items: { type: string } }
+            example:
+              event_stream_id: stream_demo_1
+              seeds: ["20260717", "20260718", "20260719", "20260720", "20260721"]
+      responses:
+        "202":
+          description: Backtest started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties: { report_id: { type: string } }
+              example:
+                message: Backtest started
+                data: { report_id: bt_12345 }
+
+  /backtests/{report_id}:
+    get:
+      summary: Backtest report (median + range, baseline vs Âu Lạc)
+      operationId: getBacktest
+      tags: [backtest]
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BacktestReportResponse" }
+
+components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: 400 Bad Request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    NotFound:
+      description: 404 Not Found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Conflict:
+      description: "409 STALE_SNAPSHOT | SEAT_CONFLICT"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Gone:
+      description: "410 OFFER_EXPIRED | HOLD_EXPIRED"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    PolicyUnavailable:
+      description: 503 POLICY_UNAVAILABLE — never silently fall back to a default price
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  schemas:
+    SeatState:
+      type: string
+      enum: [FREE, HELD, SOLD]
+    OfferDecision:
+      type: string
+      enum: [ACCEPT, REJECT]
+    HoldStatus:
+      type: string
+      enum: [ACTIVE, CONFIRMED, EXPIRED, CANCELLED]
+    ErrorCode:
+      type: string
+      enum:
+        - NO_SAME_SEAT_OPTION
+        - SOLD_OUT_TRUE
+        - ALLOCATION_REJECTED
+        - STALE_SNAPSHOT
+        - SEAT_CONFLICT
+        - OFFER_EXPIRED
+        - HOLD_EXPIRED
+        - POLICY_UNAVAILABLE
+
+    ErrorEnvelope:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code: { $ref: "#/components/schemas/ErrorCode" }
+        message: { type: string }
+        details: { type: object }
+
+    ResetResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            service_run_id: { type: string }
+            matrix_version: { type: integer }
+            forecast_version: { type: integer }
+            policy_version: { type: integer }
+            checksum: { type: string }
+        message: { type: string }
+
+    OverviewResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            overall_occupancy: { type: number }
+            total_revenue_vnd: { type: integer }
+            empty_seat_km: { type: integer }
+            passenger_km: { type: integer }
+            false_sold_out_rate: { type: number }
+            bottlenecks:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  name: { type: string }
+                  occupancy: { type: number }
+            underused:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  name: { type: string }
+                  occupancy: { type: number }
+            recent_decisions:
+              type: array
+              items:
+                type: object
+                properties:
+                  decision_id: { type: string }
+                  action: { type: string }
+                  time: { type: string, format: date-time }
+
+    SeatmapResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            matrix_version: { type: integer }
+            segments:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  name: { type: string }
+            seats:
+              type: array
+              items:
+                type: object
+                properties:
+                  seat_id: { type: string }
+                  seat_class: { type: string }
+                  states:
+                    type: object
+                    additionalProperties: { $ref: "#/components/schemas/SeatState" }
+                  reused_gap_segments:
+                    type: array
+                    items: { type: integer }
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            forecasts:
+              type: array
+              items:
+                type: object
+                properties:
+                  origin: { type: string }
+                  dest: { type: string }
+                  demand_predicted: { type: number }
+                  confidence: { type: number }
+            segment_loads:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  occupancy: { type: number }
+                  remaining_capacity: { type: integer }
+            allocations:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  bid_price_vnd: { type: integer }
+                  protection_level: { type: string }
+
+    DecisionDetailResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            decision_id: { type: string }
+            action: { type: string }
+            base_fare: { type: integer }
+            ai_suggested_price: { type: integer }
+            final_price: { type: integer }
+            bid_price_total: { type: integer }
+            bid_price_breakdown: { type: object, additionalProperties: { type: integer } }
+            violations: { type: array, items: { type: string } }
+            audit_timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  step: { type: string }
+                  time: { type: string, format: date-time }
+                  note: { type: string }
+
+    OfferRequest:
+      type: object
+      required: [service_run_id, origin_station_id, dest_station_id, seat_class, quantity]
+      properties:
+        service_run_id: { type: string }
+        origin_station_id: { type: string }
+        dest_station_id: { type: string }
+        seat_class: { type: string }
+        quantity: { type: integer, minimum: 1 }
+
+    OfferResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            offer_id: { type: string }
+            service_run_id: { type: string }
+            matrix_version: { type: integer }
+            forecast_version: { type: integer }
+            policy_version: { type: integer }
+            decision: { $ref: "#/components/schemas/OfferDecision" }
+            seat_plan:
+              type: array
+              items:
+                type: object
+                properties:
+                  seat_id: { type: string }
+                  segment_from: { type: integer }
+                  segment_to: { type: integer }
+                  reused_gap: { type: boolean }
+                  requires_seat_change: { type: boolean }
+            pricing:
+              type: object
+              properties:
+                gia_goc_vnd: { type: integer }
+                gia_niem_yet_vnd: { type: integer }
+                gia_cuoi_vnd: { type: integer }
+                rules_fired:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      rule_id: { type: string }
+                      he_so: { type: number }
+                      thu_tu: { type: integer }
+                clamped: { type: boolean }
+                che_do_gia: { type: string }
+            bid:
+              type: object
+              properties:
+                total_vnd: { type: integer }
+                by_segment: { type: object, additionalProperties: { type: integer } }
+            decision_record_id: { type: string }
+            expires_at: { type: string, format: date-time }
+
+    HoldRequest:
+      type: object
+      required: [offer_id, expected_matrix_version]
+      properties:
+        offer_id: { type: string }
+        expected_matrix_version: { type: integer }
+        passenger_name: { type: string }
+
+    HoldResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            hold_id: { type: string }
+            status: { $ref: "#/components/schemas/HoldStatus" }
+            expires_at: { type: string, format: date-time }
+            new_matrix_version: { type: integer }
+
+    ConfirmResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            booking_id: { type: string }
+            status: { type: string }
+            final_price_vnd: { type: integer }
+            decision_record_id: { type: string }
+
+    BacktestReportResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status: { type: string }
+            baseline_metrics:
+              type: object
+              properties:
+                revenue_median: { type: integer }
+                acceptance_rate: { type: number }
+            ai_metrics:
+              type: object
+              properties:
+                revenue_median: { type: integer }
+                acceptance_rate: { type: number }

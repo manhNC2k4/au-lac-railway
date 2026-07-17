@@ -1,0 +1,157 @@
+{
+  "service_run_id": "SE1_2026-06-15_LE",
+  "train_id": "SE1",
+  "service_date": "2026-06-15",
+  "direction": "LE",
+  "che_do_gia": "AI",
+  "demo_clock": "2026-06-15T09:00:00Z",
+  "random_seed": 20260717,
+  "stations": [
+    {
+      "station_id": "HNO",
+      "name": "Hà Nội",
+      "ly_trinh_km": 0.0
+    },
+    {
+      "station_id": "NBI",
+      "name": "Ninh Bình",
+      "ly_trinh_km": 115.0
+    },
+    {
+      "station_id": "THO",
+      "name": "Thanh Hóa",
+      "ly_trinh_km": 175.0
+    },
+    {
+      "station_id": "VIN",
+      "name": "Vinh",
+      "ly_trinh_km": 319.0
+    },
+    {
+      "station_id": "DHO",
+      "name": "Đồng Hới",
+      "ly_trinh_km": 522.0
+    },
+    {
+      "station_id": "HUE",
+      "name": "Huế",
+      "ly_trinh_km": 688.0
+    },
+    {
+      "station_id": "DNA",
+      "name": "Đà Nẵng",
+      "ly_trinh_km": 791.4
+    },
+    {
+      "station_id": "SGO",
+      "name": "Sài Gòn",
+      "ly_trinh_km": 1726.0
+    }
+  ],
+  "segments": [
+    {
+      "segment_id": 1,
+      "from": "HNO",
+      "to": "NBI",
+      "km_from": 0.0,
+      "km_to": 115.0,
+      "length_km": 115.0
+    },
+    {
+      "segment_id": 2,
+      "from": "NBI",
+      "to": "THO",
+      "km_from": 115.0,
+      "km_to": 175.0,
+      "length_km": 60.0
+    },
+    {
+      "segment_id": 3,
+      "from": "THO",
+      "to": "VIN",
+      "km_from": 175.0,
+      "km_to": 319.0,
+      "length_km": 144.0
+    },
+    {
+      "segment_id": 4,
+      "from": "VIN",
+      "to": "DHO",
+      "km_from": 319.0,
+      "km_to": 522.0,
+      "length_km": 203.0
+    },
+    {
+      "segment_id": 5,
+      "from": "DHO",
+      "to": "HUE",
+      "km_from": 522.0,
+      "km_to": 688.0,
+      "length_km": 166.0
+    },
+    {
+      "segment_id": 6,
+      "from": "HUE",
+      "to": "DNA",
+      "km_from": 688.0,
+      "km_to": 791.4,
+      "length_km": 103.4
+    },
+    {
+      "segment_id": 7,
+      "from": "DNA",
+      "to": "SGO",
+      "km_from": 791.4,
+      "km_to": 1726.0,
+      "length_km": 934.6
+    }
+  ],
+  "seat_class": "NGOI_MEM_DH",
+  "seats": [
+    "C01-S001",
+    "C01-S002",
+    "C01-S003",
+    "C01-S004",
+    "C01-S005",
+    "C01-S006",
+    "C01-S007",
+    "C01-S008",
+    "C01-S009",
+    "C01-S010",
+    "C01-S011",
+    "C01-S012",
+    "C01-S013",
+    "C01-S014",
+    "C01-S015",
+    "C01-S016",
+    "C01-S017",
+    "C01-S018",
+    "C01-S019",
+    "C01-S020",
+    "C01-S021",
+    "C01-S022",
+    "C01-S023",
+    "C01-S024",
+    "C01-S025",
+    "C01-S026",
+    "C01-S027",
+    "C01-S028",
+    "C01-S029",
+    "C01-S030",
+    "C01-S031",
+    "C01-S032",
+    "C01-S033",
+    "C01-S034",
+    "C01-S035",
+    "C01-S036",
+    "C01-S037",
+    "C01-S038",
+    "C01-S039",
+    "C01-S040"
+  ],
+  "golden_seat_id": "C01-S017",
+  "golden_gap_segments": [
+    3,
+    4
+  ]
+}
