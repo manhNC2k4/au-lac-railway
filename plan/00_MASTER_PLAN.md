@@ -155,6 +155,18 @@ Test bắt buộc (đưa thẳng lên slide): `test_price_invariant_to_search_co
 **Không ảnh hưởng golden path** (demo chạy 15/06, không phải Tết). Nhưng **nếu giám khảo hỏi**, câu trả lời phải sẵn: *"M8b bị chặn cấu trúc — sức chứa Tết bind làm cầu chặng dài bị từ chối, mix bán không dịch đủ. Đã ghi trong README, có knob để chỉnh."* **Không sửa dataset trong 30h** — ngoài scope.
 Owner câu trả lời: **FE2** (pitch).
 
+### 2.9 Resolver ranking phải là BEST-FIT, không phải "reused-first + seat_id" (phát hiện 18/07, đã sửa)
+
+Spec ranking ban đầu (DEV3: reused_gap trước, rồi seat_id) **trả sai ghế golden**: với seed thật,
+các ghế chỉ có vé `DHO→SGO` phía sau (vd `C01-S007`, trống L1–L4) cũng đếm là `reused_gap`,
+và thứ tự alphabet đặt chúng TRƯỚC `C01-S017` — golden request THO→DHO sẽ nhận S007 thay vì S017.
+
+**Đã sửa trong `src/merging/resolver.py`:** rank theo **best-fit** — ghế còn **ít ô FREE thừa
+ngoài span yêu cầu nhất** đứng trước (S017 khít hoàn hảo = 0 ô thừa), tie-break seat_id.
+Reused-first là hệ quả tự nhiên; đồng thời đây mới đúng mục tiêu allocation: nhét khách vào
+khoảng trống khít nhất, **giữ ghế trống dài cho chặng dài**. Test BE3 (`tests.test_merging`)
+không đổi, smoke E2E chọn đúng C01-S017. Ai viết lại resolver/fixture: **giữ tiêu chí best-fit này**.
+
 ---
 
 ## 3. Gói `seed/` — hợp đồng dữ liệu chung
@@ -369,6 +381,7 @@ Demo **chỉ** hoàn thành khi **tất cả**:
 | Forecast trễ | Deterministic forecast fixture versioned | Không có output giờ 3 |
 | Backtest chậm | Giảm event stream, **giữ đủ 5 seed + metric** | 1 run > 10s |
 | PostgreSQL lỗi môi trường | Docker volume sạch + seed reset. **KHÔNG đổi sang SQLite giữa chừng** | Không recover trong 30' |
+| Volume `backend_pgdata` cũ init bằng **PG16**, compose dùng **postgres:15** ⇒ db crash `database files are incompatible` (đã gặp & xử lý 18/07) | `docker compose down` → `docker rm -f` container giữ volume → `docker volume rm backend_pgdata` → `docker compose up -d db flyway`. Dữ liệu tái tạo 100% từ `seed/` qua reset — xoá volume là an toàn, **KHÔNG đổi image version giữa chừng** | Log db: `initialized by PostgreSQL version 16` |
 | UI chờ backend | Giữ fixture adapter, thay service từng module | API thật chưa sẵn giờ 10 |
 | P1 chiếm thời gian | **Không làm P1**, giữ static evidence | Golden path chưa 3/3 giờ 18 |
 | Live demo lỗi | Video backup + screenshots + checksum | Bất kỳ smoke fail sau giờ 23 |
