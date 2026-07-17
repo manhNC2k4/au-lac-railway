@@ -40,7 +40,7 @@
 - [ ] `SafetyDecision` schema
 - [ ] `PricingBreakdown` schema — `gia_goc → gia_niem_yet → gia_cuoi` + rule đã bắn + thứ tự áp
 - [ ] `GuardrailViolation`, `Offer`, `DecisionRecord` schema
-- [ ] `pricing_policy.json` (cùng BE2 — họ commit trong `seed/`, bạn định nghĩa shape)
+- [ ] `pricing_policy.json` (cùng BE1 — họ commit trong `seed/`, bạn định nghĩa shape)
 
 ### H2–H6 · Tracer bullet
 

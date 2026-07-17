@@ -23,9 +23,9 @@ Trạng thái: `✅ DONE` · `🚧 WIP` · `⛔ BLOCKED` · `⚠️ CONTRACT CHA
 
 <!-- Append dòng mới ngay dưới đây. Ví dụ:
 | H+02 | BE1 | contract freeze v1.0 | ✅ DONE | `git show a1b2c3` · openapi.yaml 8 endpoints + canonical examples | BE2,BE3,FE1,FE2 |
-| H+03 | BE2 | seed/ prior commit | ✅ DONE | `git show d4e5f6` · 7 file · golden gap C01-S017 verified | BE1,BE3,FE1,FE2 |
+| H+03 | BE1 | seed/ prior commit | ✅ DONE | `git show d4e5f6` · 7 file · golden gap C01-S017 verified | BE2,BE3,FE1,FE2 |
 | H+06 | BE3 | continuous_same_seat | ✅ DONE | `pytest tests/test_merging.py -q` → 8 passed | FE1 (S02) |
-| H+07 | BE1 | atomic hold CAS | ⛔ BLOCKED | chờ seed/scenario.json schema | chờ BE2 |
+| H+07 | BE1 | atomic hold CAS | ⛔ BLOCKED | chờ seed/scenario.json schema | chờ chính mình xong seed/ |
 -->
 
 ---
@@ -35,7 +35,7 @@ Trạng thái: `✅ DONE` · `🚧 WIP` · `⛔ BLOCKED` · `⚠️ CONTRACT CHA
 | Mốc | Điều kiện | Xác nhận | Đạt? |
 |---|---|---|---|
 | H+02 | OpenAPI + `seed/` schema versioned; 0 câu hỏi P0 mở | BE1 + cả đội | ☐ |
-| H+03 | `seed/` commit vào git (dù mới là prior) | BE2 | ☐ |
+| H+03 | `seed/` commit vào git (dù mới là prior) | BE1 | ☐ |
 | H+06 | Fixture happy path `offer→hold→confirm` chạy trong UI | BE1 + FE1 + FE2 | ☐ |
 | H+10 | Core transaction / resolver / pricing / metrics tests xanh | BE1–BE3 | ☐ |
 | H+14 | **Real golden path end-to-end** | Cả đội | ☐ |
