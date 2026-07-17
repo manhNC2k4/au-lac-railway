@@ -22,7 +22,7 @@
 ```
 generated_data/data/*.parquet  (4 GB, gitignored, KHÔNG có trên máy ai)
         │
-        │  BE2 chạy 1 lần, offline, trước T0
+        │  BE1 chạy 1 lần, offline, trước T0
         ▼
    seed/  (~50 KB JSON — COMMIT VÀO GIT)
         │
@@ -37,7 +37,7 @@ generated_data/data/*.parquet  (4 GB, gitignored, KHÔNG có trên máy ai)
 
 **Hệ quả cho từng người — đọc kỹ:**
 
-- **Chỉ BE2 cần dataset 4 GB.** BE1, BE3, FE1, FE2 **không bao giờ** đọc Parquet, không cài DuckDB, không chờ dataset.
+- **Chỉ BE1 cần dataset 4 GB.** BE2, BE3, FE1, FE2 **không bao giờ** đọc Parquet, không cài DuckDB, không chờ dataset.
 - Vì `seed/` được **commit vào git**, cả 5 người code song song từ giờ 0 mà không ai block ai.
 - Không có dòng code app nào `import pandas` để phục vụ request. Parquet là công cụ phân tích offline, không phải database.
 
@@ -47,9 +47,9 @@ Kiểm tra trước khi lập kế hoạch, để không ai mất 2 giờ phát 
 
 | Sự thật | Bằng chứng | Ảnh hưởng |
 |---|---|---|
-| **`generated_data/data/` KHÔNG tồn tại trên máy** | `.gitignore` loại trừ nó; `find` không thấy file parquet nào | README mô tả một run đã chạy ở **máy khác**. Dataset phải **sinh lại** hoặc **copy tay**. → BE2, giờ 0, ưu tiên #1 |
+| **`generated_data/data/` KHÔNG tồn tại trên máy** | `.gitignore` loại trừ nó; `find` không thấy file parquet nào | README mô tả một run đã chạy ở **máy khác**. Dataset phải **sinh lại** hoặc **copy tay**. → BE1, giờ 0, ưu tiên #1 |
 | **`_ground_truth/` cũng không tồn tại** | như trên | Backtest upper bound `z_opt` chưa có |
-| **pandas / numpy / pyarrow chưa cài** | `ModuleNotFoundError` | Chưa có `requirements.txt`. → BE2 tạo, giờ 0 |
+| **pandas / numpy / pyarrow chưa cài** | `ModuleNotFoundError` | Chưa có `requirements.txt`. → BE1 tạo, giờ 0 |
 | **Không có venv, không có pyproject** | `find` không thấy | Onboarding thủ công |
 | **Đã có code dùng được** | `demo/ssm/`, `demo/build_forecast_features.py`, `demo/eda_dataset_for_5_subproblems.py` | **Tái sử dụng, đừng viết lại** — xem §4 |
 
@@ -163,7 +163,7 @@ Lý do (chọn rung thang thấp nhất còn giữ được):
 - Golden gap (`C01-S017` FREE đúng THO→DHO) **sẽ không tự nhiên xuất hiện** — phải **dựng có chủ đích** dù có dataset hay không.
 - `seed/` = ~50 KB. Viết tay/sinh bằng script 150 dòng, chạy trong 1 giây.
 
-**Dataset dùng để hiệu chuẩn `seed/` cho thật, không phải để copy:** phân bố lead time, tỷ lệ LF theo đoạn, giá vé BQ theo cự ly, tỷ lệ hủy. BE2 lấy các con số này từ `demo/eda_dataset_for_5_subproblems.py` (đã viết sẵn, chạy được).
+**Dataset dùng để hiệu chuẩn `seed/` cho thật, không phải để copy:** phân bố lead time, tỷ lệ LF theo đoạn, giá vé BQ theo cự ly, tỷ lệ hủy. BE1 lấy các con số này từ `demo/eda_dataset_for_5_subproblems.py` (đã viết sẵn, chạy được), rồi cấp cho BE2 dùng khi thiết kế forecast/bid-price.
 
 ⇒ **`seed/` không block trên dataset.** Nếu generator chạy 3 tiếng, cả đội vẫn code bình thường.
 
@@ -171,11 +171,11 @@ Lý do (chọn rung thang thấp nhất còn giữ được):
 
 | Nếu | Thì |
 |---|---|
-| Generator chưa xong lúc giờ 3 | BE2 commit `seed/` với tham số **prior** từ YAML (không cần dataset). Golden path chạy. Hiệu chuẩn lại sau, chỉ đổi **số**, không đổi **schema**. |
+| Generator chưa xong lúc giờ 3 | BE1 commit `seed/` với tham số **prior** từ YAML (không cần dataset). Golden path chạy. Hiệu chuẩn lại sau, chỉ đổi **số**, không đổi **schema**. |
 | Generator fail hẳn | Giữ nguyên `seed/` prior. Backtest event stream sinh bằng NHPP từ YAML. **Vẫn nộp được.** |
-| pandas/pyarrow không cài được | Chỉ ảnh hưởng BE2. App không cần chúng. |
+| pandas/pyarrow không cài được | Chỉ ảnh hưởng BE1 (extractor). App không cần chúng. |
 
-### 3.3 Nội dung `seed/` (BE2 sở hữu, freeze giờ 3)
+### 3.3 Nội dung `seed/` (BE1 sở hữu, freeze giờ 3)
 
 ```
 seed/
@@ -196,11 +196,11 @@ seed/
 |---|---|---|
 | `demo/ssm/ssm_contract.py` | `MACRO_CLASS`, hằng `TRONG/DA_BAN/DANG_GIU`, `SeatStateMatrixAPI` Protocol — **hợp đồng SSM đã đóng băng** | BE1 |
 | `demo/ssm/seat_state_matrix.py` | Mô hình in-memory ghế×đoạn + `first_fit` + `assign` nguyên tử. **Port sang Postgres**, giữ nguyên semantics | BE1 |
-| `demo/build_forecast_features.py` | Feature pickup, `U_FORECAST=14`, split 01/05, MASE. Đã leakage-safe | BE2 |
-| `demo/eda_dataset_for_5_subproblems.py` | Lấy số hiệu chuẩn cho `seed/` (LF/đoạn, gap/chuyến, booking curve) | BE2 |
+| `demo/build_forecast_features.py` | Feature pickup, `U_FORECAST=14`, split 01/05, MASE. Đã leakage-safe. Chạy trên dataset thô | BE1 (chạy) → cấp số cho BE2 |
+| `demo/eda_dataset_for_5_subproblems.py` | Lấy số hiệu chuẩn cho `seed/` (LF/đoạn, gap/chuyến, booking curve) | BE1 |
 | `generate_data.py` class `Pricer` (dòng 404) | **Logic giá đã đúng luật** — F0 → δ → clip sàn/trần → CSXH max sau cùng | BE3 |
-| `generate_data.py` `solve_dlp_and_bid_price` (dòng 544) | Tham chiếu DLP | BE2 |
-| `04_THAM_SO_CAU_HINH_MO_PHONG.yaml` | **Nguồn số duy nhất**: `kappa0`, `theta`, `varsigma`, `rho_t`, `gia_neo`, `diem_gay_che_do` | BE2, BE3 |
+| `generate_data.py` `solve_dlp_and_bid_price` (dòng 544) | Tham chiếu DLP cho bid-price approximation | BE2 |
+| `04_THAM_SO_CAU_HINH_MO_PHONG.yaml` | **Nguồn số duy nhất**: `kappa0`, `theta`, `varsigma`, `rho_t`, `gia_neo`, `diem_gay_che_do` | BE1, BE3 |
 
 > `generate_data.py` `Pricer` đã cài đúng thứ tự CSXH-áp-sau và clip sàn/trần. **BE3 đọc nó trước khi thiết kế PricingEngine.** Chép logic, không chép cấu trúc (nó viết cho batch, MVP cần per-request).
 
@@ -210,8 +210,8 @@ seed/
 
 | Dev | Vai trò | Sở hữu P0 | File plan |
 |---|---|---|---|
-| **BE1** | Integration / State Lead | OpenAPI, PostgreSQL, `service_run`, SeatStateManager, atomic hold/confirm, expiry, merge owner | `DEV1_BE_STATE_INTEGRATION.md` |
-| **BE2** | Data / Forecast / Backtest | `seed/`, extractor, forecast, bid-price approximation, baseline, backtest, metrics | `DEV2_BE_DATA_FORECAST_BACKTEST.md` |
+| **BE1** | Database / Data Pipeline / Integration Lead | OpenAPI, PostgreSQL, `seed/` + extractor (dataset→hiệu chuẩn→`seed/`→DB, KHÔNG nạp thẳng dataset), `service_run`, SeatStateManager, atomic hold/confirm, expiry, merge owner | `DEV1_BE_STATE_INTEGRATION.md` |
+| **BE2** | Forecast / Bid-Price / Backtest | forecast, bid-price approximation, baseline, backtest engine, metrics (đọc `seed/` do BE1 cấp, không đụng dataset thô) | `DEV2_BE_DATA_FORECAST_BACKTEST.md` |
 | **BE3** | Decision (Merging + Pricing) | `continuous_same_seat`, `reused_gap`, safety filter, PricingEngine, guardrail, OfferService, DecisionRecord | `DEV3_BE_MERGING_PRICING.md` |
 | **FE1** | UI nền tảng + Ops | Design system, typed client, S01 Ops, S02 Seat-Leg Matrix, S05 Decision Detail, S06 Compliance, a11y | `DEV4_FE_OPS_MATRIX.md` |
 | **FE2** | UI luồng bán + Pitch | S03 Booking Lab, S04 Backtest Comparison, error states, video, AI log, pitch | `DEV5_FE_BOOKING_BACKTEST.md` |
@@ -222,8 +222,8 @@ seed/
 
 | Đường dẫn | Owner duy nhất |
 |---|---|
-| `openapi.yaml`, `migrations/`, `src/state/` | BE1 |
-| `seed/`, `src/forecast/`, `src/backtest/`, `scripts/extract_seed.py` | BE2 |
+| `openapi.yaml`, `migrations/`, `src/state/`, `seed/`, `scripts/extract_seed.py` | BE1 |
+| `src/forecast/`, `src/backtest/` | BE2 |
 | `src/merging/`, `src/pricing/`, `src/offer/`, `rules/*.yaml` | BE3 |
 | `web/src/api/`, `web/src/components/`, `web/src/pages/ops/`, `web/src/pages/decision/` | FE1 |
 | `web/src/pages/booking/`, `web/src/pages/backtest/`, `pitch/` | FE2 |
@@ -264,8 +264,8 @@ Plan gốc nói "S01-S06" nhưng không liệt kê. **Định nghĩa tại đây
 
 | Dev | Việc đầu tiên |
 |---|---|
-| BE1 | `openapi.yaml` + enum/error envelope + migration skeleton |
-| BE2 | `requirements.txt`, **chạy `generate_data.py` nền**, `seed/` prior từ YAML |
+| BE1 | `requirements.txt`, **chạy `generate_data.py` nền**, `openapi.yaml` + enum/error envelope + migration skeleton, `seed/` prior từ YAML |
+| BE2 | Đọc draft schema `seed/forecast.json` cùng BE1; dựng khung forecast + công thức bid-price approximation |
 | BE3 | Đọc `Pricer` trong `generate_data.py`; khóa `PricingBreakdown` / `SeatPlan` / `SafetyDecision` schema |
 | FE1 | Khung route S01–S06 + typed mock client từ `seed/` |
 | FE2 | Booking Lab wireframe chạy bằng fixture |
@@ -275,7 +275,7 @@ Plan gốc nói "S01-S06" nhưng không liệt kê. **Định nghĩa tại đây
 | Mốc | Bằng chứng | Xác nhận |
 |---|---|---|
 | Giờ 2 | OpenAPI + `seed/` schema versioned; 0 câu hỏi P0 mở | BE1 + cả đội |
-| Giờ 3 | `seed/` commit vào git (dù mới là prior) | BE2 |
+| Giờ 3 | `seed/` commit vào git (dù mới là prior) | BE1 |
 | Giờ 6 | Fixture happy path chạy trong UI | BE1 + FE1 |
 | Giờ 10 | Core transaction / resolver / pricing / metrics xanh | BE1–BE3 |
 | Giờ 14 | Real golden path end-to-end | Cả đội |
@@ -378,10 +378,10 @@ Lý do: 5 người / 30 giờ / không họp được. `progress.md` là **cách
 ```markdown
 | Giờ | Dev | Mục | Trạng thái | Bằng chứng | Unblock ai |
 |-----|-----|-----|-----------|-----------|-----------|
-| H+03 | BE2 | seed/ prior commit | ✅ DONE | `git show a1b2c3` · 7 file trong seed/ | BE1, FE1, FE2 |
+| H+03 | BE1 | seed/ prior commit | ✅ DONE | `git show a1b2c3` · 7 file trong seed/ | BE2, BE3, FE1, FE2 |
 | H+05 | BE1 | atomic hold CAS | 🚧 WIP | test_two_competing_holds đang đỏ | — |
 | H+06 | BE3 | continuous_same_seat | ✅ DONE | `pytest tests/test_merging.py -q` → 8 passed | FE1 (S02) |
-| H+07 | BE1 | migration v2 | ⛔ BLOCKED | chờ seed/scenario.json schema | chờ BE2 |
+| H+07 | BE1 | migration v2 | ⛔ BLOCKED | chờ seed/scenario.json schema | chờ chính mình xong seed/ |
 ```
 
 **Luật:**
@@ -400,7 +400,7 @@ git checkout -b <be1|be2|be3|fe1|fe2>/<task>
 
 # Backend
 python -m venv .venv && .venv\Scripts\activate     # Windows
-pip install -r requirements.txt                     # BE2 tạo file này giờ 0
+pip install -r requirements.txt                     # BE1 tạo file này giờ 0
 docker compose up -d postgres                       # BE1 tạo compose giờ 0
 
 # Frontend
@@ -412,7 +412,7 @@ cd web && npm install && npm run dev
 
 ---
 
-## Phụ lục — bản đồ cột dataset (chỉ BE2 cần)
+## Phụ lục — bản đồ cột dataset (chỉ BE1 cần)
 
 `data/transactions/thang=YYYY-MM/part.parquet`:
 ```
