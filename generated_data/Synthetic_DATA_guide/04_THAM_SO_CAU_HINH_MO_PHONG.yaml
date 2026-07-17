@@ -1,0 +1,500 @@
+# =============================================================================
+# THAM SỐ CẤU HÌNH MÔ PHỎNG — Dataset đường sắt hành khách Việt Nam
+# Phụ lục của Tài liệu 02 (toán học) và 03 (kỹ thuật)
+#
+# QUY ƯỚC:
+#   [THẬT]   = số liệu có nguồn chính thống, KHÔNG được coi là tham số tự do
+#   [NEO]    = hằng số hiệu chuẩn rút ra bằng phép chia từ số liệu [THẬT]
+#   [FIT]    = tham số tự do, ước lượng bằng SMM (Tài liệu 02 §9)
+#   [GIẢ]    = giả định kỹ thuật, cần phân tích độ nhạy
+#
+# Tái lập: dataset = f(master_seed, hash(file này), hash(pricing_rules.yaml), hash(ref/))
+# =============================================================================
+
+meta:
+  version: "1.0.0"
+  ngay_lap: 2026-07-17
+  master_seed: 20260717
+  mui_gio: "Asia/Ho_Chi_Minh"
+  don_vi_tien: "VND"
+  ghi_chu: "Dataset TỔNG HỢP, hiệu chuẩn theo 18 mô men công bố công khai của VNR/Traravico."
+
+# =============================================================================
+# 1. MẠNG LƯỚI  [THẬT — cần đối chiếu Công lệnh VNR / dsvn.vn]
+# =============================================================================
+mang_luoi:
+  tuyen_chinh:
+    ma: "THONG_NHAT"
+    ga_dau: "HNO"
+    ga_cuoi: "SGO"
+    chieu_dai_km: 1726.0          # [THẬT]
+
+  # ly_trinh_km tính từ ga Hà Nội. Các giá trị ⭐ đã kiểm chứng chéo qua Ga Đà Nẵng (Km 791+400).
+  # Các giá trị còn lại là ƯỚC LƯỢNG — PHẢI thay bằng lý trình chính thức trước khi chốt.
+  ga:
+    - {id: HNO, ten: "Hà Nội",        km:    0.0, loai: dau_moi,   dwell_phut: 20, P: 1.00, theta: 1.00, tinh_2025: "Hà Nội"}      # ⭐
+    - {id: PLY, ten: "Phủ Lý",        km:   56.0, loai: doc_duong, dwell_phut:  3, P: 0.12, theta: 0.10, tinh_2025: "Ninh Bình"}
+    - {id: NDI, ten: "Nam Định",      km:   87.0, loai: khu_doan,  dwell_phut:  5, P: 0.22, theta: 0.15, tinh_2025: "Ninh Bình"}
+    - {id: NBI, ten: "Ninh Bình",     km:  115.0, loai: khu_doan,  dwell_phut:  5, P: 0.16, theta: 0.45, tinh_2025: "Ninh Bình"}
+    - {id: BSO, ten: "Bỉm Sơn",       km:  138.0, loai: doc_duong, dwell_phut:  3, P: 0.08, theta: 0.05, tinh_2025: "Thanh Hóa"}
+    - {id: THO, ten: "Thanh Hóa",     km:  175.0, loai: khu_doan,  dwell_phut:  7, P: 0.42, theta: 0.55, tinh_2025: "Thanh Hóa"}
+    - {id: VIN, ten: "Vinh",          km:  319.0, loai: khu_doan,  dwell_phut: 10, P: 0.38, theta: 0.50, tinh_2025: "Nghệ An"}     # ⭐ (791-472)
+    - {id: YTR, ten: "Yên Trung",     km:  348.0, loai: doc_duong, dwell_phut:  3, P: 0.10, theta: 0.08, tinh_2025: "Hà Tĩnh"}
+    - {id: HPO, ten: "Hương Phố",     km:  410.0, loai: doc_duong, dwell_phut:  3, P: 0.06, theta: 0.05, tinh_2025: "Hà Tĩnh"}
+    - {id: DLE, ten: "Đồng Lê",       km:  460.0, loai: doc_duong, dwell_phut:  3, P: 0.05, theta: 0.05, tinh_2025: "Quảng Trị"}
+    - {id: DHO, ten: "Đồng Hới",      km:  522.0, loai: khu_doan,  dwell_phut:  7, P: 0.18, theta: 0.60, tinh_2025: "Quảng Trị"}
+    - {id: DHA, ten: "Đông Hà",       km:  622.0, loai: khu_doan,  dwell_phut:  5, P: 0.15, theta: 0.25, tinh_2025: "Quảng Trị"}
+    - {id: HUE, ten: "Huế",           km:  688.0, loai: khu_doan,  dwell_phut: 10, P: 0.30, theta: 0.85, tinh_2025: "Huế"}         # ⭐ (791-103)
+    - {id: DNA, ten: "Đà Nẵng",       km:  791.4, loai: dau_moi,   dwell_phut: 15, P: 0.55, theta: 1.00, tinh_2025: "Đà Nẵng"}     # ⭐ Km791+400
+    - {id: TKY, ten: "Tam Kỳ",        km:  865.0, loai: doc_duong, dwell_phut:  3, P: 0.20, theta: 0.35, tinh_2025: "Đà Nẵng"}
+    - {id: QNG, ten: "Quảng Ngãi",    km:  927.5, loai: khu_doan,  dwell_phut:  7, P: 0.25, theta: 0.30, tinh_2025: "Quảng Ngãi"}  # ⭐ (791+136.5)
+    - {id: DTR, ten: "Diêu Trì",      km: 1095.0, loai: khu_doan,  dwell_phut: 10, P: 0.28, theta: 0.55, tinh_2025: "Gia Lai"}     # ⭐ (791+304)
+    - {id: THA, ten: "Tuy Hòa",       km: 1198.0, loai: khu_doan,  dwell_phut:  5, P: 0.18, theta: 0.35, tinh_2025: "Đắk Lắk"}     # sáp nhập: Phú Yên → Đắk Lắk
+    - {id: GIA, ten: "Giã",           km: 1258.0, loai: doc_duong, dwell_phut:  3, P: 0.06, theta: 0.10, tinh_2025: "Khánh Hòa"}
+    - {id: NTR, ten: "Nha Trang",     km: 1314.5, loai: dau_moi,   dwell_phut: 12, P: 0.35, theta: 0.95, tinh_2025: "Khánh Hòa"}   # ⭐ (791+523.5)
+    - {id: TCH, ten: "Tháp Chàm",     km: 1408.0, loai: khu_doan,  dwell_phut:  5, P: 0.15, theta: 0.30, tinh_2025: "Khánh Hòa"}
+    - {id: BTH, ten: "Bình Thuận",    km: 1551.0, loai: khu_doan,  dwell_phut:  5, P: 0.20, theta: 0.60, tinh_2025: "Lâm Đồng"}
+    - {id: BHO, ten: "Biên Hòa",      km: 1697.0, loai: khu_doan,  dwell_phut:  5, P: 0.60, theta: 0.25, tinh_2025: "Đồng Nai"}
+    - {id: DAN, ten: "Dĩ An",         km: 1707.0, loai: doc_duong, dwell_phut:  3, P: 0.30, theta: 0.10, tinh_2025: "TP. Hồ Chí Minh"}
+    - {id: SGO, ten: "Sài Gòn",       km: 1726.0, loai: dau_moi,   dwell_phut: 20, P: 1.00, theta: 0.90, tinh_2025: "TP. Hồ Chí Minh"}  # ⭐
+
+  vung_thien_tai:                   # dùng cho λ của quá trình gián đoạn
+    - {ten: BAC,          km_tu:    0, km_den:  200, thang_dinh: [7, 8, 9]}
+    - {ten: BAC_TRUNG,    km_tu:  200, km_den:  500, thang_dinh: [8, 9, 10]}
+    - {ten: TRUNG_TRUNG,  km_tu:  500, km_den:  900, thang_dinh: [10, 11]}
+    - {ten: NAM_TRUNG,    km_tu:  900, km_den: 1400, thang_dinh: [11, 12]}   # ⭐ đợt 11/2025
+    - {ten: NAM,          km_tu: 1400, km_den: 1726, thang_dinh: [9, 10]}
+
+  diem_xung_yeu:                    # [THẬT]
+    - {ten: "Đèo Hải Vân",            km_tu: 740,     km_den: 790}
+    - {ten: "Hầm Bãi Gió",            km_tu: 1226,    km_den: 1227,   su_co_2024: true}
+    - {ten: "Hầm Chí Thạnh",          km_tu: 1170,    km_den: 1172,   su_co_2024: true}
+    - {ten: "Vân Canh – Phước Lãnh",  km_tu: 1136.85, km_den: 1136.93, troi_nen_m: 75, sau_m: 9}   # ⭐ 11/2025
+
+# =============================================================================
+# 2. MÁC TÀU & THÀNH PHẦN ĐOÀN TÀU
+# =============================================================================
+mac_tau:
+  # [THẬT] giờ xuất phát: biểu đồ hiệu lực từ 15/5/2026
+  - {ma: SE1,  cap: SE1/SE2,   chieu: LE,   ga_dau: HNO, ga_cuoi: SGO, gio_xp: "21:45", so_ga_dung: 22, rho_t: 1.10, chat_luong: cao}
+  - {ma: SE2,  cap: SE1/SE2,   chieu: CHAN, ga_dau: SGO, ga_cuoi: HNO, gio_xp: "20:35", so_ga_dung: 22, rho_t: 1.10, chat_luong: cao}
+  - {ma: SE3,  cap: SE3/SE4,   chieu: LE,   ga_dau: HNO, ga_cuoi: SGO, gio_xp: "19:20", so_ga_dung: 24, rho_t: 1.08, chat_luong: cao}
+  - {ma: SE4,  cap: SE3/SE4,   chieu: CHAN, ga_dau: SGO, ga_cuoi: HNO, gio_xp: "19:20", so_ga_dung: 24, rho_t: 1.08, chat_luong: cao}
+  - {ma: SE5,  cap: SE5/SE6,   chieu: LE,   ga_dau: HNO, ga_cuoi: SGO, gio_xp: "08:00", so_ga_dung: 32, rho_t: 1.00, chat_luong: tb}
+  - {ma: SE6,  cap: SE5/SE6,   chieu: CHAN, ga_dau: SGO, ga_cuoi: HNO, gio_xp: "08:45", so_ga_dung: 32, rho_t: 1.00, chat_luong: tb}
+  - {ma: SE7,  cap: SE7/SE8,   chieu: LE,   ga_dau: HNO, ga_cuoi: SGO, gio_xp: "06:00", so_ga_dung: 35, rho_t: 0.98, chat_luong: tb}
+  - {ma: SE8,  cap: SE7/SE8,   chieu: CHAN, ga_dau: SGO, ga_cuoi: HNO, gio_xp: "06:00", so_ga_dung: 35, rho_t: 0.98, chat_luong: tb}
+  - {ma: SE9,  cap: SE9/SE10,  chieu: LE,   ga_dau: HNO, ga_cuoi: SGO, gio_xp: "13:00", so_ga_dung: 30, rho_t: 1.00, chat_luong: tb}
+  - {ma: SE10, cap: SE9/SE10,  chieu: CHAN, ga_dau: SGO, ga_cuoi: HNO, gio_xp: "13:15", so_ga_dung: 30, rho_t: 1.00, chat_luong: tb}
+  # khu đoạn
+  - {ma: SE19, cap: SE19/SE20, chieu: LE,   ga_dau: HNO, ga_cuoi: DNA, gio_xp: "20:10", so_ga_dung: 14, rho_t: 1.02}
+  - {ma: SE20, cap: SE19/SE20, chieu: CHAN, ga_dau: DNA, ga_cuoi: HNO, gio_xp: "19:00", so_ga_dung: 14, rho_t: 1.02}
+  - {ma: SE21, cap: SE21/SE22, chieu: CHAN, ga_dau: SGO, ga_cuoi: DNA, gio_xp: "19:30", so_ga_dung: 12, rho_t: 1.05}
+  - {ma: SE22, cap: SE21/SE22, chieu: LE,   ga_dau: DNA, ga_cuoi: SGO, gio_xp: "12:35", so_ga_dung: 12, rho_t: 1.05}
+  - {ma: NA1,  cap: NA1/NA2,   chieu: LE,   ga_dau: HNO, ga_cuoi: VIN, gio_xp: "21:50", so_ga_dung:  6, rho_t: 0.95}
+  - {ma: NA2,  cap: NA1/NA2,   chieu: CHAN, ga_dau: VIN, ga_cuoi: HNO, gio_xp: "22:00", so_ga_dung:  6, rho_t: 0.95}
+  - {ma: SNT1, cap: SNT1/SNT2, chieu: LE,   ga_dau: SGO, ga_cuoi: NTR, gio_xp: "20:00", so_ga_dung:  7, rho_t: 1.12}
+  - {ma: SNT2, cap: SNT1/SNT2, chieu: CHAN, ga_dau: NTR, ga_cuoi: SGO, gio_xp: "19:30", so_ga_dung:  7, rho_t: 1.12}
+  - {ma: SPT1, cap: SPT1/SPT2, chieu: LE,   ga_dau: SGO, ga_cuoi: PTH, gio_xp: "06:40", so_ga_dung:  4, rho_t: 1.15}
+  - {ma: SE29, cap: SE29/SE30, chieu: CHAN, ga_dau: SGO, ga_cuoi: DTR, gio_xp: "21:00", so_ga_dung:  9, rho_t: 1.00}
+  # ngoài trục Thống Nhất (tuyến nhánh — mô hình riêng)
+  - {ma: HD1,  cap: "HĐ1/2",   tuyen: HUE_DNA, ghi_chu: "Kết nối/Hành trình di sản, 2 đôi/ngày, DT +41% từ T3/2026"}
+  - {ma: HP1,  cap: "HP1/2",   tuyen: HNO_HPH, ghi_chu: "Hoa Phượng Đỏ, 4 đôi/ngày, DT +12%"}
+  - {ma: SP3,  cap: "SP3/4",   tuyen: HNO_LCA, ghi_chu: "DT +27% — tuyến tăng mạnh nhất"}
+
+thanh_phan_doan_tau:
+  SE_cao_cap:                       # SE1/2, SE3/4  [THẬT: cấu hình điển hình]
+    toa:
+      - {so: [1,2,3],        loai_cho: NGOI_MEM_DH, so_cho: 56}
+      - {so: [4,5],          loai_cho: NAM_K6,      so_cho: 42, tang: [1,2,3]}
+      - {so: [6,7,8,9,10,11,12], loai_cho: NAM_K4,  so_cho: 28, tang: [1,2]}
+    tong_cho: 546                   # 3*56 + 2*42 + 7*28 = 168+84+196
+  SE_thuong:                        # SE5..SE10
+    toa:
+      - {so: [1,2,3,4,5],    loai_cho: NGOI_MEM_DH, so_cho: 64}
+      - {so: [6,7,8],        loai_cho: NAM_K6,      so_cho: 42}
+      - {so: [9,10,11,12],   loai_cho: NAM_K4,      so_cho: 28}
+    tong_cho: 558                   # 320 + 126 + 112
+
+loai_cho:
+  # varsigma_c: hệ số giá loại chỗ. [NEO] từ SE1 HN–SG: 1.535.000 / 1.400.000 / 1.205.000 / 1.152.000
+  - {ma: NGOI_MEM_DH, varsigma: 1.000, mo_ta: "Ngồi mềm điều hòa"}
+  - {ma: NAM_K6_T3,   varsigma: 1.046, mo_ta: "Nằm khoang 6 tầng 3"}   # 1.205/1.152
+  - {ma: NAM_K6_T2,   varsigma: 1.215, mo_ta: "Nằm khoang 6 tầng 2"}   # 1.400/1.152
+  - {ma: NAM_K6_T1,   varsigma: 1.332, mo_ta: "Nằm khoang 6 tầng 1"}   # 1.535/1.152
+  - {ma: NAM_K4_T2,   varsigma: 1.380, mo_ta: "Nằm khoang 4 tầng 2"}   # [FIT]
+  - {ma: NAM_K4_T1,   varsigma: 1.462, mo_ta: "Nằm khoang 4 tầng 1"}   # 1.684/1.152
+  - {ma: VIP2,        varsigma: 1.900, mo_ta: "Khoang VIP 2 giường"}   # [GIẢ]
+  # Kiểm tra: tỷ lệ T1:T2:T3 khoang 6 = 1.000 : 0.912 : 0.785  ⭐ BẮT BUỘC tái tạo
+
+# =============================================================================
+# 3. GIÁ CƠ BẢN
+# =============================================================================
+gia_co_ban:
+  cong_thuc: "F0 = rho_t * varsigma_c * kappa0 * d^theta"
+  kappa0: 9800          # [FIT] đồng — hiệu chỉnh để F0(SE1, HN-SG, NGOI_MEM_DH) ≈ 1.152.000
+  theta:  0.87          # [FIT] cước lũy thoái; ước lượng bằng hồi quy log-log trên biểu giá cào
+  neo_kiem_tra:         # [THẬT] — bắt buộc khớp ±3%
+    - {mac_tau: SE1, od: [HNO, SGO], loai_cho: NGOI_MEM_DH, gia: 1152000}
+    - {mac_tau: SE1, od: [HNO, SGO], loai_cho: NAM_K6_T3,   gia: 1205000}
+    - {mac_tau: SE1, od: [HNO, SGO], loai_cho: NAM_K6_T2,   gia: 1400000}
+    - {mac_tau: SE1, od: [HNO, SGO], loai_cho: NAM_K6_T1,   gia: 1535000}
+    - {mac_tau: SE1, od: [HNO, SGO], loai_cho: NAM_K4_T1,   gia: 1684000}
+    - {mac_tau: SE21, od: [SGO, DNA], loai_cho: NGOI_MEM_DH, gia: 525000}   # 935 km
+    - {mac_tau: SE21, od: [SGO, DNA], loai_cho: NAM_K6_T2,   gia: 630000}
+    - {mac_tau: SE21, od: [SGO, DNA], loai_cho: NAM_K4_T2,   gia: 831000}
+  san_tran:
+    san_ty_le_tren_F0: 0.55         # [GIẢ] — không được bán dưới mức có lãi
+    tran_ty_le_tren_F0: 1.60        # [GIẢ] — trần đã duyệt
+    bien_do_thay_doi_toi_da_moi_lan: 0.05   # |Δp|/p ≤ 5% mỗi lần điều chỉnh  (Mục 6.6 đề bài)
+    gia_khoa_sau_khi_giu_cho: true          # BẮT BUỘC
+
+# =============================================================================
+# 4. LỊCH — [THẬT]
+# =============================================================================
+lich:
+  tet_am_lich:            # mùng 1 Tết (dương lịch)
+    2024: 2024-02-10
+    2025: 2025-01-29
+    2026: 2026-02-17      # ⭐ suy ra từ công bố VNR: 28 tháng Chạp = 15/02/2026
+    2027: 2027-02-06
+  nghi_le_2026:
+    - {ten: "Tết Dương lịch", tu: 2026-01-01, den: 2026-01-04, so_ngay: 4}
+    - {ten: "Tết Bính Ngọ",   tu: 2026-02-14, den: 2026-02-22, so_ngay: 9}
+    - {ten: "Giỗ Tổ Hùng Vương", tu: 2026-04-25, den: 2026-04-27, so_ngay: 3}
+    - {ten: "30/4 - 1/5",     tu: 2026-04-30, den: 2026-05-03, so_ngay: 4}
+    - {ten: "Quốc khánh 2/9", tu: 2026-09-01, den: 2026-09-02, so_ngay: 2}
+  dot_ban_ve:
+    - {ten: TET_BINH_NGO, ngay_mo_ban: 2025-09-20, mo_ban_tap_the: 2025-09-15,
+       tau_chay_tu: 2026-02-03, tau_chay_den: 2026-03-08, H_min: 136, H_max: 169}
+    - {ten: HE_2026,      ngay_mo_ban: 2026-04-11,
+       tau_chay_tu: 2026-05-15, tau_chay_den: 2026-08-16, H_min: 34,  H_max: 127}
+    - {ten: SAU_HE_2026,  ngay_mo_ban: 2026-07-04,
+       tau_chay_tu: 2026-08-17, tau_chay_den: 2026-12-30, H_min: 44,  H_max: 179}
+    - {ten: THUONG,       H_mac_dinh: 75}      # [GIẢ]
+  diem_gay_che_do:        # ⭐ BẮT BUỘC có cờ trong dataset
+    - {ngay: 2025-07-01, ten: SAP_NHAP_TINH,      anh_huong: "join gravity theo tỉnh"}
+    - {ngay: 2026-01-01, ten: LUAT_DS_95_2025,    anh_huong: "khung pháp lý"}
+    - {ngay: 2026-01-14, ten: ND_16_2026,         anh_huong: "Điều 40 miễn giảm CSXH"}
+    - {ngay: 2026-05-01, ten: AI_GIA_LINH_HOAT,   anh_huong: "che_do_gia: LUAT -> AI"}   # ⭐⭐
+    - {ngay: 2026-05-15, ten: TRA_VE_ONLINE,      anh_huong: "hazard trả vé tăng"}
+    - {ngay: 2026-05-15, ten: BIEU_DO_MOI,        anh_huong: "giờ xuất phát"}
+    - {ngay: 2026-07-01, ten: GIAM_10_NHIEN_LIEU, anh_huong: "delta_mua = -0.10 tới 16/8"}
+    - {ngay: 2026-07-15, ten: THU_PHI_CAO_TOC_BN, anh_huong: "chi phí đối thủ đường bộ tăng"}
+
+su_kien:                  # eta_v = cường độ tăng theta của ga trong cửa sổ
+  - {ten: "Đại hội Đảng XIV",       tu: 2026-01-19, den: 2026-01-23, ga: [HNO], eta: 0.30, loai: cong_vu}
+  - {ten: "Lễ hội pháo hoa Đà Nẵng", thang: [6, 7],                  ga: [DNA], eta: 0.45, loai: du_lich}
+  - {ten: "Festival Huế",            thang: [6],                     ga: [HUE], eta: 0.35, loai: du_lich}
+  - {ten: "Lễ hội biển Nha Trang",   thang: [6, 7],                  ga: [NTR], eta: 0.30, loai: du_lich}
+  - {ten: "Biển Sầm Sơn/Cửa Lò",     thang: [5, 6, 7, 8],            ga: [THO, VIN], eta: 0.40, loai: du_lich}
+  - {ten: "Phong Nha - Kẻ Bàng",     thang: [4, 5, 6, 7, 8],         ga: [DHO], eta: 0.35, loai: du_lich}
+  - {ten: "Mùa biển Quy Nhơn",       thang: [5, 6, 7],               ga: [DTR], eta: 0.30, loai: du_lich}
+  - {ten: "Mũi Né",                  thang: [5, 6, 7, 12],           ga: [BTH], eta: 0.25, loai: du_lich}
+  - {ten: "Nhập học/khai giảng",     tu: 2026-08-05, den: 2026-09-15, ga: [HNO, SGO, DNA], eta: 0.25, loai: hoc_sinh}
+  - {ten: "27/7 tri ân",             thang: [7],                     ga: [DHA], eta: 0.20, loai: khac}
+
+# =============================================================================
+# 5. CẦU  — [FIT] trừ khi ghi khác
+# =============================================================================
+cau:
+  gravity:
+    kappa: 1.0            # [FIT] chuẩn hóa
+    alpha: 0.75           # [FIT] số mũ dân số gốc
+    beta:  0.75           # [FIT] số mũ dân số đích
+    gamma1: 0.35          # [FIT] số mũ hấp dẫn gốc
+    gamma2: 0.65          # [FIT] số mũ hấp dẫn đích  (đích quan trọng hơn cho du lịch)
+    ma_sat: {theta_d: 0.95, d0_km: 2500}    # f(d) = d^theta_d * exp(d/d0)
+
+  phan_khuc:              # pi_g — tỷ trọng, phụ thuộc lịch (giá trị ngày thường)
+    - {ma: CONG_VU,  ty_trong: 0.12, beta_cost: 0.6, beta_time: 1.4, ghi_chu: "ít nhạy giá"}
+    - {ma: VE_QUE,   ty_trong: 0.30, beta_cost: 1.5, beta_time: 0.6}
+    - {ma: DU_LICH,  ty_trong: 0.33, beta_cost: 1.2, beta_time: 0.9}
+    - {ma: THAM_THAN,ty_trong: 0.15, beta_cost: 1.3, beta_time: 0.7}
+    - {ma: HSSV,     ty_trong: 0.10, beta_cost: 2.0, beta_time: 0.5, ghi_chu: "nhạy giá nhất"}
+  phan_khuc_tet:          # override trong cửa sổ |tau| <= 21
+    VE_QUE:  0.62
+    THAM_THAN: 0.18
+    DU_LICH: 0.12
+    CONG_VU: 0.04
+    HSSV:    0.04
+    ghi_chu: "⭐ Tết: beta_cost hiệu dụng GIẢM (buộc phải về) => ít co giãn giá.
+              Neo thực tế: giá Tết +4..5% mà sản lượng vẫn +9,5%."
+
+  mode_logit:
+    ASC: {sat: 0.0, bay: 0.9, bo: 0.4, ca_nhan: -0.2}    # [FIT]
+    doi_thu:
+      bay:  {chi_ap_dung_cu_ly_km_tu: 500,  gia_dong_per_km: 1450, thoi_gian_gio_co_dinh: 3.5}   # [GIẢ] gồm ra/vào sân bay
+      bo:   {gia_dong_per_km: 480, toc_do_kmh: 55, tang_phi_tu: 2026-07-15, muc_tang: 0.08}      # ⭐ IV: thu phí cao tốc
+      ca_nhan: {gia_dong_per_km: 950, toc_do_kmh: 50, gioi_han_km: 400}
+    ghi_chu: "Thị phần đường sắt PHẢI tự sinh ra dạng: thấp <150km, đỉnh 300-1000km, giảm >1200km"
+
+  bat_doi_xung_chieu:     # ⭐ suy ra từ chính sách giảm giá 'chiều rỗng' của VNR
+    gamma_peak: 1.35      # [FIT]
+    truoc_tet:  {chieu_nang: CHAN, dinh_tau: -7, sigma: 5}    # SG -> Bắc/Trung
+    sau_tet:    {chieu_nang: LE,   dinh_tau:  6, sigma: 6}    # Bắc/Trung -> SG
+    ghi_chu: "VNR giảm 5-15% cho chiều LẺ trước Tết và CHẴN sau Tết => đó là chiều RỖNG."
+
+  luong_dac_thu_vn:       # bắt buộc — luồng công nhân KCN chi phối ma trận O-D Tết
+    - {ten: "KCN Nam Bộ -> quê", ga_goc: [SGO, BHO, DAN], ga_dich: [VIN, THO, DHO, QNG, DTR],
+       he_so_tet: 4.5, cu_ly_km_dien_hinh: ">900", ghi_chu: "⭐ đúng ngưỡng 900km của luật giảm giá"}
+    - {ten: "Hà Nội <-> Vinh/Thanh Hóa cuối tuần", he_so_cuoi_tuan: 1.6}
+    - {ten: "Hà Nội <-> Hải Phòng cuối tuần",      he_so_cuoi_tuan: 2.1}
+
+  xu_the:
+    mu1_tang_truong_nam: 0.052     # [NEO] +5,2% khách YoY (6T/2026)
+    kiem_tra_cheo: "DT +8,4% & khách +5,2% => giá BQ +3,0%  (1.084/1.052 = 1.030)"
+
+  fourier:
+    K_duong_lich: 6       # mùa vụ năm (du lịch, thời tiết)
+    K_tau_tet:    4       # chu kỳ 60 ngày quanh Tết
+    rbf_le: {sigma_ngay: 2.5}
+
+# =============================================================================
+# 6. ĐƯỜNG CONG ĐẶT CHỖ  g(z), z = 1 - u/H
+# =============================================================================
+duong_cong_dat_cho:
+  # ⭐ TRÁI TIM KINH TẾ: khách chặng ngắn đến SAU khách chặng dài
+  bang:
+    - {loai: DAI_THUONG,  dieu_kien: "cu_ly >= 900 & !tet",
+       w0: 0.02, thanh_phan: [{w: 0.55, a: 2.0, b: 4.0}, {w: 0.43, a: 5.0, b: 1.8}], E_u_ngay: 16}
+    - {loai: TRUNG,       dieu_kien: "300 <= cu_ly < 900",
+       w0: 0.01, thanh_phan: [{w: 0.35, a: 2.0, b: 3.0}, {w: 0.64, a: 6.0, b: 1.6}], E_u_ngay: 8}
+    - {loai: NGAN,        dieu_kien: "cu_ly < 300",
+       w0: 0.00, thanh_phan: [{w: 0.15, a: 2.0, b: 2.0}, {w: 0.85, a: 8.0, b: 1.3}], E_u_ngay: 3}
+    - {loai: TET_CHIEU_NANG, dieu_kien: "|tau| <= 21 & chieu_nang & cu_ly >= 900",
+       w0: 0.18, thanh_phan: [{w: 0.62, a: 1.5, b: 6.0}, {w: 0.20, a: 5.0, b: 2.0}], E_u_ngay: 65,
+       ghi_chu: "w0 = khối lượng điểm lúc 8h00 ngày mở bán — hiện tượng CÓ THẬT"}
+  sinh_nhpp:
+    phuong_phap: "thinning_Lewis_Shedler"    # KHÔNG chia bin
+    ghi_chu: "Chia bin sẽ triệt tiêu cấu trúc đuôi cận ngày — nơi mọi chuyện thú vị xảy ra"
+
+# =============================================================================
+# 7. LỰA CHỌN (nested logit)
+# =============================================================================
+lua_chon:
+  cau_truc_to:
+    - {to: DUONG_SAT, mu: 0.55, phuong_an: "tàu x loại chỗ x ngày ±3"}
+    - {to: HANG_KHONG, mu: 0.75}
+    - {to: DUONG_BO,   mu: 0.80}
+    - {to: KHONG_DI,   mu: 1.00}
+  rang_buoc_ly_thuyet: "0 < mu <= 1 với MỌI tổ — nếu mu > 1 => đạo hàm chéo sai dấu => dữ liệu PHI VẬT LÝ"
+  beta:
+    gia:       2.4      # [FIT] trên giá chuẩn hóa theo thu nhập phân khúc
+    lech_gio:  0.06     # /giờ lệch so với giờ mong muốn
+    di_dem:   -0.35     # âm = ưa thích (tiết kiệm 1 đêm khách sạn)
+    doi_cho:   1.20     # ⭐ chi phí phi thỏa dụng mỗi lần đổi chỗ
+  chap_nhan_doi_cho:    # sigma(zeta0 - zeta1*M - zeta2*dem - zeta3*tre_nho)
+    zeta0: 1.10
+    zeta1: 1.60
+    zeta2: 0.90
+    zeta3: 1.40
+  thu_hoi:              # recapture khi bị từ chối
+    sang_tau_khac_cung_ngay: 0.35
+    sang_ngay_khac:          0.20
+    sang_loai_cho_khac:      0.25
+    roi_bo:                  0.20
+
+# =============================================================================
+# 8. HỦY / TRẢ VÉ
+# =============================================================================
+tra_ve:
+  khau_tru_ty_le: 0.30                  # [THẬT] 30% giá in trên thẻ
+  han_toi_thieu_ngay: {ca_nhan: 1.0, tap_the: 2.0}   # [THẬT] 24h / 48h
+  hazard:
+    h0_dang: "weibull"
+    h0: {shape: 1.35, scale_ngay: 45}
+    phi:                                # hệ số Cox
+      cu_ly_chuan_hoa:  0.25
+      la_tet:          -0.40            # Tết: ít trả hơn (khó mua lại)
+      kenh_online:      0.30
+      sau_15_5_2026:    0.45            # ⭐ trả vé online => rào cản giảm
+  ty_le_muc_tieu:
+    truoc_15_5_2026: 0.055              # [GIẢ] — cần kiểm định
+    sau_15_5_2026:   0.075              # [GIẢ] — giả thuyết kiểm định được
+  ghi_chu: "⭐ Mỗi lần trả vé sinh ra 1 khoảng trống => trả vé LÀ nguồn cung của bài toán ghép chặng"
+
+# =============================================================================
+# 9. GIÁN ĐOẠN / THIÊN TAI
+# =============================================================================
+gian_doan:
+  su_kien_that:         # [THẬT] — hard-code, KHÔNG mô phỏng
+    - id: LU_11_2025
+      tu: 2025-11-06
+      den: 2025-11-22
+      bao: "Số 13 (Kalmaegi)"
+      doan_phong_toa_km:
+        - {tu: 1123.600, den: 1139.100}
+        - {tu: 1204.200, den: 1219.742}
+        - {tu: 1337.900, den: 1339.850}
+      tau_khach_dung: 44
+      ve_hoan: 39000
+      tien_hoan_ty: 24.0
+      hoan_bq_dong: 615385                 # ⭐ [NEO] > giá vé BQ 514k => cơ chế chọn mẫu
+      chuyen_tai: {tu_ngay: 2025-11-23, ga_1: THA, ga_2: GIA}
+      suat_an_mien_phi: {chinh: 9400, phu: 6100, chi_phi_trieu: 623}
+      nguon: "Bộ Xây dựng - QĐ công bố tình huống khẩn cấp 08/12/2025"
+    - id: HAM_BAI_GIO_CHI_THANH_2024
+      ach_tac_ngay: 20
+      ghi_chu: "2 đợt, tuyến HN-TPHCM"
+  mo_phong:
+    lambda_nam_theo_vung:      # [FIT] số sự kiện/năm
+      BAC: 0.8
+      BAC_TRUNG: 1.0
+      TRUNG_TRUNG: 1.6
+      NAM_TRUNG: 1.4
+      NAM: 0.4
+    thoi_luong: {phan_phoi: lognormal, median_ngay: 8, sigma: 0.75, max_ngay: 25}
+    do_dai_phong_toa_km: {phan_phoi: lognormal, median: 12, sigma: 0.9}
+    lien_ket_thoi_tiet:
+      dang: logistic
+      bien: mua_tich_luy_72h_mm
+      nguong_mm: 250
+      he_so: 0.012
+    co_che_anh_huong: "Vé bị ảnh hưởng <=> hành trình (i,j] GIAO với đoạn phong tỏa.
+                       ⚠️ TUYỆT ĐỐI KHÔNG hủy ngẫu nhiên đều — sẽ mất cơ chế chọn mẫu."
+  muc_tieu_hieu_chuan_nam:     # [NEO]
+    chuyen_huy: 300
+    khach_chuyen_tai: 8500
+
+# =============================================================================
+# 10. HÀNG CHỜ
+# =============================================================================
+hang_cho:
+  ty_le_vao_hang_cho_khi_bi_tu_choi: 0.28   # [FIT]
+  thoi_gian_giu_cho_phut: 30                # [GIẢ]
+  xac_suat_thanh_toan: {co_so: 0.70, giam_theo_ngay_cho: 0.02}
+  do_linh_hoat:
+    ngay: {0: 0.45, 1: 0.30, 2: 0.15, 3: 0.10}
+    chap_nhan_loai_cho_khac: 0.55
+    chap_nhan_doi_cho: 0.22
+
+# =============================================================================
+# 11. THAM SỐ 'GIÁ VÉ LINH HOẠT' (AI) — tái tạo cơ chế VNR từ 01/5/2026
+# =============================================================================
+ai_gia_linh_hoat:
+  hieu_luc_tu: 2026-05-01                   # [THẬT]
+  ap_dung: "tất cả các mác tàu"             # [THẬT]
+  bien_do: {min: 0.15, max: 0.35}           # [THẬT]
+  tran_theo_tuyen:                          # [THẬT]
+    THONG_NHAT_CHANG_NGAN: 0.35
+    HUE_DANANG: 0.30
+    HN_HAIPHONG: 0.25
+    HN_LAOCAI: 0.25
+    HN_DANANG: 0.25
+    SG_PHANTHIET: 0.25
+    SG_NHATRANG: 0.25
+    SG_QUYNHON: 0.25
+    SG_DANANG: 0.25
+  dieu_kien_kich_hoat:                      # [FIT] — mô hình hóa mô tả của VNR
+    max_lf_khu_gian_toi_thieu: 0.60
+    min_lf_tren_hanh_trinh_toi_da: 0.50
+    lead_time_toi_da_ngay: 14
+  neo_hieu_chuan_thi_diem:                  # [THẬT] tuần 22-29/4/2026
+    so_ve: 9376
+    doanh_thu_dong: 2000000000
+    tien_giam_dong: 523000000
+    ty_le_giam_tren_doanh_thu_gop: 0.207    # ⭐ 523/(2000+523) — NEO CHÍNH
+    gia_bq_ve_uu_dai_dong: 213000           # ⭐ 2 tỷ / 9.376 => đúng là chặng ngắn
+    he_so_su_dung_cho: 0.79
+    ghi_chu: "⚠️ Con số '10,36% hành khách hưởng KM' là trên TOÀN ĐOÀN TÀU, không phải
+              trên 9.376 vé — kiểm tra bằng phép chia trước khi dùng làm ràng buộc."
+  hien_thi: {mau: xanh_nhat, hien_muc_giam: true, thong_bao: "Tàu này đang có khuyến mãi chỗ giá rẻ"}
+
+# =============================================================================
+# 12. MÔ MEN HIỆU CHUẨN  (SMM) — [THẬT]/[NEO]
+# =============================================================================
+mo_men:
+  - {id: M1,  ten: "Khách 6T/2026",              gia_tri: 3.90e6,  don_vi: luot,  trong_so: 10, nguon: VNR}
+  - {id: M2,  ten: "Tăng trưởng khách YoY",      gia_tri: 0.052,                 trong_so: 8,  nguon: VNR}
+  - {id: M3,  ten: "Doanh thu vận tải 6T/2026",  gia_tri: 2.9212e12, don_vi: dong, trong_so: 10, nguon: VNR}
+  - {id: M4,  ten: "DT hành khách Traravico 6T", gia_tri: 2.003e12, don_vi: dong, trong_so: 9,  nguon: Traravico}
+  - {id: M5,  ten: "Giá vé BQ/lượt",             gia_tri: 514000,   don_vi: dong, trong_so: 10, nguon: "M4/M1"}
+  - {id: M6,  ten: "Khách đợt Tết",              gia_tri: 779000,   don_vi: luot, trong_so: 10, nguon: Traravico}
+  - {id: M7,  ten: "Doanh thu đợt Tết",          gia_tri: 5.56e11,  don_vi: dong, trong_so: 9,  nguon: Traravico}
+  - {id: M8,  ten: "Giá vé BQ Tết",              gia_tri: 714000,   don_vi: dong, trong_so: 10, nguon: "M7/M6"}
+  - {id: M8b, ten: "Tỷ số giá BQ Tết / năm",     gia_tri: 1.39,                  trong_so: 12,
+     ghi_chu: "⭐⭐ RÀNG BUỘC CHẨN ĐOÁN MẠNH NHẤT: giá Tết chỉ +4..5% => >=32 điểm % còn lại
+               PHẢI đến từ MIX (dịch phân phối cự ly về phía >900km), KHÔNG phải từ nâng giá."}
+  - {id: M9,  ten: "Hệ số sử dụng chỗ T4/2026",  gia_tri: 0.79,                  trong_so: 8,  nguon: VNR}
+  - {id: M10, ten: "Cung vé đi suốt Tết",        gia_tri: 330000,   don_vi: ve,   trong_so: 6}
+  - {id: M11, ten: "Cung vé đi suốt hè",         gia_tri: 1.5e6,    don_vi: ve,   trong_so: 6}
+  - {id: M12, ten: "Chuyến hủy thiên tai/năm",   gia_tri: 300,                   trong_so: 5}
+  - {id: M13, ten: "Khách chuyển tải/năm",       gia_tri: 8500,                  trong_so: 5}
+  - {id: M14, ten: "Hoàn vé BQ đợt lũ",          gia_tri: 615000,   don_vi: dong, trong_so: 9,
+     ghi_chu: "⭐ PHẢI > M5 (514k). Tỷ số mục tiêu 1.10-1.40."}
+  - {id: M15, ten: "Tỷ lệ giảm AI/DT gộp",       gia_tri: 0.207,                 trong_so: 7}
+  - {id: M16, ten: "Tăng DT HN-Lào Cai",         gia_tri: 0.27,                  trong_so: 4}
+  - {id: M17, ten: "Tàu di sản: SL +11%, DT +41%", gia_tri: 1.27,                trong_so: 4, ghi_chu: "=> giá BQ +27%"}
+  - {id: M18, ten: "Charter: đ/khách",           gia_tri: 2960000,               trong_so: 3}
+
+toi_uu_hieu_chuan:
+  phuong_phap: SMM
+  thuat_toan: CMA-ES
+  so_lan_lap_toi_da: 300
+  so_ban_sao_mo_phong: 12
+  common_random_numbers: true       # ⭐ bắt buộc — làm hàm mục tiêu trơn
+  nguong_chap_nhan:
+    M1_M9:  0.05                    # sai số tương đối < 5%
+    con_lai: 0.15
+
+# =============================================================================
+# 13. ĐỊNH CỠ ĐẦU RA
+# =============================================================================
+sinh_du_lieu:
+  bo_pilot:
+    mac_tau: [SE1, SE2, SE3, SE4, SE19, SE20, NA1, NA2]
+    loai_cho: [NGOI_MEM_DH, NAM_K6_T1, NAM_K6_T2, NAM_K6_T3, NAM_K4_T1, NAM_K4_T2]
+    tu_ngay: 2024-01-01
+    den_ngay: 2026-07-17
+    uoc_tinh: {chuyen: 7300, log_tim_kiem: 10e6, ve: 1.2e6, dung_luong_gb: 5}
+  bo_full:
+    mac_tau: ALL
+    uoc_tinh: {log_tim_kiem: 50e6, ve: 8e6, dung_luong_gb: 32}
+  dinh_dang: parquet
+  nen: zstd
+  phan_vung: [ngay_chay, mac_tau]
+  kieu_tien: int64                  # ⭐ KHÔNG dùng float cho tiền
+
+# =============================================================================
+# 14. ĐÁNH GIÁ
+# =============================================================================
+danh_gia:
+  chia_du_lieu:
+    theo: ngay_chay                 # ⭐ KHÔNG theo thoi_diem_mua
+    train:      {tu: 2024-01-01, den: 2025-12-31}
+    validation: {tu: 2026-01-01, den: 2026-04-30, che_do: LUAT}
+    test_A:     {tu: 2026-05-01, den: 2026-08-16, che_do: AI}
+    test_B:     {tu: 2026-02-03, den: 2026-03-08, ten: "Tết - cực trị"}
+    test_C:     {tu: 2025-11-06, den: 2025-11-30, ten: "Gián đoạn - chống sốc"}
+    embargo_ngay: 169               # ⭐⭐ = H_max của Tết. Bỏ qua = rò rỉ chắc chắn.
+  chi_so_du_bao: [MASE_s7, MASE_s364, Poisson_deviance, pinball_0.5, pinball_0.9, CRPS, coverage_80]
+  chi_so_rm:     [RO, PKU, LF_khu_gian, ghe_rong_cuc_bo_km, gap_ratio, ty_le_doi_cho,
+                  chuyen_doi_tim_kiem, cau_chua_dap_ung, ty_le_tra_ve]
+  chi_so_cong_bang: [CV_gia, Gini_muc_giam, p_value_permutation_Z, so_vi_pham_chinh_sach]
+  chi_so_toc_do:  {p95_recalc_ms: 200}
+  baselines: [B0_FCFS, B1_QUOTA_TINH, B2_LUAT_VNR_AI, B3_DLP_BIDPRICE, B4_DLP_ML, B5_HINDSIGHT_LP]
+  muc_tieu_de_bai:
+    PKU_tang: [0.03, 0.08]
+    doanh_thu_tang: [0.03, 0.10]
+    ghe_rong_cuc_bo_giam: 0.20
+    ve_doc_duong_tang: 0.10
+    tim_kiem_khong_thanh_giam: 0.15
+    vi_pham_chinh_sach: 0            # ⭐ hard gate
+
+# =============================================================================
+# 15. RÀNG BUỘC CỨNG (hard gate — vi phạm = dataset/nghiệm KHÔNG hợp lệ)
+# =============================================================================
+rang_buoc_cung:
+  - "∀e,c: da_ban + dang_giu <= suc_chua"
+  - "∀ chỗ k: các khoảng trong Π_k đôi một rời nhau"
+  - "gia_san <= gia_cuoi <= gia_tran"
+  - "Giảm CSXH áp SAU mọi δ động, dùng MAX không cộng dồn"
+  - "Đối tượng ưu tiên (cao tuổi/khuyết tật/trẻ đi một mình/cần trợ giúp) => so_lan_doi_cho = 0"
+  - "so_lan_doi_cho > 0 CHỈ KHI không còn chỗ liên tục nào tại thời điểm đó"
+  - "Đề xuất đổi chỗ phải được khách xác nhận đồng ý (có thể bị từ chối)"
+  - "Giá KHÔNG phụ thuộc số lần tìm kiếm, thiết bị, hay bất kỳ đặc trưng cá nhân nhạy cảm nào"
+  - "Giá đã giữ chỗ => bất biến"
+  - "|Δp| mỗi lần điều chỉnh <= 5%"
+  - "Không feature nào từ _ground_truth/ được dùng để huấn luyện"
+  - "Không dữ liệu cá nhân thật ở bất kỳ đâu trong dataset"
