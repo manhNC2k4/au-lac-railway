@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: aulac_user
+      POSTGRES_PASSWORD: aulac_password
+      POSTGRES_DB: aulac_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aulac_user -d aulac_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  flyway:
+    image: flyway/flyway:9-alpine
+    command: -configFiles=/flyway/conf/flyway.conf -locations=filesystem:/flyway/sql migrate
+    volumes:
+      - ./flyway/sql:/flyway/sql
+      - ./flyway/conf:/flyway/conf
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aulac_user:aulac_password@db:5432/aulac_db
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
