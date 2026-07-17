@@ -106,6 +106,8 @@ CREATE TABLE offer (
     offer_id VARCHAR(50) PRIMARY KEY,
     service_run_id VARCHAR(50) REFERENCES service_run(service_run_id),
     matrix_version INT,
+    forecast_version INT,          -- Đã bổ sung: đủ 4 versions cho bất biến trung tâm (Final Review §3.1)
+    policy_version INT,            -- Đã bổ sung: đủ 4 versions cho bất biến trung tâm (Final Review §3.1)
     decision VARCHAR(20) NOT NULL,
     seat_plan JSONB,
     final_price_vnd BIGINT,

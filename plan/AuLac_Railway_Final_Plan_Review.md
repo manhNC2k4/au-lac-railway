@@ -153,7 +153,7 @@ Kế hoạch này cắt MVP thành một vertical slice có thể chứng minh e
 - Min-cost multi-seat matching, active consent và re-accommodation sau bán.
 - Gradient boosting, EM unconstraining đầy đủ, model registry và drift automation.
 - Redis, distributed worker, PostgreSQL HA, production JWT/RBAC và payment integration.
-- Group booking, waitlist, đa mác tàu, đa tuyến và rollout production.
+- Group booking, waitlist, đa mác tàu, đa tuyến và rollout production. *(Schema đã tạo sẵn trong V1 — xem ghi chú §3.3 — nhưng logic vẫn ngoài P0.)*
 
 **CUT LINE**
 
@@ -200,6 +200,10 @@ Mọi bước của một offer dùng cùng service_run_id, matrix_version, fore
 | booking              | hold_id, status, created/confirmed/cancelled_at                                 | MVP quantity=1; confirm không tính lại.                 |
 | decision_record      | input_hash, versions, result, violations, explanation_code, actor, created_at   | Append-only; không log mô tả y tế.                      |
 | forecast_observation | result_status, rejection_reason, quantity, days_to_departure, source, dedup key | Dùng cho forecast; cấm đưa vào PricingContext.          |
+
+**Cập nhật đối chiếu DB (17/07/2026, sau `backend/flyway/sql/V1__init_schema.sql`).** Migration V1 đã tạo thêm `users`, `refresh_tokens`, `promotion`, `external_factor`, `waiting_list`, `audit_log`, `demand_forecast`, `bid_price` theo `docs/SDD_Update_Recommendations.md`. Các bảng này **đã tồn tại trong DB** nhưng **không đổi phạm vi P0/P1/P2 ở §2** — waitlist, group booking (`booking.group_id`) và auth production (`users`/`refresh_tokens`) vẫn là P2, chỉ là schema được chuẩn bị sẵn, chưa có logic P0 nào phụ thuộc vào chúng.
+
+Bảng `offer` trong V1 đã có đủ `matrix_version`, `forecast_version`, `policy_version` (cùng `service_run_id`) — đủ 4 versions cho "bất biến trung tâm" §3.1.
 
 ## 3.4 Thuật toán đã khóa
 

@@ -185,6 +185,8 @@ state → resolver (BE3) → pricing (BE3) → allocation/bid (BE2) → hold/con
 
 Index theo `service_run_id`. Tiền = `BIGINT` đồng.
 
+> **Đối chiếu DB thật (V1__init_schema.sql):** migration đã chạy trước, và đã đi xa hơn bảng tối thiểu này — có thêm `users`, `refresh_tokens`, `promotion`, `external_factor`, `waiting_list`, `audit_log`, `demand_forecast`, `bid_price` (theo `docs/SDD_Update_Recommendations.md`). Đừng động vào chúng trong P0 — không đổi scope, chỉ là schema pre-provisioned. Bảng `offer` đã có đủ `matrix_version`/`forecast_version`/`policy_version` — đủ 4 versions cho FE1 hiển thị (Master §7.1).
+
 ---
 
 ## Test bắt buộc (DoD của bạn)
