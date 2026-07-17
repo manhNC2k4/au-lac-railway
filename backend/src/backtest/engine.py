@@ -85,19 +85,54 @@ def _forecast_snapshot(matrix: SegmentSeatMatrix, days_to_departure: float) -> d
     return {seg["segment_id"]: seg["forecast_remaining"] for seg in fc["segments"]}
 
 
-def replay_baseline(events: list[dict], state: BaselineQuota) -> list[RequestResult]:
+def _default_fare_fn(e: dict) -> int:
+    return fixed_fare(e["distance_km"])
+
+
+def make_priced_fare_fns(seed_dir=None):
+    """T5 (plan/BE_INTEGRATION_PLAN.md): thay fixed_fare bằng giá thật khi BE3 đã xong —
+    baseline B0 bán GIÁ NIÊM YẾT (F0 fare product), Âu Lạc bán giá PricingEngine
+    (luật động YAML + guardrail). Interface accept/reject + revenue giữ nguyên.
+    """
+    from src.pricing.context import PricingContext
+    from src.pricing.engine import PricingEngine
+
+    sd = seed_dir or (Path(__file__).resolve().parents[2] / "seed")
+    products = json.loads((sd / "fare_products.json").read_text(encoding="utf-8"))["products"]
+    f0 = {(p["origin_station_id"], p["dest_station_id"]): int(p["gia_goc_vnd"]) for p in products}
+    policy = json.loads((sd / "pricing_policy.json").read_text(encoding="utf-8"))
+    engine_ = PricingEngine({"floor_ratio": policy["floor_ratio"],
+                             "ceiling_ratio": policy["ceiling_ratio"],
+                             "max_delta_ratio": policy["max_delta_ratio"], "csxh": []})
+
+    def baseline_fare(e: dict) -> int:
+        return f0[(e["origin"], e["dest"])]
+
+    def aulac_fare(e: dict) -> int:
+        # ponytail: ctx chỉ từ event (run 15/06 => peak_summer), không từ state matrix —
+        # giá tất định theo event, đủ cho so sánh allocation; nối LF thật nếu cần sau.
+        ctx = PricingContext(che_do_gia="AI", lead_time_days=int(e["days_to_departure"]),
+                             distance_km=e["distance_km"], peak_summer=True)
+        return engine_.price(f0[(e["origin"], e["dest"])], ctx).gia_cuoi_vnd
+
+    return baseline_fare, aulac_fare
+
+
+def replay_baseline(events: list[dict], state: BaselineQuota, fare_fn=None) -> list[RequestResult]:
+    fare_fn = fare_fn or _default_fare_fn
     results = []
     for e in events:
-        fare = fixed_fare(e["distance_km"])
+        fare = fare_fn(e)
         ok = state.request(e["segment_from"], e["segment_to"], e["quantity"])
         results.append(RequestResult(e["request_id"], ok, fare if ok else 0, e["distance_km"]))
     return results
 
 
-def replay_aulac(events: list[dict], state: SegmentSeatMatrix) -> list[RequestResult]:
+def replay_aulac(events: list[dict], state: SegmentSeatMatrix, fare_fn=None) -> list[RequestResult]:
+    fare_fn = fare_fn or _default_fare_fn
     results = []
     for e in events:
-        fare = fixed_fare(e["distance_km"])
+        fare = fare_fn(e)
         remaining = {s: state.remaining_capacity(s) for s in network.all_segment_ids()}
         fc = _forecast_snapshot(state, e["days_to_departure"])
         segs = list(range(e["segment_from"], e["segment_to"] + 1))
@@ -135,24 +170,27 @@ def metrics(events: list[dict], baseline_results: list[RequestResult], aulac_res
     }
 
 
-def run_seed(events: list[dict]) -> dict:
+def run_seed(events: list[dict], baseline_fare_fn=None, aulac_fare_fn=None) -> dict:
     """Common random numbers: cùng event stream cho cả 2 policy (§DEV2 H6-H10).
     State bắt đầu TRỐNG (không golden pre-seed) — sự khác biệt baseline/Âu Lạc emerge
     tự nhiên qua ~400 request/seed vì baseline không tái sử dụng gap (xem BaselineQuota).
-    Test riêng cho golden request cố định dùng build_golden_state() (test_backtest.py)."""
+    Test riêng cho golden request cố định dùng build_golden_state() (test_backtest.py).
+    fare_fn mặc định = fixed_fare (cô lập biến allocation); bản priced dùng
+    make_priced_fare_fns() — xem T5 plan tích hợp."""
     baseline_state = BaselineQuota()
     aulac_state = SegmentSeatMatrix(network.N_SEATS, network.N_SEGMENTS)
-    baseline_results = replay_baseline(events, baseline_state)
-    aulac_results = replay_aulac(events, aulac_state)
+    baseline_results = replay_baseline(events, baseline_state, baseline_fare_fn)
+    aulac_results = replay_aulac(events, aulac_state, aulac_fare_fn)
     return metrics(events, baseline_results, aulac_results, baseline_state, aulac_state)
 
 
-def run_backtest(events_by_seed: dict[int, list[dict]]) -> dict:
+def run_backtest(events_by_seed: dict[int, list[dict]],
+                 baseline_fare_fn=None, aulac_fare_fn=None) -> dict:
     per_seed = {}
     failed_seeds = []
     for seed, events in events_by_seed.items():
         try:
-            per_seed[seed] = run_seed(events)
+            per_seed[seed] = run_seed(events, baseline_fare_fn, aulac_fare_fn)
         except Exception as exc:  # noqa: BLE001 — báo seed fail, KHÔNG giấu (DEV2 §H14-H18)
             failed_seeds.append({"seed": seed, "error": str(exc)})
     revenues_baseline = [m["baseline"]["revenue_vnd"] for m in per_seed.values()]
@@ -203,5 +241,7 @@ def load_all_events(seeds: list[int] | None = None, seed_dir: Path | None = None
 
 
 if __name__ == "__main__":
-    report = run_backtest(load_all_events())
+    # Evidence runner với GIÁ THẬT (T5): baseline = giá niêm yết, Âu Lạc = PricingEngine.
+    baseline_fn, aulac_fn = make_priced_fare_fns()
+    report = run_backtest(load_all_events(), baseline_fn, aulac_fn)
     print(json.dumps(report, ensure_ascii=False, indent=2, default=str))

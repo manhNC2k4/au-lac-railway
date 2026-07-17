@@ -1,34 +1,41 @@
 # -*- coding: utf-8 -*-
-"""POST /offers — same-seat gap scan + pricing + demo bid-price approximation.
-KHÔNG giữ ghế (đó là việc của /holds). Chỉ đọc seed/DB — không chạm dữ liệu
-chấm điểm offline (Master §2.1, CI gate cấm mọi tham chiếu tới nó trong src/).
+"""POST /offers — pipeline thật (Master §8): snapshot → resolver BE3 → F0 →
+PricingEngine (YAML rules + guardrail + CSXH max-last) → so Σbid BE2 → Offer
+immutable + DecisionRecord append-only. KHÔNG giữ ghế (đó là việc của /holds).
 
-Pricing/bid ở đây là bản RÚT GỌN cho phiên làm việc solo (không có BE2/BE3):
-base fare đọc từ seed/fare_products (qua fare_product table), clip floor/ceiling
-ratio trên F0 (đúng thứ tự luật), bid_price = "demo bid-price approximation"
-(round_to_1k(yield_per_km * distance * scarcity)) — KHÔNG claim EMSR-b.
+Tích hợp H10-H14: thay logic rút gọn của phiên solo BE1 bằng 3 module BE3
+(`merging.resolver`, `pricing.engine`, `offer.service`) + bid `forecast.bid_price`
+của BE2. Route/response shape GIỮ NGUYÊN theo openapi.yaml.
 """
-import uuid
-from datetime import timedelta
+import json
+from datetime import date
 
-from fastapi import APIRouter, Header
+import numpy as np
+from fastapi import APIRouter
 
+from ..forecast import bid_price, network
+from ..merging import resolver
+from ..offer.service import OfferService
+from ..pricing.context import PricingContext
+from ..pricing.engine import PolicyUnavailableError, PricingEngine
 from ..state.db import get_connection
 from ..state.errors import AllocationRejected, NoSameSeatOption, PolicyUnavailable
-from .deps import get_clock, get_state_manager
+from .deps import SEED_DIR, get_clock, get_state_manager
 from .schemas import OfferRequest
 
 router = APIRouter(tags=["booking"])
 
-# Golden scenario stations — khớp scripts/build_seed.py (không seed vào DB
-# station table trong phiên rút gọn này; đủ cho golden path 8 ga cố định).
-STATION_ORDER = ["HNO", "NBI", "THO", "VIN", "DHO", "HUE", "DNA", "SGO"]
-STATION_KM = {"HNO": 0.0, "NBI": 115.0, "THO": 175.0, "VIN": 319.0,
-              "DHO": 522.0, "HUE": 688.0, "DNA": 791.4, "SGO": 1726.0}
-OFFER_TTL_SECONDS = 300
+STATION_ORDER = [s["id"] for s in network.STATIONS]
 
-REF_YIELD_PLACEHOLDER = 700  # VND/km — demo bid-price approximation only
-P_LOW, P_HIGH = 0.6, 1.0
+# Scenario metadata (che_do_gia, service_date) — tĩnh trong một demo run.
+_SCENARIO = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
+# csxh table sống ở seed (bảng pricing_policy V1 không có cột csxh — không sửa migration P0).
+_SEED_POLICY = json.loads((SEED_DIR / "pricing_policy.json").read_text(encoding="utf-8"))
+
+STATE_CODE = {"FREE": resolver.FREE, "SOLD": resolver.SOLD, "HELD": resolver.HELD}
+
+# Cao điểm hè 2026: 15/05 → 16/08 (Master §1.1)
+PEAK_SUMMER = (date(2026, 5, 15), date(2026, 8, 16))
 
 
 def seg_range(origin: str, dest: str) -> tuple[int, int]:
@@ -37,15 +44,34 @@ def seg_range(origin: str, dest: str) -> tuple[int, int]:
     i, j = STATION_ORDER.index(origin), STATION_ORDER.index(dest)
     if i >= j:
         raise NoSameSeatOption("origin phải trước dest theo lý trình", {"origin": origin, "dest": dest})
-    return i + 1, j  # 1-based segment_id: segment k phục vụ station[k-1]->station[k]
+    return i + 1, j  # 1-based, inclusive
 
 
-def clip(x: float, lo: float, hi: float) -> float:
-    return max(lo, min(hi, x))
+def _matrix_from_seatmap(seatmap: dict) -> tuple[np.ndarray, list[str]]:
+    seat_ids = sorted(seatmap["seats"])
+    n_seg = network.N_SEGMENTS
+    m = np.zeros((len(seat_ids), n_seg), dtype=np.int8)
+    for i, sid in enumerate(seat_ids):
+        for seg_str, status in seatmap["seats"][sid].items():
+            m[i, int(seg_str) - 1] = STATE_CODE.get(status, resolver.SOLD)
+    return m, seat_ids
 
 
-def round_1k(x: float) -> int:
-    return int(round(x / 1000.0)) * 1000
+def _latest_forecast(cur, service_run_id: str, seat_class: str) -> tuple[dict[int, float], int]:
+    """Map segment_id -> forecast_remaining của version mới nhất. Hàng insert theo
+    thứ tự segment (reset + refresh đều giữ thứ tự này) — map qua row order."""
+    cur.execute(
+        """SELECT forecast_demand, forecast_version FROM demand_forecast
+           WHERE service_run_id=%s AND seat_class=%s
+             AND forecast_version=(SELECT COALESCE(MAX(forecast_version),1)
+                                   FROM demand_forecast WHERE service_run_id=%s)
+           ORDER BY id""",
+        (service_run_id, seat_class, service_run_id),
+    )
+    rows = cur.fetchall()
+    by_seg = {i + 1: float(r[0]) for i, r in enumerate(rows)}
+    version = rows[0][1] if rows else 1
+    return by_seg, version
 
 
 @router.post("/offers", status_code=201)
@@ -54,14 +80,20 @@ def create_offer(req: OfferRequest):
     ssm = get_state_manager()
     clock = get_clock()
 
-    seat_id = ssm.find_continuous_same_seat(req.service_run_id, seg_from, seg_to)
-    if not seat_id:
+    # 1. Snapshot nhất quán — một lần đọc, dùng cho resolver + LF + remaining
+    seatmap = ssm.get_seatmap(req.service_run_id)
+    matrix, seat_ids = _matrix_from_seatmap(seatmap)
+    matrix_version = seatmap["matrix_version"]
+
+    # 2-3. Resolver BE3 — same-seat liên tục, reused_gap label thật, rank reused-first
+    plan = resolver.best_same_seat(matrix, seat_ids, seg_from, seg_to)
+    if plan is None:
         raise NoSameSeatOption(
             "Không tìm được ghế liên tục cho hành trình",
             {"origin": req.origin_station_id, "dest": req.dest_station_id},
         )
-    reused_gap = (seg_to - seg_from) >= 1
 
+    # 4. Base fare + policy + forecast từ DB (đã nạp từ seed lúc reset)
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
@@ -74,106 +106,128 @@ def create_offer(req: OfferRequest):
         if not row:
             conn.rollback()
             raise PolicyUnavailable("Chưa có fare_product cho O-D này", {})
-        base_fare = row[0]
+        base_fare = int(row[0])
 
         cur.execute(
-            """SELECT floor_ratio, ceiling_ratio, policy_version FROM pricing_policy
+            """SELECT floor_ratio, ceiling_ratio, max_delta_percent, policy_version FROM pricing_policy
                WHERE is_active=TRUE ORDER BY policy_id DESC LIMIT 1""",
         )
         prow = cur.fetchone()
         if not prow:
             conn.rollback()
             raise PolicyUnavailable("Chưa có pricing policy được approve", {})
-        floor_ratio, ceiling_ratio, policy_version = prow
+        floor_ratio, ceiling_ratio, max_delta_percent, policy_version = prow
 
-        cur.execute(
-            """SELECT forecast_demand, forecast_version FROM demand_forecast
-               WHERE service_run_id=%s AND seat_class=%s ORDER BY id LIMIT 7""",
-            (req.service_run_id, req.seat_class),
-        )
-        forecast_result = cur.fetchall()
-        forecast_rows = {i + 1: r[0] for i, r in enumerate(forecast_result)}
-        forecast_version = forecast_result[0][1] if forecast_result else 1
-        cur.execute("SELECT matrix_version FROM service_run WHERE service_run_id=%s", (req.service_run_id,))
-        mv_row = cur.fetchone()
-        matrix_version = mv_row[0] if mv_row else 1
+        forecast_by_seg, forecast_version = _latest_forecast(cur, req.service_run_id, req.seat_class)
     conn.commit()
 
-    seatmap = ssm.get_seatmap(req.service_run_id)
-    remaining_by_seg: dict[int, int] = {s: 0 for s in range(seg_from, seg_to + 1)}
-    for states in seatmap["seats"].values():
-        for seg_str, status in states.items():
-            seg = int(seg_str)
-            if seg_from <= seg <= seg_to and status == "FREE":
-                remaining_by_seg[seg] += 1
+    # 5. Scarcity/bid BE2 — demo bid-price approximation, KHÔNG claim EMSR-b
+    segs = list(range(seg_from, seg_to + 1))
+    remaining_by_seg = {
+        s: int((matrix[:, s - 1] == resolver.FREE).sum()) for s in segs
+    }
+    bid_by_segment = bid_price.bid_price_by_segments(
+        segs,
+        {s: forecast_by_seg.get(s, remaining_by_seg[s] * 0.6) for s in segs},
+        {s: float(remaining_by_seg[s]) for s in segs},
+        {s: network.LEG_DISTANCE_KM[s] for s in segs},
+    )
 
-    bid_by_segment = {}
-    for seg in range(seg_from, seg_to + 1):
-        o_id, d_id = STATION_ORDER[seg - 1], STATION_ORDER[seg]
-        dist = STATION_KM[d_id] - STATION_KM[o_id]
-        remaining_cap = max(remaining_by_seg.get(seg, 0), 1)
-        forecast_remaining = forecast_rows.get(seg, remaining_cap * 0.6)
-        pressure = forecast_remaining / remaining_cap
-        scarcity = clip((pressure - P_LOW) / (P_HIGH - P_LOW), 0.0, 1.0)
-        bid_by_segment[str(seg)] = round_1k(REF_YIELD_PLACEHOLDER * dist * scarcity)
-    bid_total = sum(bid_by_segment.values())
+    # 6. PricingContext — chỉ tín hiệu hợp pháp; KHÔNG user_id/search-count/device (§2.7)
+    now = clock.now()
+    service_date = date.fromisoformat(_SCENARIO["service_date"])
+    lead_time_days = max((service_date - now.date()).days, 0)
+    lf = {s: 1.0 - (matrix[:, s - 1] == resolver.FREE).sum() / matrix.shape[0]
+          for s in range(1, network.N_SEGMENTS + 1)}
+    journey_lf = [lf[s] for s in segs]
+    ctx = PricingContext(
+        che_do_gia=_SCENARIO.get("che_do_gia", "AI"),
+        lead_time_days=lead_time_days,
+        distance_km=network.od_distance_km(req.origin_station_id, req.dest_station_id),
+        peak_summer=PEAK_SUMMER[0] <= service_date <= PEAK_SUMMER[1],
+        tet_window=False,
+        load_factor_route=min(journey_lf),
+        load_factor_max=max(journey_lf),
+    )
 
-    gia_niem_yet = clip(base_fare, base_fare * floor_ratio, base_fare * ceiling_ratio)
-    gia_cuoi = round_1k(gia_niem_yet)  # không CSXH trong golden path mặc định (khách thường)
+    policy = {
+        "floor_ratio": float(floor_ratio),
+        "ceiling_ratio": float(ceiling_ratio),
+        "max_delta_ratio": float(max_delta_percent) / 100.0,
+        "csxh": _SEED_POLICY.get("csxh", []),
+    }
+    versions = {"matrix_version": matrix_version, "forecast_version": forecast_version,
+                "policy_version": policy_version}
+    service = OfferService(
+        engine=PricingEngine(policy),
+        products=[{"origin_station_id": req.origin_station_id,
+                   "dest_station_id": req.dest_station_id,
+                   "seat_class": req.seat_class, "gia_goc_vnd": base_fare}],
+        versions=versions,
+    )
+    try:
+        offer = service.build_offer(
+            service_run_id=req.service_run_id, origin=req.origin_station_id,
+            dest=req.dest_station_id, seat_class=req.seat_class,
+            seat_plan=plan, pricing_ctx=ctx, bid_by_segment=bid_by_segment,
+            safety=None,  # API contract chưa có passenger fields — khách thường
+            now=now,
+        )
+    except PolicyUnavailableError as exc:
+        raise PolicyUnavailable(str(exc), {}) from exc
 
-    decision = "ACCEPT"
-    if gia_cuoi < bid_total:
-        decision = "REJECT"
-
-    offer_id = f"offer_{uuid.uuid4().hex[:12]}"
-    decision_record_id = f"dr_{uuid.uuid4().hex[:12]}"
-    expires_at = clock.now() + timedelta(seconds=OFFER_TTL_SECONDS)
-    seat_plan = [{
-        "seat_id": seat_id, "segment_from": seg_from, "segment_to": seg_to,
-        "reused_gap": reused_gap, "requires_seat_change": False,
-    }]
-
+    dr = offer.decision_record
+    pb = offer.pricing
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
             """INSERT INTO offer (offer_id, service_run_id, matrix_version, forecast_version, policy_version,
                                    decision, seat_plan, final_price_vnd, expires_at)
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (offer_id, req.service_run_id, matrix_version, forecast_version, policy_version,
-             decision, __import__("json").dumps(seat_plan), gia_cuoi, expires_at),
+            (offer.offer_id, req.service_run_id, matrix_version, forecast_version, policy_version,
+             offer.decision, json.dumps([offer.seat_plan]), pb.gia_cuoi_vnd, offer.expires_at),
         )
         cur.execute(
-            """INSERT INTO decision_record (decision_id, result, base_fare_vnd, ai_suggested_price_vnd,
-                                             final_price_vnd, bid_price_total_vnd, bid_price_breakdown, actor)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,'system')""",
-            (decision_record_id, decision, base_fare, round_1k(gia_niem_yet), gia_cuoi, bid_total,
-             __import__("json").dumps(bid_by_segment)),
+            """INSERT INTO decision_record (decision_id, input_hash, versions, result, base_fare_vnd,
+                                             ai_suggested_price_vnd, final_price_vnd, bid_price_total_vnd,
+                                             bid_price_breakdown, violations, audit_timeline,
+                                             explanation_code, actor, created_at)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (dr.decision_id, dr.input_hash, json.dumps(versions), dr.result, dr.base_fare_vnd,
+             dr.gia_niem_yet_vnd, dr.gia_cuoi_vnd, dr.bid_total_vnd,
+             json.dumps(offer.bid_by_segment), json.dumps(dr.violations),
+             json.dumps({"rules_fired": dr.rules_fired, "explanation": dr.explanation}),
+             dr.explanation_code, dr.actor, dr.created_at),
         )
     conn.commit()
 
-    if decision == "REJECT":
+    if offer.decision == "REJECT":
         raise AllocationRejected(
             "Giá vé không bù đủ chi phí cơ hội các đoạn chiếm dụng",
-            {"final_price_vnd": gia_cuoi, "bid_price_total_vnd": bid_total, "decision_record_id": decision_record_id},
+            {"final_price_vnd": pb.gia_cuoi_vnd, "bid_price_total_vnd": offer.bid_total_vnd,
+             "decision_record_id": dr.decision_id},
         )
 
     return {"data": {
-        "offer_id": offer_id,
+        "offer_id": offer.offer_id,
         "service_run_id": req.service_run_id,
         "matrix_version": matrix_version,
         "forecast_version": forecast_version,
         "policy_version": policy_version,
-        "decision": decision,
-        "seat_plan": seat_plan,
+        "decision": offer.decision,
+        "seat_plan": [offer.seat_plan],
         "pricing": {
-            "gia_goc_vnd": base_fare,
-            "gia_niem_yet_vnd": round_1k(gia_niem_yet),
-            "gia_cuoi_vnd": gia_cuoi,
-            "rules_fired": [],
-            "clamped": round_1k(gia_niem_yet) != base_fare,
-            "che_do_gia": "AI",
+            "gia_goc_vnd": pb.gia_goc_vnd,
+            "gia_niem_yet_vnd": pb.gia_niem_yet_vnd,
+            "gia_cuoi_vnd": pb.gia_cuoi_vnd,
+            "rules_fired": dr.rules_fired,
+            "violations": dr.violations,
+            "clamped": bool(dr.violations),
+            "csxh_doi_tuong": pb.csxh_doi_tuong,
+            "che_do_gia": pb.che_do_gia,
         },
-        "bid": {"total_vnd": bid_total, "by_segment": bid_by_segment},
-        "decision_record_id": decision_record_id,
-        "expires_at": expires_at.isoformat(),
+        "bid": {"total_vnd": offer.bid_total_vnd, "by_segment": offer.bid_by_segment},
+        "decision_record_id": dr.decision_id,
+        "explanation": dr.explanation,
+        "expires_at": offer.expires_at,
     }}

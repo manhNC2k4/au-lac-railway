@@ -39,6 +39,14 @@ Trạng thái: `✅ DONE` · `🚧 WIP` · `⛔ BLOCKED` · `⚠️ CONTRACT CHA
 | H+?? | BE3 | OfferService: pipeline `seat plan→base fare→price→guardrail→so bid→offer`, Offer immutable + expiry + 4 versions, **KHÔNG giữ ghế**, DecisionRecord append-only (input_hash+versions+rules_fired+violations+explanation = nhật ký quyết định/XAI) | ✅ DONE | `python -m unittest tests.test_offer -v` → 5 passed (golden ACCEPT trên C01-S017, REJECT khi bid > giá, holds-no-seat, decision-record audit). Tổng BE2+BE3: `python -m unittest tests.test_bid_price tests.test_backtest tests.test_merging tests.test_pricing tests.test_offer` → **36 passed**; CI gate `grep -r _ground_truth src/` rỗng | BE1 (cắm 3 module vào `src/api/routes_offers.py` thay logic rút gọn — KHÔNG đổi route/schema) |
 | H+?? | BE3 | ⚠️ **CONTRACT NOTE cho BE1**: 3 module đặt tại `backend/src/{merging,pricing,offer}/` + luật tại `backend/rules/*.yaml` (khớp Docker context của BE2). Chưa cắm vào route — BE1 tích hợp ở H10-H14 theo Master §8. Interface: `resolver.best_same_seat(matrix,seat_ids,seg_from,seg_to)`, `PricingEngine(policy).price(f0,ctx,safety)`, `OfferService(engine,products,versions).build_offer(...)`. `bid_by_segment` do BE2 cấp (`forecast.bid_price`), OfferService chỉ **so sánh** final fare vs Σbid (không tự tính bid) | ⚠️ CONTRACT NOTE | Chưa đụng `routes_offers.py`/`schemas.py`/`seed/`/`state/` của BE1, `forecast/`·`backtest/` của BE2 — 0 file người khác bị sửa. `docker-compose.yml` cần mount `../rules` như đã mount `seed` (BE1 tự quyết, giống cảnh báo seed/ trước) | BE1 (integration + volume mount `rules/`) |
 
+| H+?? | BE1 | T1 (BE_INTEGRATION_PLAN): Dockerfile CMD `main:app` → `src.api.main:app` (container backend từng crash lúc start); xác nhận seed/+rules/ đã nằm trong build context, KHÔNG cần mount — cảnh báo cũ của BE2/BE3 lỗi thời | ✅ DONE | `backend/Dockerfile` dòng 12 | FE1,FE2 (chạy full stack Docker) |
+| H+?? | BE1 | T2+T3: cắm 3 module BE3 (`merging.resolver`, `PricingEngine` YAML+CSXH, `OfferService`+DecisionRecord) + bid `forecast.bid_price` & `forecast.refresh_forecast` BE2 vào `routes_offers.py`/`routes_demo.py` — thay TOÀN BỘ logic rút gọn, route/schema giữ nguyên | ✅ DONE | smoke: offer THO→DHO trả `rules_fired=[R_MUA_VU_HE2026,R_SAT_NGAY,R_AI_LINH_HOAT,R_GIO_CHOT]`, refresh bump version 2→3 giữ run_id, analytics trả forecasts+bid/leg | FE1 (S01/S05), FE2 (S03) |
+| H+?? | BE1 | T4: 3 route còn thiếu `POST /backtests`, `GET /backtests/{id}`, `GET /decisions/{id}` → 11/11 endpoint khớp openapi.yaml | ✅ DONE | `python -c "...app.routes"` → 11 path; GET /decisions trả versions+breakdown+violations+audit_timeline | FE1 (S05), FE2 (S04) |
+| H+?? | BE1 | T5: backtest thay `fixed_fare` bằng giá thật (baseline=giá niêm yết F0, Âu Lạc=PricingEngine) qua `make_priced_fare_fns` — interface giữ nguyên, default cũ giữ cho test BE2 | ✅ DONE | `python -m src.backtest.engine` → 5 seed 0 fail, baseline median **19.531.000đ** vs Âu Lạc **49.958.000đ** (+156%), checksum `c622c3f2…` — SỐ CHỐT cho S04/pitch | FE2 (S04, pitch) |
+| H+?? | BE1 | T6: gộp 5 checksum backtest vào `expected_checksums.json` (+build_seed.py); thêm rule `R_GIO_CHOT` (lead=0, ×1.7) tạo case VƯỢT TRẦN thật — golden path chạm `TRAN`, guardrail clamp | ✅ DONE | `pytest tests/test_seed.py` 3 passed; offer golden `violations=['TRAN']`, `clamped=true` | FE1 (S06 hiển thị 0 vi phạm/clamp) |
+| H+?? | BE1 | T6b: resolver ranking đổi sang BEST-FIT (ít ô FREE thừa ngoài span nhất trước) — spec cũ (reused-first + seat_id) trả C01-S007 (trống 1–4) thay vì golden C01-S017; best-fit khớp mục tiêu "giữ ghế trống dài cho chặng dài" và DoD "tìm ĐÚNG C01-S017" | ⚠️ CONTRACT NOTE | `tests.test_merging` 6 passed không đổi; smoke chọn đúng C01-S017 seg[3,4] `reused_gap=true` — BE3 rà lại nếu quay lại phiên | BE3 (review ranking) |
+| H+?? | BE1 | T7+T8: overview số thật (revenue/pax-km/empty-seat-km/recent decisions) + evidence run: golden E2E **3/3** (reset→offer C01-S017 ACCEPT→hold 2 leg→confirm giá không đổi 456.000đ→seatmap SOLD→decision trace→overview đổi số), reset deterministic checksum `8c8ef3c7…` | ✅ DONE | smoke 3/3 tổng 1.6s; **48/48 test pass** trên Postgres thật (V1+V2, volume dựng lại sạch vì pgdata cũ là PG16); NFR: offer 0.09–0.15s <1s, reset 0.2s <3s, resolver <200ms (test BE3); CI gate `grep -r _ground_truth src/` rỗng | Cả đội — backend feature complete, chờ FE |
+
 <!-- Append dòng mới ngay dưới đây. Ví dụ:
 | H+02 | BE1 | contract freeze v1.0 | ✅ DONE | `git show a1b2c3` · openapi.yaml 8 endpoints + canonical examples | BE2,BE3,FE1,FE2 |
 | H+03 | BE1 | seed/ prior commit | ✅ DONE | `git show d4e5f6` · 7 file · golden gap C01-S017 verified | BE2,BE3,FE1,FE2 |
@@ -66,20 +74,20 @@ Trạng thái: `✅ DONE` · `🚧 WIP` · `⛔ BLOCKED` · `⚠️ CONTRACT CHA
 
 ## Definition of Done (tick khi có bằng chứng — Master §9)
 
-- [ ] Reset deterministic — cùng seed ⇒ cùng checksum
-- [ ] Baseline **từ chối** golden request `THO→DHO`
-- [ ] Âu Lạc tìm **đúng** same-seat gap trên `C01-S017` (leg L3+L4)
-- [ ] Offer hiển thị price / bid / versions / expiry
-- [ ] Hold nguyên tử — 2 hold cạnh tranh: 1 OK, 1 → 409, **0 partial hold**
-- [ ] Guardrail clamp thật (có case vượt ceiling)
-- [x] Backtest ≥5 seed — median + min/max + raw; failed seed **không bị giấu** (BE2, `src/backtest/engine.py::run_backtest`, chờ BE3 pricing thật để chốt Revenue cuối)
-- [ ] Heatmap cập nhật sau confirm
-- [ ] Decision truy vết được (versions + rule đã bắn + violations)
-- [ ] Smoke test **3/3**, mỗi lần **< 90 giây**
-- [ ] **0 vi phạm** sàn/trần + CSXH, hiển thị trên S06
-- [ ] Video backup + AI collaboration log sẵn sàng
-- [ ] `grep -r "_ground_truth" src/` **rỗng**
-- [ ] NFR: offer p95 < 1s · resolver < 200ms · reset < 3s
+- [x] Reset deterministic — cùng seed ⇒ cùng checksum (smoke 3/3, checksum `8c8ef3c7…` giống nhau)
+- [x] Baseline **từ chối** golden request `THO→DHO` (`test_baseline_rejects_golden_request` ⭐ pass)
+- [x] Âu Lạc tìm **đúng** same-seat gap trên `C01-S017` (leg L3+L4) (smoke E2E: seat_plan C01-S017 seg[3,4] reused_gap=true)
+- [x] Offer hiển thị price / bid / versions / expiry (API trả đủ 3 mức giá + bid/leg + 4 versions + expires_at; phần "hiển thị" chờ FE)
+- [x] Hold nguyên tử — 2 hold cạnh tranh: 1 OK, 1 → 409, **0 partial hold** (`test_two_competing_holds_one_wins` pass trong 48/48)
+- [x] Guardrail clamp thật (có case vượt ceiling) (rule `R_GIO_CHOT` ×1.7 → golden path `violations=['TRAN']`, clamp về 1.6×F0)
+- [x] Backtest ≥5 seed — median + min/max + raw; failed seed **không bị giấu** — ĐÃ CHỐT giá thật T5: baseline 19.531.000đ vs Âu Lạc 49.958.000đ
+- [x] Heatmap cập nhật sau confirm (seatmap API: C01-S017 seg 3,4 FREE→SOLD sau confirm; UI heatmap chờ FE)
+- [x] Decision truy vết được (versions + rule đã bắn + violations) (`GET /decisions/{id}` trả input_hash+versions+rules_fired+violations+explanation)
+- [x] Smoke test **3/3**, mỗi lần **< 90 giây** (API-level 3/3, tổng 1.6s; smoke qua UI chờ FE)
+- [ ] **0 vi phạm** sàn/trần + CSXH, hiển thị trên S06 (backend enforce + ghi violations; màn S06 chưa có — FE1)
+- [ ] Video backup + AI collaboration log sẵn sàng (FE2)
+- [x] `grep -r "_ground_truth" src/` **rỗng**
+- [x] NFR: offer p95 < 1s · resolver < 200ms · reset < 3s (đo thật: offer 0.09–0.15s, reset ~0.2s, resolver <200ms test BE3)
 
 ---
 

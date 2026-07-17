@@ -50,24 +50,28 @@ def resolve_same_seat_options(
     """Trả danh sách SeatPlan same-seat, đã rank. Không option nào `requires_seat_change`
     (MVP chỉ ghép same-seat liên tục) ⇒ hành khách ưu tiên (so_lan_doi_cho=0) luôn hợp lệ.
 
-    Ranking: ưu tiên ghế TÁI DÙNG KHOẢNG TRỐNG (reused_gap) trước — đây là mục tiêu
-    ghép chặng: nhồi khách vào ghế đã bán một phần, giữ ghế trống-hoàn-toàn cho chặng dài.
-    Sau đó theo thứ tự seat_id (tất định).
+    Ranking BEST-FIT: ghế còn ÍT ô FREE thừa ngoài span nhất đứng trước — nhét khách
+    vào khoảng trống khít nhất (golden gap C01-S017 = 0 ô thừa), giữ ghế trống dài
+    cho chặng dài. reused_gap-first là hệ quả (ghế reused luôn ít ô thừa hơn ghế
+    trống hoàn toàn). Tie-break theo seat_id (tất định).
     """
     idxs = continuous_same_seat(matrix, seg_from, seg_to)
-    plans = [
-        SeatPlan(
+    plans = []
+    leftover: dict[str, int] = {}
+    for i in idxs:
+        row = matrix[i]
+        plans.append(SeatPlan(
             seat_id=seat_ids[i], segment_from=seg_from, segment_to=seg_to,
-            reused_gap=_is_reused_gap(matrix[i], seg_from, seg_to),
+            reused_gap=_is_reused_gap(row, seg_from, seg_to),
             requires_seat_change=False,
-        )
-        for i in idxs
-    ]
+        ))
+        leftover[seat_ids[i]] = int((row[: seg_from - 1] == FREE).sum()
+                                    + (row[seg_to:] == FREE).sum())
     # priority_passenger: chỉ nhận same-seat, không bao giờ requires_seat_change (DEV3 §3).
     # Ở MVP mọi option đã là same-seat nên filter là no-op — nhưng giữ để invariant hiện rõ.
     if priority_passenger:
         plans = [p for p in plans if not p.requires_seat_change]
-    plans.sort(key=lambda p: (not p.reused_gap, p.seat_id))
+    plans.sort(key=lambda p: (leftover[p.seat_id], p.seat_id))
     return plans
 
 

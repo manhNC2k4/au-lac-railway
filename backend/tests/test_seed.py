@@ -30,6 +30,11 @@ def test_seed_package_matches_expected_checksums():
     assert sha256_of(pricing_policy) == expected["pricing_policy_checksum"]
     assert sha256_of(forecast) == expected["forecast_checksum"]
 
+    # Manifest tổng phủ cả event stream backtest (progress.md dòng 109 — yêu cầu BE2).
+    # File ↔ checksum integrity đã có test_committed_events_match_generator (BE2) lo.
+    bt = json.loads((SEED_DIR / "backtest" / "checksums.json").read_text(encoding="utf-8"))
+    assert bt["checksums"] == expected["backtest_events_checksums"]
+
 
 def test_golden_gap_present():
     bookings = [json.loads(line) for line in

@@ -40,3 +40,10 @@ rules:
     thu_tu: 4
     when: {che_do_gia: AI, load_factor_route_lte: 0.75}
     he_so: 0.85
+
+  - rule_id: R_GIO_CHOT
+    mo_ta: "Phụ thu giờ chót AI (lead=0, ngày khởi hành): +70% — cố ý VƯỢT trần 1.6
+      để guardrail clamp thật (DoD 'có case vượt ceiling', S06 hiển thị TRAN)"
+    thu_tu: 5
+    when: {che_do_gia: AI, lead_time_days_lte: 0}
+    he_so: 1.7

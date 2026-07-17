@@ -239,6 +239,11 @@ def main():
         "pricing_policy_checksum": sha256_of(pricing_policy),
         "forecast_checksum": sha256_of(forecast),
     }
+    # Gộp checksum event stream backtest của BE2 vào manifest tổng (progress.md dòng 109)
+    bt_manifest = SEED_DIR / "backtest" / "checksums.json"
+    if bt_manifest.exists():
+        checksums["backtest_events_checksums"] = json.loads(
+            bt_manifest.read_text(encoding="utf-8"))["checksums"]
     (SEED_DIR / "expected_checksums.json").write_text(
         json.dumps(checksums, ensure_ascii=False, indent=2), encoding="utf-8")
 
