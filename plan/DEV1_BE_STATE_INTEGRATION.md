@@ -9,12 +9,12 @@
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `openapi.yaml` | Hợp đồng public API v1 — **nguồn duy nhất** |
-| `migrations/` | PostgreSQL DDL |
+| `openapi.yaml` | Hợp đồng public API v1 — **nguồn duy nhất**. Nền tảng: `docs/API_Contract.md` (đã đối chiếu với Master §7 ngày 17/07) — bạn **rà + freeze**, không viết từ trắng |
+| `backend/flyway/sql/` | PostgreSQL DDL — **Flyway, KHÔNG Alembic**. V1 + V2 đã có sẵn |
 | `src/state/` | `SeatStateManager`, `Clock`, repository |
 | `src/api/` | FastAPI routes, error envelope |
-| `docker-compose.yml` | Postgres |
-| `seed/` | Gói dữ liệu chung — **cả đội đọc, chỉ bạn ghi** |
+| `backend/docker-compose.yml` | Postgres — **đã tồn tại** (service `db`, postgres:15 + flyway). Rà lại, không tạo mới |
+| `seed/` | Gói dữ liệu chung — **cả đội đọc, chỉ bạn commit**. Riêng `seed/backtest/events-*.jsonl` do **BE2 sinh nội dung**, nộp PR cho bạn |
 | `scripts/extract_seed.py` | Dataset → `seed/` → DB (offline, chạy 1 lần) |
 | `requirements.txt` | Bạn tạo, giờ 0 |
 
@@ -46,29 +46,33 @@
 
 ### H0 · Bốn việc, theo đúng thứ tự này — cả đội đang chờ
 
-- [ ] **1. `requirements.txt`** (5 phút):
+- [ ] **1. `requirements.txt`** (5 phút) — **không có alembic**, migration dùng Flyway đã có sẵn:
   ```
-  fastapi, uvicorn, pydantic, sqlalchemy, psycopg[binary], alembic,
+  fastapi, uvicorn, pydantic, sqlalchemy, psycopg[binary],
   numpy, pandas, pyarrow, pyyaml, lunardate, scipy, pytest, httpx
   ```
 - [ ] **2. Chạy generator NỀN, ngay lập tức** — nó là thứ lâu nhất, khởi động trước rồi làm việc khác:
-  ```bash
-  cd generated_data && python generate_data.py --skip-lp > gen.log 2>&1 &
+  ```powershell
+  # Windows PowerShell (cú pháp bash `... &` KHÔNG chạy được):
+  cd generated_data
+  Start-Process python -ArgumentList "generate_data.py","--skip-lp" -RedirectStandardOutput gen.log -RedirectStandardError gen.err.log
+  # (hoặc đơn giản: mở 1 terminal riêng chạy `python generate_data.py --skip-lp`)
   ```
   `--skip-lp` bỏ LP offline optimum (Master §2.1 — cấm dùng ở runtime nên chỉ để tham khảo).
   **Đo và ghi thời gian chạy vào `progress.md`** — chưa ai biết con số này.
-- [ ] **3. `openapi.yaml` + enum/error envelope + migration skeleton + `docker-compose.yml`** — xem H0–H2 dưới
+  > Lưu ý: script tự hiệu chuẩn `kappa0`/`dist_tilt` (~22 vòng bisection pilot) **trước** vòng mô phỏng chính — vài phút đầu chưa thấy log theo ngày là **bình thường**, không phải treo.
+- [ ] **3. `openapi.yaml` + enum/error envelope** — chuyển thẳng từ `docs/API_Contract.md` (đã đối chiếu, đủ reason codes + 503 + shape /offers). `backend/` compose + Flyway V1/V2 **đã có** — chỉ `cd backend && docker compose up -d db flyway` và xác nhận chạy — xem H0–H2 dưới
 - [ ] **4. `seed/` prior từ YAML** — **không chờ generator**. Deliverable H3 của bạn.
 
 ### H0–H2 · Contract freeze — cả đội chờ bạn
 
 **2 giờ quan trọng nhất của 30 giờ.** 4 người khác không code core được cho tới khi bạn freeze.
 
-- [ ] `openapi.yaml` — 8 endpoint ở Master §7, **có canonical example cho mỗi request/response**
+- [ ] `openapi.yaml` — 11 endpoint ở Master §7 (đã hợp nhất với `docs/API_Contract.md`), **có canonical example cho mỗi request/response** — phần lớn example đã viết sẵn trong API_Contract, chỉ chuyển format
 - [ ] Enums: `SeatState`, `OfferDecision`, `HoldStatus` (Master §7)
-- [ ] Error envelope + 8 reason code + mapping HTTP 409/410/422/503
-- [ ] `docker-compose.yml` (postgres:16, volume sạch, healthcheck)
-- [ ] Migration skeleton
+- [ ] Error envelope + 8 reason code + mapping HTTP 409/410/422/503 (bảng đã có ở API_Contract §1)
+- [ ] Xác nhận `backend/docker-compose.yml` chạy (service `db` = postgres:15-alpine, đã có healthcheck + Flyway) — **không tạo mới, không đổi version giữa chừng**
+- [ ] Rà migration Flyway V1 + V2 (`backend/flyway/sql/`) khớp openapi
 - [ ] Interface `Clock` + `SeatStateManager` (Protocol) — **tái dùng `demo/ssm/ssm_contract.py`**
 - [ ] `seed/scenario.json` schema (shape, không cần số thật) — BE2 cần shape này để dựng forecast module song song, FE1 cần để sinh mock client
 - [ ] `PricingBreakdown`/`SeatPlan`/`SafetyDecision` schema — thống nhất cùng BE3
@@ -93,14 +97,15 @@ seed/
 └─ expected_checksums.json
 ```
 
-**Golden gap — dựng chính xác thế này:**
+**Golden gap — dựng chính xác thế này (⚠️ segment 1-based = L1..L7, theo quy ước khóa ở Master §1 / API_Contract §1):**
 
 ```jsonc
 // initial_bookings.jsonl
-{"seat_id":"C01-S017","from":"HNO","to":"THO","segments":[0,1],   "status":"SOLD"}
-{"seat_id":"C01-S017","from":"DHO","to":"SGO","segments":[4,5,6], "status":"SOLD"}
-// ⇒ segments [2,3] (THO→VIN→DHO) FREE  = GOLDEN GAP
+{"seat_id":"C01-S017","from":"HNO","to":"THO","segments":[1,2],   "status":"SOLD"}
+{"seat_id":"C01-S017","from":"DHO","to":"SGO","segments":[5,6,7], "status":"SOLD"}
+// ⇒ segments [3,4] (THO→VIN→DHO) FREE  = GOLDEN GAP (L3–L4)
 // ⇒ golden request THO→DHO khớp đúng 2 leg này trên CÙNG một ghế
+// seat_id format: C01-S001..C01-S040 (3 chữ số)
 ```
 
 **Fixture bắt buộc** (thiếu cái nào là thiếu evidence cho cả đội):
@@ -186,6 +191,11 @@ state → resolver (BE3) → pricing (BE3) → allocation/bid (BE2) → hold/con
 Index theo `service_run_id`. Tiền = `BIGINT` đồng.
 
 > **Đối chiếu DB thật (V1__init_schema.sql):** migration đã chạy trước, và đã đi xa hơn bảng tối thiểu này — có thêm `users`, `refresh_tokens`, `promotion`, `external_factor`, `waiting_list`, `audit_log`, `demand_forecast`, `bid_price` (theo `docs/SDD_Update_Recommendations.md`). Đừng động vào chúng trong P0 — không đổi scope, chỉ là schema pre-provisioned. Bảng `offer` đã có đủ `matrix_version`/`forecast_version`/`policy_version` — đủ 4 versions cho FE1 hiển thị (Master §7.1).
+
+> **V2__fix_contract_gaps.sql (đã thêm 17/07/2026)** vá 3 lỗ hổng của V1 — đọc trước khi code CAS:
+> 1. **`service_run.matrix_version`** — V1 không có nơi nào sở hữu matrix_version toàn cục (cột `version` trong `seat_segment_state` là version từng ô). CAS so `expected_matrix_version` với cột này và tăng nó trong **cùng transaction** với UPDATE cells.
+> 2. **`pricing_policy` đổi sang tỷ lệ** (`floor_ratio=0.55`, `ceiling_ratio=1.60` trên F0 từng O-D — khớp YAML §3 + `Pricer`) + thêm `policy_version`. Sàn/trần tuyệt đối của V1 đã bị xóa — sàn chung cho leg 60km và 934km là vô nghĩa.
+> 3. CHECK constraints cho status/decision + UNIQUE cho `fare_product`/`demand_forecast` + cột version cho `bid_price`.
 
 ---
 

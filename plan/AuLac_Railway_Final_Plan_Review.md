@@ -228,6 +228,8 @@ Bảng `offer` trong V1 đã có đủ `matrix_version`, `forecast_version`, `po
 | GET        | /api/v1/backtests/{report_id}      | Đọc report           | Median, range, raw seed và failed runs.                   |
 | GET        | /api/v1/decisions/{decision_id}    | Explain/audit        | Input versions, price/bid breakdown, violations.          |
 
+**Cập nhật hợp nhất API (17/07/2026, sau đối chiếu `docs/API_Contract.md`).** Danh sách trên đã được hợp nhất tại `00_MASTER_PLAN.md §7` — `GET /demo/state` được thay bằng 3 endpoint GET tách riêng (`/demo/overview`, `/demo/seatmap`, `/demo/analytics`) + thêm `POST /demo/forecasts/refresh`. Response `POST /offers` bắt buộc chứa price breakdown 3 mức (`gia_goc/gia_niem_yet/gia_cuoi`), bid total + từng leg, và đủ 4 versions. Quy ước segment **1-based (L1..L7)**, seat_id `C01-S001..S040`. Chi tiết + canonical examples: `docs/API_Contract.md`; nguồn cuối cùng: `openapi.yaml` (BE1, giờ 2).
+
 ## 3.6 Kiểu và lỗi chuẩn
 
 - SeatState: FREE | HELD | SOLD.

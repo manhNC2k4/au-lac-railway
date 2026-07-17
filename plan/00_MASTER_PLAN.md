@@ -83,6 +83,10 @@ Kiểm tra trước khi lập kế hoạch, để không ai mất 2 giờ phát 
 
 **Backtest seeds:** `20260717, 20260718, 20260719, 20260720, 20260721`.
 
+**⚠️ Quy ước đánh số — khóa cứng, mọi file dùng chung (đã chốt 17/07/2026, chi tiết ở `docs/API_Contract.md §1`):**
+- **Segment/leg 1-based:** `segment_id ∈ {1..7}` = L1..L7. `seat_plan` dùng `[segment_from, segment_to]` bao gồm hai đầu. Golden gap = segment **3..4**. KHÔNG dùng 0-based ở bất kỳ đâu (kể cả `seed/initial_bookings.jsonl`).
+- **seat_id:** `C{toa 2 số}-S{ghế 3 số}` → `C01-S001`…`C01-S040`. Golden seat `C01-S017`.
+
 ### 1.1 Ba cái bẫy của ngày 2026-06-15
 
 1. **`che_do_gia = AI`** — 15/06/2026 nằm **sau** điểm gãy 01/05/2026. Golden run chạy ở chế độ **AI**, không phải LUAT. Mọi fixture giá phải phản ánh điều đó.
@@ -222,8 +226,8 @@ seed/
 
 | Đường dẫn | Owner duy nhất |
 |---|---|
-| `openapi.yaml`, `migrations/`, `src/state/`, `seed/`, `scripts/extract_seed.py` | BE1 |
-| `src/forecast/`, `src/backtest/` | BE2 |
+| `openapi.yaml`, `backend/flyway/sql/` (migrations), `backend/docker-compose.yml`, `src/state/`, `seed/` (quyền commit), `scripts/extract_seed.py` | BE1 |
+| `src/forecast/`, `src/backtest/`, **sinh nội dung `seed/backtest/events-*.jsonl`** (nộp PR, BE1 duyệt & commit vào `seed/`) | BE2 |
 | `src/merging/`, `src/pricing/`, `src/offer/`, `rules/*.yaml` | BE3 |
 | `web/src/api/`, `web/src/components/`, `web/src/pages/ops/`, `web/src/pages/decision/` | FE1 |
 | `web/src/pages/booking/`, `web/src/pages/backtest/`, `pitch/` | FE2 |
@@ -264,8 +268,8 @@ Plan gốc nói "S01-S06" nhưng không liệt kê. **Định nghĩa tại đây
 
 | Dev | Việc đầu tiên |
 |---|---|
-| BE1 | `requirements.txt`, **chạy `generate_data.py` nền**, `openapi.yaml` + enum/error envelope + migration skeleton, `seed/` prior từ YAML |
-| BE2 | Đọc draft schema `seed/forecast.json` cùng BE1; dựng khung forecast + công thức bid-price approximation |
+| BE1 | `requirements.txt`, **chạy `generate_data.py` nền** (Windows: mở terminal riêng hoặc `Start-Process` — cú pháp `&` của bash không chạy trong PowerShell), `openapi.yaml` (nền tảng là `docs/API_Contract.md` đã đối chiếu — chỉ rà + freeze, không viết mới), `seed/` prior từ YAML. **KHÔNG tạo mới docker-compose/migration — `backend/` đã có sẵn compose (postgres:15) + Flyway V1/V2, chỉ rà lại** |
+| BE2 | Đọc draft schema `seed/forecast.json` cùng BE1; dựng khung forecast + công thức bid-price approximation; **sinh `seed/backtest/events-*.jsonl` bằng NHPP từ YAML (nộp PR cho BE1)** |
 | BE3 | Đọc `Pricer` trong `generate_data.py`; khóa `PricingBreakdown` / `SeatPlan` / `SafetyDecision` schema |
 | FE1 | Khung route S01–S06 + typed mock client từ `seed/` |
 | FE2 | Booking Lab wireframe chạy bằng fixture |
@@ -288,14 +292,19 @@ Plan gốc nói "S01-S06" nhưng không liệt kê. **Định nghĩa tại đây
 
 ## 7. Hợp đồng API v1 (BE1 khóa giờ 2)
 
+> Danh sách dưới đã **hợp nhất với `docs/API_Contract.md`** (17/07/2026): thay `GET /demo/state` bằng 3 endpoint GET tách riêng (dễ cho FE) + thêm `POST /demo/forecasts/refresh`. Shape chi tiết + canonical examples xem API_Contract; BE1 chuyển thành `openapi.yaml` giờ 2.
+
 | Method | Path | Điểm bắt buộc |
 |---|---|---|
-| POST | `/api/v1/demo/scenarios/{id}/reset` | Không partial load; trả checksum + versions |
-| GET | `/api/v1/demo/state` | Matrix/load/alerts/last_updated; read-only |
-| POST | `/api/v1/offers` | Seat plan + price + bid + expiry + versions. **Chưa giữ ghế** |
+| POST | `/api/v1/demo/scenarios/{id}/reset` | Không partial load; trả checksum + đủ 3 versions |
+| POST | `/api/v1/demo/forecasts/refresh` | Logic BE2, route BE1; trả `forecast_version` mới |
+| GET | `/api/v1/demo/overview` | KPI + bottlenecks + recent decisions; read-only |
+| GET | `/api/v1/demo/seatmap` | Heatmap ghế × leg + `matrix_version` + `reused_gap_segments`; read-only |
+| GET | `/api/v1/demo/analytics` | Forecast + segment load + bid theo leg; read-only |
+| POST | `/api/v1/offers` | Seat plan + **price breakdown 3 mức** + **bid total & từng leg** + expiry + **đủ 4 versions**. **Chưa giữ ghế** |
 | POST | `/api/v1/holds` | `Idempotency-Key`; `expected_matrix_version`; **all-or-nothing** |
 | POST | `/api/v1/bookings/{hold_id}/confirm` | **Không tính lại giá**; idempotent; 410 nếu expired |
-| POST | `/api/v1/backtests` | Cùng event stream, seed set, metric definitions |
+| POST | `/api/v1/backtests` | Cùng event stream, **5 seeds**, metric definitions |
 | GET | `/api/v1/backtests/{report_id}` | Median, range, raw seed, failed runs |
 | GET | `/api/v1/decisions/{decision_id}` | Input versions, price/bid breakdown, violations |
 
@@ -398,10 +407,10 @@ Lý do: 5 người / 30 giờ / không họp được. `progress.md` là **cách
 git clone <repo> && cd au-lac-railway
 git checkout -b <be1|be2|be3|fe1|fe2>/<task>
 
-# Backend
+# Backend — compose + Flyway ĐÃ CÓ SẴN trong backend/, không tạo mới
 python -m venv .venv && .venv\Scripts\activate     # Windows
 pip install -r requirements.txt                     # BE1 tạo file này giờ 0
-docker compose up -d postgres                       # BE1 tạo compose giờ 0
+cd backend && docker compose up -d db flyway        # service tên là "db" (postgres:15), KHÔNG phải "postgres"
 
 # Frontend
 cd web && npm install && npm run dev

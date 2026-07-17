@@ -9,10 +9,11 @@
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `src/forecast/` | Forecast deterministic + bid-price approximation |
+| `src/forecast/` | Forecast deterministic + bid-price approximation. Logic của `POST /demo/forecasts/refresh` cũng ở đây (route thì BE1 làm trong `src/api/`) |
 | `src/backtest/` | Backtest engine, baseline, metrics |
+| `seed/backtest/events-*.jsonl` | **Bạn SINH nội dung** (NHPP từ YAML §6, 5 seeds, có checksum) rồi **nộp PR cho BE1 duyệt & commit** — giảm tải cho BE1 giờ 0–3. Deadline: cùng lúc `seed/` freeze (H3) |
 
-**Bạn KHÔNG sở hữu:** `seed/`, `scripts/extract_seed.py`, `requirements.txt`, dataset gốc — tất cả là của **BE1**. Cần đổi số/shape trong `seed/` ⇒ nhờ BE1, đừng tự sửa (đó là file BE1 ghi, cả đội đọc).
+**Bạn KHÔNG sở hữu:** phần còn lại của `seed/`, `scripts/extract_seed.py`, `requirements.txt`, dataset gốc — tất cả là của **BE1**. Cần đổi số/shape trong `seed/` ⇒ nhờ BE1, đừng tự sửa (đó là file BE1 commit, cả đội đọc).
 
 ---
 
@@ -29,6 +30,9 @@ Master §3.1 đã khóa: `seed/` dựng từ spec, hiệu chuẩn bằng dataset
 - [ ] Chốt shape `seed/forecast.json`: `forecast_remaining/leg`, `confidence`, `forecast_version`
 - [ ] Chốt shape event stream backtest: `backtest/events-seed-*.jsonl`
 - [ ] Chốt định nghĩa 5 metric (bảng dưới) — không mập mờ đơn vị/mẫu số
+- [ ] **Bắt đầu sinh `seed/backtest/events-seed-{20260717..20260721}.jsonl`** — NHPP từ YAML §6 (booking curve theo cự ly), deterministic theo seed, kèm checksum. Nộp PR cho BE1 trước H3
+
+> **Định nghĩa False sold-out — CANONICAL (chốt 17/07/2026):** mẫu số = **tổng # request** (như bảng dưới). Bản trong `AuLac_Railway_SDD_Review_MVP_30h.docx` §4.5 (mẫu số = # request bị baseline từ chối) đã **superseded** — hai mẫu số cho hai con số khác nhau, S04 chỉ hiện một.
 
 ### H2–H6 · Forecast + bid price — code trước khi có số thật
 

@@ -1,5 +1,7 @@
 # Khuyến nghị Cập nhật và Hoàn thiện Software Design Document (SDD) - Âu Lạc Railway
 
+> ⚠️ **SUPERSEDED MỘT PHẦN bởi `plan/AuLac_Railway_Final_Plan_Review.md` (17/07/2026).** Các mục Auth/JWT (1.1, 2.3), Waiting List (1.2, 2.1), Group Seating (1.4, 2.2) là **P2 — KHÔNG làm trong MVP 30h**. Schema tương ứng đã được tạo sẵn trong `backend/flyway/sql/V1__init_schema.sql` nhưng không có logic P0 nào phụ thuộc vào chúng. Đọc file plan trước khi làm theo bất kỳ mục nào ở đây.
+
 Tài liệu này tổng hợp các điểm cần bổ sung vào bản SDD hiện tại để đảm bảo đáp ứng 100% yêu cầu từ đề bài, đồng thời mô tả rõ luồng hoạt động thực tế của hệ thống giữa các tầng (Frontend, Backend, AI Models).
 
 ---
