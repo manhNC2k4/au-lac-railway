@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """DoD tests — DEV2_BE_DATA_FORECAST_BACKTEST.md §Test bắt buộc (backtest phần).
-Run: python -m unittest tests.test_backtest -v   (từ repo root)
+Run: python -m unittest tests.test_backtest -v   (từ backend/ — src/ nằm trong
+backend/ để khớp Docker build context của backend/Dockerfile)
 """
 import unittest
 from pathlib import Path
@@ -8,7 +9,7 @@ from pathlib import Path
 from src.backtest import engine, events
 from src.forecast import network
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestGoldenRequest(unittest.TestCase):
@@ -68,7 +69,7 @@ class TestNoGroundTruth(unittest.TestCase):
     def test_no_ground_truth_import(self):
         """CI gate — Master Plan §2.1 / §9 DoD: grep -r "_ground_truth" src/ phải rỗng."""
         hits = []
-        for path in (REPO_ROOT / "src").rglob("*.py"):
+        for path in (BACKEND_ROOT / "src").rglob("*.py"):
             if "_ground_truth" in path.read_text(encoding="utf-8"):
                 hits.append(str(path))
         self.assertEqual(hits, [])

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """DoD tests — DEV2_BE_DATA_FORECAST_BACKTEST.md §Test bắt buộc (bid-price phần).
-Run: python -m unittest tests.test_bid_price -v   (từ repo root)
+Run: python -m unittest tests.test_bid_price -v   (từ backend/)
 """
 import math
 import unittest

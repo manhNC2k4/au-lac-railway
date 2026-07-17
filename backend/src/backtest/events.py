@@ -22,7 +22,8 @@ import yaml
 
 from src.forecast import network
 
-YAML_PATH = (Path(__file__).resolve().parents[2] / "generated_data" / "Synthetic_DATA_guide"
+REPO_ROOT = Path(__file__).resolve().parents[3]  # backend/src/backtest -> backend/src -> backend -> repo root
+YAML_PATH = (REPO_ROOT / "generated_data" / "Synthetic_DATA_guide"
              / "04_THAM_SO_CAU_HINH_MO_PHONG.yaml")
 SEEDS = [20260717, 20260718, 20260719, 20260720, 20260721]
 HORIZON_DAYS = 90.0          # giữa H_min..H_max=34..127 của đợt HE_2026 (YAML §4)
@@ -117,7 +118,7 @@ def checksum(events: list[dict]) -> str:
 
 
 def write_all(out_dir: Path | None = None) -> dict[int, str]:
-    out_dir = out_dir or (Path(__file__).resolve().parents[2] / "seed" / "backtest")
+    out_dir = out_dir or (REPO_ROOT / "seed" / "backtest")
     out_dir.mkdir(parents=True, exist_ok=True)
     checksums = {}
     for seed in SEEDS:
