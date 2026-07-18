@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-"""BE3 · PricingEngine — F0 (giá gốc O-D) → luật động (YAML) → guardrail → CSXH (max, sau cùng).
+"""BE3 · PricingEngine — F0 (giá gốc O-D) → đề xuất giá động → guardrail → CSXH (max, sau cùng).
 
-Thứ tự phép toán & tham số bám class Pricer (generate_data.py:404) — đã kiểm chứng 7,6tr vé,
-0 vi phạm. Chép LOGIC không chép cấu trúc (Pricer là batch; đây là per-request + audit trail).
+P3 (MODEL_BASE_INTEGRATION_PLAN §P3): đề xuất giá động dùng optimizer elasticity thật
+(`app.elasticity.Elasticity`, ước lượng từ search_log) — max E[đóng góp]=P(mua|r)·(p−c),
+c=Σ bid DLP hành trình (P2). Trần động r≤1+0.15·LF_max, sàn r≥1−0.05·(1−LF_max) (dải hẹp
+quanh F0, tránh ngoại suy vùng thiên lệch — xem app/bt5_pricing.py). Mùa vụ (hè/Tết) đọc từ
+`models/artifacts/bt5_pricing_params.json` (hệ số DGP thật, không gõ tay). Không nạp được
+elasticity (artifact thiếu / chưa boot Pricer) ⇒ fallback mùa-vụ-only, KHÔNG bịa hệ số động.
 
-Guardrail đúng thứ tự (DEV3 §Guardrail), KHÔNG đảo:
+Guardrail đúng thứ tự (DEV3 §Guardrail), KHÔNG đảo — giữ nguyên tuyệt đối qua P3:
   1. Policy TỒN TẠI & approved  → thiếu ⇒ PolicyUnavailable (503, KHÔNG default giá)
   2. clip sàn / trần
   3. max delta (chỉ khi có giá công bố trước)
@@ -14,15 +18,29 @@ CSXH áp SAU guardrail: MAX một mức, nhân (1 - muc_giam), round — Điều
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+import sys
+from dataclasses import dataclass
 from pathlib import Path
 
-import yaml
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:          # `app/` package sống ở repo root, ngoài backend/
+    sys.path.insert(0, str(REPO_ROOT))
+
+from app.config import DEFAULT_POLICY        # noqa: E402 — sau khi chỉnh sys.path
 
 from ..forecast.bid_price import round_to_1k
 from .context import PricingContext, SafetyContext
 
-RULES_PATH = Path(__file__).resolve().parents[2] / "rules" / "pricing_rules.yaml"
+PRICING_PARAMS_PATH = REPO_ROOT / "models" / "artifacts" / "bt5_pricing_params.json"
+
+
+def _load_delta_mua(path: Path = PRICING_PARAMS_PATH) -> dict:
+    """Hệ số mùa vụ DGP thật (models/export_bt5_params.py) — nguồn duy nhất, không gõ tay."""
+    return json.loads(path.read_text(encoding="utf-8"))["delta_mua"]
+
+
+DELTA_MUA = _load_delta_mua()
 
 
 class PolicyUnavailableError(Exception):
@@ -48,36 +66,42 @@ class PricingBreakdown:
     che_do_gia: str
 
 
-def _match(cond_key: str, cond_val, ctx: dict) -> bool:
-    for suf, op in (("_gte", ">="), ("_lte", "<="), ("_gt", ">"), ("_lt", "<")):
-        if cond_key.endswith(suf):
-            attr = cond_key[: -len(suf)]
-            if attr not in ctx:
-                return False
-            x, y = ctx[attr], cond_val
-            return {">=": x >= y, "<=": x <= y, ">": x > y, "<": x < y}[op]
-    return ctx.get(cond_key) == cond_val
+def _delta_mua(ctx: PricingContext) -> tuple[float, str]:
+    """Mùa vụ thật (bt5_pricing_params.json) — Tết ưu tiên hơn hè khi cả hai đúng (hiếm)."""
+    if ctx.tet_window:
+        return DELTA_MUA["tet"], "MUA_VU:TET"
+    if ctx.peak_summer:
+        return DELTA_MUA["he"], "MUA_VU:HE"
+    return 0.0, ""
 
 
-def load_rules(path: Path = RULES_PATH) -> list[dict]:
-    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return sorted(doc["rules"], key=lambda r: r["thu_tu"])
+def apply_dynamic(f0: int, ctx: PricingContext, bid_total_vnd: int,
+                  elasticity) -> tuple[float, list[RuleFired]]:
+    """Đề xuất giá động = mùa vụ (real DGP) [+ elasticity optimizer nếu artifact có nạp].
 
-
-def apply_rules(f0: int, ctx: PricingContext, rules: list[dict]) -> tuple[float, list[RuleFired]]:
-    cvals = {
-        "che_do_gia": ctx.che_do_gia, "lead_time_days": ctx.lead_time_days,
-        "distance_km": ctx.distance_km, "peak_summer": ctx.peak_summer,
-        "tet_window": ctx.tet_window, "load_factor_route": ctx.load_factor_route,
-        "load_factor_max": ctx.load_factor_max,
-    }
-    price = float(f0)
+    elasticity=None (Pricer/artifact chưa boot) ⇒ fallback mùa-vụ-only, KHÔNG suy đoán hệ số
+    khan hiếm — guardrail/CSXH phía sau vẫn chạy nguyên vẹn nên vẫn tất định & trong biên."""
+    dmua, dmua_id = _delta_mua(ctx)
     fired: list[RuleFired] = []
-    for r in rules:
-        if all(_match(k, v, cvals) for k, v in r.get("when", {}).items()):
-            price *= r["he_so"]
-            fired.append(RuleFired(r["rule_id"], r["he_so"], r["thu_tu"]))
-    return price, fired
+    if dmua_id:
+        fired.append(RuleFired(dmua_id, round(1 + dmua, 4), 1))
+
+    if elasticity is None:
+        return f0 * (1 + dmua), fired
+
+    lf_max = min(max(ctx.load_factor_max, 0.0), 1.0)
+    is_tet = ctx.tet_window
+    ceil_r = 1.0 + DEFAULT_POLICY["elastic_markup_max"] * lf_max
+    floor_r = 1.0 - DEFAULT_POLICY["elastic_markdown_max"] * (1.0 - lf_max)
+    if is_tet:
+        ceil_r = max(ceil_r, 1.0 + dmua + DEFAULT_POLICY["elastic_markup_max"] * lf_max)
+        floor_r = max(floor_r, 1.0 + dmua)
+    floor_r = min(floor_r, ceil_r)
+
+    opt = elasticity.optimal_price(f0, bid_total_vnd, ctx.distance_km, is_tet,
+                                   ctx.lead_time_days, floor_r, ceil_r)
+    fired.append(RuleFired(f"ELASTIC:r={opt['r']:.2f}", round(opt["r"], 4), 2))
+    return float(opt["p"]), fired
 
 
 def apply_guardrail(f0: int, price: float, policy: dict | None,
@@ -118,11 +142,11 @@ def csxh_apply(gia_niem_yet: int, entitlements, csxh_table: list[dict]) -> tuple
 @dataclass
 class PricingEngine:
     policy: dict                          # từ seed/pricing_policy.json (có floor/ceiling/csxh)
-    rules: list[dict] = field(default_factory=load_rules)
+    elasticity: object | None = None      # app.elasticity.Elasticity, nạp lúc boot (deps.get_pricer().elast)
 
     def price(self, f0: int, ctx: PricingContext, safety: SafetyContext | None = None,
-              previous_price: int | None = None) -> PricingBreakdown:
-        raw, fired = apply_rules(f0, ctx, self.rules)
+              previous_price: int | None = None, bid_total_vnd: int = 0) -> PricingBreakdown:
+        raw, fired = apply_dynamic(f0, ctx, bid_total_vnd, self.elasticity)
         gia_niem_yet, touched = apply_guardrail(f0, raw, self.policy, previous_price)
         entitlements = safety.entitlements if safety else ()
         ten, muc, gia_cuoi = csxh_apply(gia_niem_yet, entitlements, self.policy.get("csxh", []))

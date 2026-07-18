@@ -28,7 +28,9 @@ services:
         condition: service_healthy
 
   backend:
-    build: .
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     environment:

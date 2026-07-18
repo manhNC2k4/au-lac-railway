@@ -47,8 +47,9 @@ GHI CHÚ về 2 mã lỗi KHÔNG dựng được qua API công khai với seed h
     bid các leg thấp) mọi ghế tìm được đều có giá ≥ Σbid ⇒ luôn ACCEPT; và policy luôn
     được nạp lúc reset. Hai nhánh này có test đơn vị ở tầng engine (test_offer.py/test_pricing.py).
 """
+import json
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -56,6 +57,8 @@ from fastapi.testclient import TestClient
 from src.api import deps
 from src.api.main import app
 from src.state.clock import Clock, FixedClock
+
+from tests.conftest import insert_test_offer
 
 BASE = "/api/v1"
 SCENARIO_ID = "golden_scenario_1"
@@ -65,7 +68,10 @@ SEAT_CLASS = "NGOI_MEM_DH"
 # ⇒ luật giờ chót R_GIO_CHOT (+70%) bắn, vượt trần ⇒ guardrail clamp về TRAN (1.6×F0).
 DEMO_CLOCK = datetime(2026, 6, 15, 9, 0, 0, tzinfo=timezone.utc)
 
-client = TestClient(app)
+# `with` bắt buộc — kích hoạt lifespan (load_models: Pricer/DemandModel), thiếu nó
+# get_pricer()/allocation_cache.refresh() luôn 503 giả (fail-closed nhưng sai lý do).
+_client_cm = TestClient(app)
+client = _client_cm.__enter__()
 
 
 def _key() -> str:
@@ -86,7 +92,7 @@ def scenario():
     deps.set_clock(Clock())  # trả lại đồng hồ thật, không rò trạng thái sang test khác
 
 
-def _create_offer(origin: str, dest: str, quantity: int = 1):
+def _create_offer(origin: str, dest: str, quantity: int = 1, priority_passenger: bool = False):
     """POST /offers — ĐIỀN 5 trường bắt buộc theo OfferRequest."""
     return client.post(f"{BASE}/offers", json={
         "service_run_id": SERVICE_RUN_ID,   # ĐIỀN: chuyến tàu
@@ -94,6 +100,7 @@ def _create_offer(origin: str, dest: str, quantity: int = 1):
         "dest_station_id": dest,            # ĐIỀN: ga đến (vd DHO)
         "seat_class": SEAT_CLASS,           # ĐIỀN: hạng ghế
         "quantity": quantity,               # ĐIỀN: số vé (>=1)
+        "priority_passenger": priority_passenger,  # ĐIỀN: cao tuổi/khuyết tật -> không bao giờ ghép ghế (P5)
     })
 
 
@@ -171,16 +178,21 @@ def test_offer_golden_gap_accept(scenario):
     assert plan["segment_from"] == 3 and plan["segment_to"] == 4
     assert plan["reused_gap"] is True
 
-    # Giá: F0=285.000đ; lead=0 đẩy giá vượt trần ⇒ clamp về TRAN = 1.6×F0 = 456.000đ
+    # Giá: F0=285.000đ; mùa hè thật (+7.5%, bt5_pricing_params.json) → elasticity optimizer
+    # (r≈1.08, tối đa P(mua)·(p−c) với c=Σbid=0) ⇒ 307.000đ (P3 — không còn R_GIO_CHOT bịa
+    # ×1.7 để ép vượt trần; DoD "guardrail clamp thật" nay là unit test
+    # test_guardrail_order_floor_ceiling_delta_round_freeze, chạy trực tiếp apply_guardrail).
     p = d["pricing"]
     assert p["gia_goc_vnd"] == 285000
-    assert p["gia_niem_yet_vnd"] == 456000
-    assert p["gia_cuoi_vnd"] == 456000        # không có CSXH (API chưa nhận trường hành khách)
-    assert p["clamped"] is True               # chạm trần — DoD "có case vượt ceiling"
+    assert p["gia_niem_yet_vnd"] == 307000
+    assert p["gia_cuoi_vnd"] == 307000        # không có CSXH (API chưa nhận trường hành khách)
+    assert p["clamped"] is False              # trong biên [san,tran], không chạm guardrail
     assert p["che_do_gia"] == "AI"
 
-    # Bid các leg dương, giá cuối bù đủ ⇒ ACCEPT; có đủ 4 version + biên bản quyết định
-    assert d["bid"]["total_vnd"] > 0
+    # Bid = dual LP thật (app.bt3_allocation): seg 3-4 có cầu (3.6/16.2) < sức chứa còn
+    # lại (19/28) ⇒ KHÔNG nghẽn ⇒ dual=0 hợp lý (khác công thức scarcity cũ luôn >0).
+    # ACCEPT ở đây đến từ trần giá (456.000đ) bù đủ Σbid=0, không phải từ bid dương.
+    assert d["bid"]["total_vnd"] >= 0
     assert d["matrix_version"] == 1 and d["forecast_version"] == 1 and d["policy_version"] == 1
     assert d["decision_record_id"].startswith("dr_")
 
@@ -196,10 +208,24 @@ def test_offer_plain_seat_accept(scenario):
 
 
 def test_offer_no_same_seat_option(scenario):
-    """THO→HUE (đoạn 3-4-5): KHÔNG ghế nào trống liên tục cả 3 đoạn ⇒ 422 NO_SAME_SEAT_OPTION."""
-    r = _create_offer("THO", "HUE")     # ĐIỀN: cặp ga mà mọi ghế đều đứt đoạn ở giữa
+    """THO→HUE (đoạn 3-4-5): KHÔNG ghế nào trống liên tục cả 3 đoạn. P5 cho hành khách
+    thường ghép nhiều ghế nên bình thường sẽ ACCEPT (xem test_offer_multiseat_when_same_seat_empty)
+    — dùng priority_passenger=True (không bao giờ đổi ghế) để vẫn dựng được 422 qua API công khai."""
+    r = _create_offer("THO", "HUE", priority_passenger=True)
     assert r.status_code == 422
     assert r.json()["error_code"] == "NO_SAME_SEAT_OPTION"
+
+
+def test_offer_multiseat_when_same_seat_empty(scenario):
+    """P5 · THO→HUE không có same-seat nhưng ghép nhiều ghế tìm được phương án ⇒ 201,
+    requires_customer_consent=True, so_lan_doi_cho khớp số leg-1."""
+    r = _create_offer("THO", "HUE")
+    assert r.status_code == 201, r.text
+    d = r.json()["data"]
+    assert d["requires_customer_consent"] is True
+    assert d["so_lan_doi_cho"] >= 1
+    assert len(d["seat_plan"]) == d["so_lan_doi_cho"] + 1
+    assert all(leg["requires_seat_change"] for leg in d["seat_plan"])
 
 
 def test_offer_reversed_od(scenario):
@@ -261,6 +287,31 @@ def test_hold_stale_snapshot(scenario):
     assert resp.json()["error_code"] == "STALE_SNAPSHOT"
 
 
+def test_hold_multiseat_requires_consent(scenario, conn):
+    """P5 · offer với seat_plan >=2 leg (ghép nhiều ghế) -> /holds thiếu consent=True
+    trả 422 CONSENT_REQUIRED; gửi lại kèm consent=True thì giữ được cả 2 ghế cùng lúc."""
+    clock, _ = scenario
+    seat_plan = json.dumps([
+        {"seat_id": "C01-S001", "segment_from": 3, "segment_to": 3,
+         "reused_gap": False, "requires_seat_change": True},
+        {"seat_id": "C01-S002", "segment_from": 4, "segment_to": 4,
+         "reused_gap": False, "requires_seat_change": True},
+    ])
+    offer_id = "offer_e2e_multiseat"
+    insert_test_offer(conn, offer_id, SERVICE_RUN_ID, clock.now() + timedelta(minutes=5),
+                      seat_plan=seat_plan)
+
+    resp = client.post(f"{BASE}/holds", headers={"Idempotency-Key": _key()},
+                       json={"offer_id": offer_id, "expected_matrix_version": 1})
+    assert resp.status_code == 422
+    assert resp.json()["error_code"] == "CONSENT_REQUIRED"
+
+    resp2 = client.post(f"{BASE}/holds", headers={"Idempotency-Key": _key()},
+                        json={"offer_id": offer_id, "expected_matrix_version": 1, "consent": True})
+    assert resp2.status_code == 201, resp2.text
+    assert resp2.json()["data"]["status"] == "ACTIVE"
+
+
 def test_hold_offer_expired(scenario):
     """Offer sống 5 phút. Tua đồng hồ qua mốc đó rồi mới giữ ⇒ 410 OFFER_EXPIRED."""
     clock, _ = scenario
@@ -284,7 +335,7 @@ def test_confirm_happy_path(scenario):
     d = resp.json()["data"]
     assert d["status"] == "CONFIRMED"
     assert d["booking_id"].startswith("bk_")
-    assert d["final_price_vnd"] == 456000       # ĐÚNG giá đã chốt lúc offer, không đổi
+    assert d["final_price_vnd"] == 307000       # ĐÚNG giá đã chốt lúc offer (P3 elasticity), không đổi
 
     # Xác minh phụ: ghế vàng giờ đã SOLD ở đoạn 3-4
     seatmap = client.get(f"{BASE}/demo/seatmap", params={"service_run_id": SERVICE_RUN_ID}).json()["data"]
@@ -331,9 +382,9 @@ def test_decision_detail(scenario):
     assert d["decision_id"] == dr_id
     assert d["action"] == "ACCEPT"
     assert d["base_fare"] == 285000
-    assert d["final_price"] == 456000
-    assert d["bid_price_total"] > 0
-    assert isinstance(d["violations"], list)   # ["TRAN"] — rào chắn đã chạm
+    assert d["final_price"] == 307000  # P3: mùa hè thật + elasticity optimizer (không còn R_GIO_CHOT bịa)
+    assert d["bid_price_total"] >= 0   # DLP thật: seg 3-4 không nghẽn ⇒ dual=0 hợp lý
+    assert isinstance(d["violations"], list)   # [] — không chạm guardrail (clamp có unit test riêng)
 
 
 def test_decision_not_found(scenario):

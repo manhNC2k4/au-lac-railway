@@ -26,9 +26,12 @@ REPO_ROOT = Path(__file__).resolve().parents[3]  # backend/src/backtest -> backe
 BACKEND_ROOT = Path(__file__).resolve().parents[2]  # backend/src/backtest -> backend/src -> backend
 YAML_PATH = (REPO_ROOT / "generated_data" / "Synthetic_DATA_guide"
              / "04_THAM_SO_CAU_HINH_MO_PHONG.yaml")
-SEEDS = [20260717, 20260718, 20260719, 20260720, 20260721]
-HORIZON_DAYS = 90.0          # giữa H_min..H_max=34..127 của đợt HE_2026 (YAML §4)
-TARGET_TOTAL_REQUESTS = 400  # ponytail: quy mô demo cho tàu 40 ghế, không phải hiệu chuẩn SMM
+# nguồn: backend/scripts/calibrate_backtest_lambda.py (offline, cần generated_data/data/,
+# tính từ search_log thang=2026-06 SE1 08..22/06 cho đúng 8 ga golden, scale 40/448) —
+# thay TARGET_TOTAL_REQUESTS=400 bịa cũ. Sinh lại: python backend/scripts/calibrate_backtest_lambda.py
+LAMBDA_CACHE_PATH = REPO_ROOT / "backend" / "scripts" / "backtest_lambda_cache.json"
+SEEDS = [20260717, 20260718, 20260719, 20260720, 20260721]  # nguồn: spec — 5 seed đã commit (DoD "backtest ≥5 seeds")
+HORIZON_DAYS = 65.0  # nguồn: generated_data/data/calendar_events.csv ngay=2026-06-15, H_horizon (đợt HE_2026)
 
 
 def _load_curves() -> list[dict]:
@@ -37,9 +40,9 @@ def _load_curves() -> list[dict]:
 
 
 def _curve_for_distance(curves: list[dict], d_km: float) -> dict:
-    if d_km >= 900:
+    if d_km >= 900:  # nguồn: 2 (YAML band DAI_THUONG, khớp app.config.BAND_EDGES)
         return curves[0]
-    if d_km >= 300:
+    if d_km >= 300:  # nguồn: 2 (YAML band TRUNG, khớp app.config.BAND_EDGES)
         return curves[1]
     return curves[2]
 
@@ -47,12 +50,6 @@ def _curve_for_distance(curves: list[dict], d_km: float) -> dict:
 def _od_pairs() -> list[tuple[str, str]]:
     ids = [s["id"] for s in network.STATIONS]
     return [(ids[i], ids[j]) for i in range(len(ids)) for j in range(i + 1, len(ids))]
-
-
-def _pair_weight(o: str, d: str) -> float:
-    wo = next(s["weight"] for s in network.STATIONS if s["id"] == o)
-    wd = next(s["weight"] for s in network.STATIONS if s["id"] == d)
-    return (wo * wd) ** 0.5
 
 
 def _sample_days_to_departure(rng: np.random.Generator, n: int, w0: float, comps: list[tuple],
@@ -71,26 +68,28 @@ def _sample_days_to_departure(rng: np.random.Generator, n: int, w0: float, comps
     return z * horizon
 
 
+def _load_real_lambda() -> dict[tuple[str, str], float]:
+    """λ thật per O-D (tổng số request kỳ vọng suốt đợt bán, cho 1 chuyến), từ search_log
+    thật đã scale 40/448 — xem docstring LAMBDA_CACHE_PATH ở trên."""
+    raw = json.loads(LAMBDA_CACHE_PATH.read_text(encoding="utf-8"))["lambda_per_day_scaled"]
+    out = {}
+    for key, v in raw.items():
+        o, d = key.split("|")
+        out[(o, d)] = v
+    return out
+
+
 def generate_events(seed: int) -> list[dict]:
     rng = np.random.default_rng(seed)
     curves = _load_curves()
     pairs = _od_pairs()
-    weights = {p: _pair_weight(*p) for p in pairs}
-    avg_weight = sum(weights.values()) / len(weights)
-
-    # chuẩn hoá tổng kỳ vọng request về TARGET_TOTAL_REQUESTS (xem ghi chú module)
-    raw_lambda = {}
-    for (o, d) in pairs:
-        dist = network.od_distance_km(o, d)
-        curve = _curve_for_distance(curves, dist)
-        raw_lambda[(o, d)] = curve["E_u_ngay"] * (weights[(o, d)] / avg_weight)
-    scale = TARGET_TOTAL_REQUESTS / max(sum(raw_lambda.values()), 1e-9)
+    real_lambda = _load_real_lambda()
 
     events = []
     for (o, d) in pairs:
         dist = network.od_distance_km(o, d)
         curve = _curve_for_distance(curves, dist)
-        lam = raw_lambda[(o, d)] * scale
+        lam = real_lambda.get((o, d), 0.0)
         n = int(rng.poisson(lam))
         comps = [(c["w"], c["a"], c["b"]) for c in curve["thanh_phan"]]
         days = _sample_days_to_departure(rng, n, curve["w0"], comps, HORIZON_DAYS)

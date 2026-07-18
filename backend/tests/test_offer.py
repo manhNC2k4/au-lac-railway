@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.merging.resolver import FREE, SOLD, best_same_seat
+from src.merging.resolver import FREE, SOLD, SeatLeg, MergedSeatPlan, best_same_seat
 from src.offer.service import OfferService
 from src.pricing.context import PricingContext, SafetyContext
 from src.pricing.engine import PricingEngine
@@ -42,8 +42,8 @@ class TestOffer(unittest.TestCase):
     def test_golden_offer_accept(self):
         offer = self._offer({3: 40_000, 4: 60_000})  # Σbid 100k << giá vé
         self.assertEqual(offer.decision, "ACCEPT")
-        self.assertEqual(offer.seat_plan["seat_id"], "C01-S017")
-        self.assertTrue(offer.seat_plan["reused_gap"])
+        self.assertEqual(offer.seat_plan[0]["seat_id"], "C01-S017")
+        self.assertTrue(offer.seat_plan[0]["reused_gap"])
         self.assertGreaterEqual(offer.pricing.gia_cuoi_vnd, offer.bid_total_vnd)
 
     def test_offer_reject_when_bid_uncovered(self):
@@ -78,6 +78,30 @@ class TestOffer(unittest.TestCase):
                             safety=SafetyContext("NGUOI_CO_CONG", 0, ("NGUOI_CO_CONG",)))
         self.assertEqual(offer.pricing.csxh_muc_giam, 0.30)
         self.assertLess(offer.pricing.gia_cuoi_vnd, offer.pricing.gia_niem_yet_vnd)
+
+    def test_multiseat_offer_requires_consent(self):
+        # P5 · same-seat hết -> resolver trả MergedSeatPlan (2 ghế đổi tại VIN)
+        plan = MergedSeatPlan(
+            legs=[SeatLeg("C01-S001", 3, 3), SeatLeg("C01-S002", 4, 4)],
+            change_station_ids=["VIN"], so_lan_doi_cho=1)
+        ctx = PricingContext("AI", 10, 347.0, peak_summer=True, load_factor_route=0.6)
+        offer = service().build_offer(
+            service_run_id="SE1_2026-06-15_LE", origin="THO", dest="DHO",
+            seat_class="NGOI_MEM_DH", seat_plan=plan, pricing_ctx=ctx,
+            bid_by_segment={3: 40_000, 4: 60_000})
+        self.assertTrue(offer.requires_customer_consent)
+        self.assertEqual(offer.so_lan_doi_cho, 1)
+        self.assertEqual(offer.change_station_ids, ["VIN"])
+        self.assertEqual(len(offer.seat_plan), 2)
+        self.assertEqual(offer.seat_plan[0]["seat_id"], "C01-S001")
+        self.assertEqual(offer.seat_plan[1]["seat_id"], "C01-S002")
+        self.assertTrue(all(leg["requires_seat_change"] for leg in offer.seat_plan))
+
+    def test_same_seat_offer_no_consent_needed(self):
+        offer = self._offer({3: 40_000, 4: 60_000})
+        self.assertFalse(offer.requires_customer_consent)
+        self.assertEqual(offer.so_lan_doi_cho, 0)
+        self.assertEqual(offer.change_station_ids, [])
 
 
 if __name__ == "__main__":

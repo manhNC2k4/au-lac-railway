@@ -15,11 +15,11 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 
-from ..merging.resolver import SeatPlan
+from ..merging.resolver import MergedSeatPlan, SeatPlan
 from ..pricing.context import PricingContext, SafetyContext
 from ..pricing.engine import PricingBreakdown, PricingEngine, fare_product_od
 
-OFFER_TTL_SECONDS = 300
+OFFER_TTL_SECONDS = 300  # nguồn: spec (docs/API_Contract.md — offer TTL 5 phút, ví dụ expires_at 09:00->09:05)
 
 
 @dataclass(frozen=True)
@@ -51,12 +51,25 @@ class Offer:
     forecast_version: int
     policy_version: int
     decision: str
-    seat_plan: dict
+    seat_plan: list[dict]             # >=2 leg ⇒ ghép nhiều ghế (P5)
+    requires_customer_consent: bool
+    change_station_ids: list[str]
+    so_lan_doi_cho: int
     pricing: PricingBreakdown
     bid_total_vnd: int
     bid_by_segment: dict
     decision_record: DecisionRecord
     expires_at: str
+
+
+def _seat_plan_legs(plan: SeatPlan | MergedSeatPlan) -> list[dict]:
+    if isinstance(plan, MergedSeatPlan):
+        return [{"seat_id": leg.seat_id, "segment_from": leg.segment_from,
+                  "segment_to": leg.segment_to, "reused_gap": False,
+                  "requires_seat_change": True} for leg in plan.legs]
+    return [{"seat_id": plan.seat_id, "segment_from": plan.segment_from,
+              "segment_to": plan.segment_to, "reused_gap": plan.reused_gap,
+              "requires_seat_change": plan.requires_seat_change}]
 
 
 def _input_hash(*parts) -> str:
@@ -83,18 +96,21 @@ class OfferService:
 
     def build_offer(
         self, *, service_run_id: str, origin: str, dest: str, seat_class: str,
-        seat_plan: SeatPlan, pricing_ctx: PricingContext, bid_by_segment: dict[int, int],
+        seat_plan: SeatPlan | MergedSeatPlan, pricing_ctx: PricingContext,
+        bid_by_segment: dict[int, int],
         safety: SafetyContext | None = None, now: datetime | None = None,
     ) -> Offer:
         now = now or datetime.now(timezone.utc)
         f0 = fare_product_od(self.products, origin, dest, seat_class)   # giá O-D, KHÔNG cộng leg
-        pb: PricingBreakdown = self.engine.price(f0, pricing_ctx, safety)
-
         bid_total = sum(bid_by_segment.values())
+        pb: PricingBreakdown = self.engine.price(f0, pricing_ctx, safety, bid_total_vnd=bid_total)
+
         decision = "ACCEPT" if pb.gia_cuoi_vnd >= bid_total else "REJECT"
         code, text = _explain(pb, decision, bid_total)
 
-        ih = _input_hash(service_run_id, origin, dest, seat_class, seat_plan.seat_id,
+        legs = _seat_plan_legs(seat_plan)
+        is_merged = isinstance(seat_plan, MergedSeatPlan)
+        ih = _input_hash(service_run_id, origin, dest, seat_class, legs,
                          asdict(pricing_ctx), sorted(bid_by_segment.items()), self.versions)
         dr = DecisionRecord(
             decision_id=f"dr_{uuid.uuid4().hex[:12]}", input_hash=ih,
@@ -106,10 +122,10 @@ class OfferService:
         )
         return Offer(
             offer_id=f"offer_{uuid.uuid4().hex[:12]}", service_run_id=service_run_id,
-            **self.versions, decision=decision,
-            seat_plan={"seat_id": seat_plan.seat_id, "segment_from": seat_plan.segment_from,
-                       "segment_to": seat_plan.segment_to, "reused_gap": seat_plan.reused_gap,
-                       "requires_seat_change": seat_plan.requires_seat_change},
+            **self.versions, decision=decision, seat_plan=legs,
+            requires_customer_consent=is_merged and seat_plan.requires_customer_consent,
+            change_station_ids=list(seat_plan.change_station_ids) if is_merged else [],
+            so_lan_doi_cho=seat_plan.so_lan_doi_cho if is_merged else 0,
             pricing=pb, bid_total_vnd=bid_total,
             bid_by_segment={str(k): v for k, v in bid_by_segment.items()},
             decision_record=dr, expires_at=(now + timedelta(seconds=OFFER_TTL_SECONDS)).isoformat(),

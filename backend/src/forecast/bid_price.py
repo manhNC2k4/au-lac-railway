@@ -14,9 +14,13 @@ chuỗi đó nguyên văn, kể cả trong comment.)
 # Hiệu chỉnh từ neo [THẬT]: SE1 HNO-SGO NGOI_MEM_DH = 1.152.000đ / 1726km
 # (04_THAM_SO_CAU_HINH_MO_PHONG.yaml §3 neo_kiem_tra) — không phải EMSR-b, chỉ là
 # một hằng số quy đổi "đồng/km" cho công thức xấp xỉ demo.
-REFERENCE_YIELD_PER_KM_VND = 1_152_000 / 1726.0
-DEFAULT_P_LOW = 0.5
-DEFAULT_P_HIGH = 0.9
+REFERENCE_YIELD_PER_KM_VND = 1_152_000 / 1726.0  # nguồn: 1 (neo THẬT SE1 HNO-SGO, xem comment trên)
+# ponytail: ngưỡng scarcity của công thức xấp xỉ demo (không phải hiệu chuẩn từ dữ liệu) —
+# module này chỉ còn dùng cho backtest replay (P2 đã thay bid live bằng DLP thật, xem
+# allocation/cache.py), nâng cấp: hiệu chỉnh p_low/p_high từ phân phối pressure thật nếu
+# muốn backtest xấp xỉ khớp closer với DLP.
+DEFAULT_P_LOW = 0.5   # ponytail: ngưỡng scarcity xấp xỉ, chưa hiệu chuẩn (chỉ dùng backtest)
+DEFAULT_P_HIGH = 0.9  # ponytail: ngưỡng scarcity xấp xỉ, chưa hiệu chuẩn (chỉ dùng backtest)
 
 
 def round_to_1k(vnd: float) -> int:

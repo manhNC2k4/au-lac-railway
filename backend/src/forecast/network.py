@@ -15,14 +15,14 @@ GOLDEN_OD = ("THO", "DHO")  # segment 3..4 — xem §1.1 "golden gap"
 
 # id, km (lý trình từ HNO), weight (P — trọng số hấp dẫn, YAML §1 mang_luoi.ga)
 STATIONS = [
-    {"id": "HNO", "km": 0.0, "weight": 1.00},
-    {"id": "NBI", "km": 115.0, "weight": 0.16},
-    {"id": "THO", "km": 175.0, "weight": 0.42},
-    {"id": "VIN", "km": 319.0, "weight": 0.38},
-    {"id": "DHO", "km": 522.0, "weight": 0.18},
-    {"id": "HUE", "km": 688.0, "weight": 0.30},
-    {"id": "DNA", "km": 791.4, "weight": 0.55},
-    {"id": "SGO", "km": 1726.0, "weight": 1.00},
+    {"id": "HNO", "km": 0.0, "weight": 1.00},        # nguồn: spec (golden 8 ga, km=lý trình thật)
+    {"id": "NBI", "km": 115.0, "weight": 0.16},       # nguồn: 2 (YAML DGP §1 mang_luoi.ga)
+    {"id": "THO", "km": 175.0, "weight": 0.42},       # nguồn: 2 (YAML DGP §1 mang_luoi.ga)
+    {"id": "VIN", "km": 319.0, "weight": 0.38},       # nguồn: 2 (YAML DGP §1 mang_luoi.ga)
+    {"id": "DHO", "km": 522.0, "weight": 0.18},       # nguồn: 2 (YAML DGP §1 mang_luoi.ga)
+    {"id": "HUE", "km": 688.0, "weight": 0.30},       # nguồn: 2 (YAML DGP §1 mang_luoi.ga)
+    {"id": "DNA", "km": 791.4, "weight": 0.55},       # nguồn: 2 (YAML DGP §1 mang_luoi.ga)
+    {"id": "SGO", "km": 1726.0, "weight": 1.00},      # nguồn: 1 (neo THẬT SE1 HNO-SGO, xem forecast/bid_price.py)
 ]
 N_SEGMENTS = len(STATIONS) - 1  # 7
 
@@ -53,3 +53,15 @@ def od_distance_km(origin_id: str, dest_id: str) -> float:
 
 
 LEG_DISTANCE_KM = {s: leg_distance_km(s) for s in all_segment_ids()}
+
+# dwell_phut (phút dừng ga) — dùng để chặn điểm đổi chỗ (P5 ghép nhiều ghế) tại ga dừng < 5'.
+DWELL_MINUTES = {
+    "HNO": 20.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "NBI": 5.0,   # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "THO": 7.0,   # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "VIN": 10.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "DHO": 7.0,   # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "HUE": 10.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "DNA": 15.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "SGO": 20.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+}

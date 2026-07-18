@@ -20,7 +20,7 @@ import psycopg
 from .clock import Clock
 from .errors import HoldExpired, SeatConflict, StaleSnapshot
 
-HOLD_TTL_SECONDS = 600  # 10 phút, khớp API_Contract "hold_expires_at ~10p sau"
+HOLD_TTL_SECONDS = 600  # nguồn: spec (docs/API_Contract.md — hold_expires_at ~10 phút sau)
 
 
 @dataclass
@@ -172,6 +172,12 @@ class SeatStateManager:
                 cur.execute("DELETE FROM seat_hold WHERE offer_id IN (SELECT offer_id FROM offer WHERE service_run_id=%s)", (service_run_id,))
                 cur.execute("DELETE FROM offer WHERE service_run_id=%s", (service_run_id,))
                 cur.execute("DELETE FROM seat_segment_state WHERE service_run_id=%s", (service_run_id,))
+                # P7: reset cũng dọn sạch bảng vận hành scoped theo service_run_id — nếu
+                # không, waitlist/quota/audit cũ từ trước reset sẽ tồn đọng và bị match()/
+                # rollback() nhầm là dữ liệu hiện hành của phiên mới.
+                cur.execute("DELETE FROM waiting_list WHERE service_run_id=%s", (service_run_id,))
+                cur.execute("DELETE FROM quota_version WHERE service_run_id=%s", (service_run_id,))
+                cur.execute("DELETE FROM proposal_log WHERE service_run_id=%s", (service_run_id,))
                 rows = [(service_run_id, seat_id, seg) for seat_id in seats for seg in range(1, n_segments + 1)]
                 cur.executemany(
                     """INSERT INTO seat_segment_state (service_run_id, seat_id, segment_id, status, version)
@@ -229,6 +235,15 @@ class SeatStateManager:
     # ------------------------------------------------------------------
     def hold(self, service_run_id: str, seat_id: str, segments: list[int],
               expected_matrix_version: int, idempotency_key: str, offer_id: str) -> HoldResult:
+        """1 ghế nhiều đoạn — trường hợp riêng của hold_multi (same-seat, MVP)."""
+        return self.hold_multi(service_run_id, [(seat_id, segments)],
+                               expected_matrix_version, idempotency_key, offer_id)
+
+    def hold_multi(self, service_run_id: str, legs: list[tuple[str, list[int]]],
+                    expected_matrix_version: int, idempotency_key: str, offer_id: str) -> HoldResult:
+        """CAS nhiều ghế·nhiều đoạn (P5 ghép nhiều ghế) — MỘT transaction, tất-cả-hoặc-không:
+        khoá + verify FREE toàn bộ leg trước, chỉ UPDATE khi mọi leg đều sạch; 1 hold_id
+        dùng chung cho mọi cell (schema seat_hold không ràng buộc 1 seat_id — không cần migration)."""
         self.expire_due_holds(service_run_id)
 
         with self.conn.cursor() as cur:
@@ -242,7 +257,7 @@ class SeatStateManager:
                 self.conn.commit()
                 return HoldResult(hold_id, status, expires_at, mv)
 
-        segs_sorted = sorted(segments)  # order tăng dần — deadlock guard
+        legs_sorted = sorted((seat_id, sorted(segs)) for seat_id, segs in legs)  # seat_id tăng dần — deadlock guard
         try:
             with self.conn.cursor() as cur:
                 cur.execute(
@@ -258,30 +273,34 @@ class SeatStateManager:
                         {"expected": expected_matrix_version, "actual": current_mv},
                     )
 
-                cur.execute(
-                    """SELECT segment_id, status FROM seat_segment_state
-                       WHERE service_run_id=%s AND seat_id=%s AND segment_id = ANY(%s)
-                       ORDER BY segment_id FOR UPDATE""",
-                    (service_run_id, seat_id, segs_sorted),
-                )
-                rows = cur.fetchall()
-                if len(rows) != len(segs_sorted) or any(status != "FREE" for _, status in rows):
-                    self.conn.rollback()
-                    raise SeatConflict(
-                        "Ghế vừa bị người khác giữ/mua",
-                        {"seat_id": seat_id, "segments": segs_sorted},
+                # Pha 1: khoá + verify FREE của MỌI leg trước — chưa UPDATE gì.
+                for seat_id, segs_sorted in legs_sorted:
+                    cur.execute(
+                        """SELECT segment_id, status FROM seat_segment_state
+                           WHERE service_run_id=%s AND seat_id=%s AND segment_id = ANY(%s)
+                           ORDER BY segment_id FOR UPDATE""",
+                        (service_run_id, seat_id, segs_sorted),
                     )
+                    rows = cur.fetchall()
+                    if len(rows) != len(segs_sorted) or any(status != "FREE" for _, status in rows):
+                        self.conn.rollback()
+                        raise SeatConflict(
+                            "Ghế vừa bị người khác giữ/mua",
+                            {"seat_id": seat_id, "segments": segs_sorted},
+                        )
 
+                # Pha 2: mọi leg đã sạch — UPDATE tất cả dùng chung 1 hold_id.
                 now = self.clock.now()
                 expires_at = now + timedelta(seconds=HOLD_TTL_SECONDS)
                 hold_id = f"hold_{uuid.uuid4().hex[:12]}"
 
-                cur.execute(
-                    """UPDATE seat_segment_state
-                       SET status='HELD', hold_id=%s, hold_expires_at=%s, version=version+1
-                       WHERE service_run_id=%s AND seat_id=%s AND segment_id = ANY(%s)""",
-                    (hold_id, expires_at, service_run_id, seat_id, segs_sorted),
-                )
+                for seat_id, segs_sorted in legs_sorted:
+                    cur.execute(
+                        """UPDATE seat_segment_state
+                           SET status='HELD', hold_id=%s, hold_expires_at=%s, version=version+1
+                           WHERE service_run_id=%s AND seat_id=%s AND segment_id = ANY(%s)""",
+                        (hold_id, expires_at, service_run_id, seat_id, segs_sorted),
+                    )
                 cur.execute(
                     """INSERT INTO seat_hold (hold_id, offer_id, status, idempotency_key, expires_at)
                        VALUES (%s,%s,'ACTIVE',%s,%s)""",

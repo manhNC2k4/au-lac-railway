@@ -14,6 +14,7 @@ import yaml
 BASE = Path(__file__).resolve().parent.parent
 SEED_DIR = BASE / "seed"
 YAML_PATH = BASE.parent / "generated_data" / "Synthetic_DATA_guide" / "04_THAM_SO_CAU_HINH_MO_PHONG.yaml"
+CALIB_CACHE_PATH = Path(__file__).resolve().parent / "calibration_cache.json"
 
 SERVICE_RUN_ID = "SE1_2026-06-15_LE"
 SEED = 20260717
@@ -29,8 +30,13 @@ STATIONS = [
 ]
 N_SEATS = 40
 GOLDEN_SEAT = "C01-S017"
-RHO_T = 1.1  # SE1 chiều LE, trains.csv
 SEAT_CLASS = "NGOI_MEM_DH"
+
+# nguồn: backend/scripts/calibrate_seed_from_dataset.py (chạy 1 lần offline trên
+# generated_data/data/{transactions,search_log} thang=2026-06 SE1 LE + models/artifacts/
+# bt1_feature_spec.json). Sinh lại: python backend/scripts/calibrate_seed_from_dataset.py
+CALIB = json.loads(CALIB_CACHE_PATH.read_text(encoding="utf-8"))
+RHO_T = CALIB["rho_t"]
 
 
 def calibrate():
@@ -96,9 +102,9 @@ def build_initial_bookings():
         {"seat_id": GOLDEN_SEAT, "from": "HNO", "to": "THO", "segments": [1, 2], "status": "SOLD"},
         {"seat_id": GOLDEN_SEAT, "from": "DHO", "to": "SGO", "segments": [5, 6, 7], "status": "SOLD"},
     ]
-    # target occupancy per segment (1-based), chosen to match API_Contract example
-    # (segment 3 bottleneck 0.95, segment 6 underused 0.30)
-    target_occ = {1: 0.55, 2: 0.60, 3: 0.95, 4: 0.70, 5: 0.65, 6: 0.30, 7: 0.75}
+    # nguồn: CALIB["target_occ"] — occupancy NGOI_MEM_DH thật của SE1 LE trung tuần 06/2026
+    # (transactions thang=2026-06, xem calibrate_seed_from_dataset.py)
+    target_occ = {int(k): v for k, v in CALIB["target_occ"].items()}
     target_count = {s: round(occ * N_SEATS) for s, occ in target_occ.items()}
     # golden seat already contributes to segments 1,2,5,6,7
     for s in (1, 2, 5, 6, 7):
@@ -169,31 +175,28 @@ def build_pricing_policy(calib):
 
 
 def build_forecast(bookings):
+    """forecast_remaining_demand model-backed (nguồn: CALIB["intensity"], xem
+    integration/forecast_seed_ref.py::build_forecast_calibrated) — thay hệ số ×0.6 phẳng
+    cũ (đồng đều mọi đoạn, mất tín hiệu khan hiếm theo đoạn)."""
     sold_by_segment = {s: 0 for s in range(1, 8)}
     for b in bookings:
         for s in b["segments"]:
             sold_by_segment[s] += 1
+    intensity = {int(k): v for k, v in CALIB["intensity"].items()}
+    confidence = CALIB["confidence"]  # nguồn: CALIB["confidence_source"]
     forecasts = []
     for s in range(1, 8):
         remaining_cap = N_SEATS - sold_by_segment[s]
+        expected_final = intensity[s] * N_SEATS
+        remaining_demand = max(expected_final - sold_by_segment[s], 0.0)
         forecasts.append({
             "segment_id": s,
             "seat_class": SEAT_CLASS,
             "remaining_capacity": remaining_cap,
-            "forecast_remaining_demand": round(remaining_cap * 0.6, 1),
-            "confidence": 0.85,
+            "forecast_remaining_demand": round(remaining_demand, 1),
+            "confidence": confidence,
         })
     return {"service_run_id": SERVICE_RUN_ID, "forecast_version": 1, "segments": forecasts}
-
-
-def build_backtest_placeholders():
-    files = {}
-    for date in ["20260717", "20260718", "20260719", "20260720", "20260721"]:
-        files[f"events-seed-{date}.jsonl"] = (
-            f"# placeholder — owner BE2 (Master Plan §5.1). "
-            f"Empty on purpose: real NHPP event stream not generated in this session.\n"
-        )
-    return files
 
 
 def sha256_of(obj) -> str:
@@ -228,9 +231,6 @@ def main():
 
     (SEED_DIR / "forecast.json").write_text(
         json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    for name, content in build_backtest_placeholders().items():
-        (SEED_DIR / "backtest" / name).write_text(content, encoding="utf-8")
 
     checksums = {
         "scenario_checksum": sha256_of(scenario),

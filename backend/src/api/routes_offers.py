@@ -4,25 +4,28 @@ PricingEngine (YAML rules + guardrail + CSXH max-last) → so Σbid BE2 → Offe
 immutable + DecisionRecord append-only. KHÔNG giữ ghế (đó là việc của /holds).
 
 Tích hợp H10-H14: thay logic rút gọn của phiên solo BE1 bằng 3 module BE3
-(`merging.resolver`, `pricing.engine`, `offer.service`) + bid `forecast.bid_price`
-của BE2. Route/response shape GIỮ NGUYÊN theo openapi.yaml.
+(`merging.resolver`, `pricing.engine`, `offer.service`) + bid DLP thật qua
+`allocation.cache` (P2 Bước4, live-import `app.bt3_allocation`). Route/response shape
+GIỮ NGUYÊN theo openapi.yaml.
 """
 import json
 from datetime import date
 
 import numpy as np
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 
 from ..adapters import model_adapter
-from ..forecast import bid_price, network
+from ..allocation import cache as allocation_cache
+from ..forecast import network
 from ..merging import resolver
+from ..offer import override as override_service
 from ..offer.service import OfferService
 from ..pricing.context import PricingContext
 from ..pricing.engine import PolicyUnavailableError, PricingEngine
 from ..state.db import get_connection
 from ..state.errors import AllocationRejected, NoSameSeatOption, PolicyUnavailable
-from .deps import SEED_DIR, get_clock, get_state_manager
-from .schemas import OfferRequest
+from .deps import SEED_DIR, get_clock, get_pricer, get_state_manager, require_approver_role
+from .schemas import OfferRequest, OverrideRequest
 
 router = APIRouter(tags=["booking"])
 
@@ -33,8 +36,7 @@ _SCENARIO = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
 # csxh table sống ở seed (bảng pricing_policy V1 không có cột csxh — không sửa migration P0).
 _SEED_POLICY = json.loads((SEED_DIR / "pricing_policy.json").read_text(encoding="utf-8"))
 
-# Cao điểm hè 2026: 15/05 → 16/08 (Master §1.1)
-PEAK_SUMMER = (date(2026, 5, 15), date(2026, 8, 16))
+PEAK_SUMMER = (date(2026, 5, 15), date(2026, 8, 16))  # nguồn: spec (Master §1.1 — cao điểm hè 2026)
 
 
 def seg_range(origin: str, dest: str) -> tuple[int, int]:
@@ -80,10 +82,18 @@ def create_offer(req: OfferRequest):
     matrix_version = seatmap["matrix_version"]
 
     # 2-3. Resolver BE3 — same-seat liên tục, reused_gap label thật, rank reused-first
-    plan = resolver.best_same_seat(matrix, seat_ids, seg_from, seg_to)
+    plan = resolver.best_same_seat(matrix, seat_ids, seg_from, seg_to,
+                                    priority_passenger=req.priority_passenger)
+    if plan is None:
+        # P5 · same-seat rỗng -> thử ghép nhiều ghế (đổi chỗ tại ga dwell >=5').
+        # Hành khách ưu tiên KHÔNG BAO GIỜ nhận phương án này (resolver tự lọc rỗng).
+        plan = resolver.best_multiseat(
+            matrix, seat_ids, STATION_ORDER, seg_from, seg_to,
+            priority_passenger=req.priority_passenger, dwell_minutes=network.DWELL_MINUTES,
+        )
     if plan is None:
         raise NoSameSeatOption(
-            "Không tìm được ghế liên tục cho hành trình",
+            "Không tìm được phương án ghế cho hành trình",
             {"origin": req.origin_station_id, "dest": req.dest_station_id},
         )
 
@@ -112,20 +122,25 @@ def create_offer(req: OfferRequest):
             raise PolicyUnavailable("Chưa có pricing policy được approve", {})
         floor_ratio, ceiling_ratio, max_delta_percent, policy_version = prow
 
-        forecast_by_seg, forecast_version = _latest_forecast(cur, req.service_run_id, req.seat_class)
+        _, forecast_version = _latest_forecast(cur, req.service_run_id, req.seat_class)
     conn.commit()
 
-    # 5. Scarcity/bid BE2 — demo bid-price approximation, KHÔNG claim EMSR-b
+    # 5. Bid price DLP thật (app.bt3_allocation, cache theo version — xem allocation/cache.py)
     segs = list(range(seg_from, seg_to + 1))
-    remaining_by_seg = {
-        s: int((matrix[:, s - 1] == resolver.FREE).sum()) for s in segs
-    }
-    bid_by_segment = bid_price.bid_price_by_segments(
-        segs,
-        {s: forecast_by_seg.get(s, remaining_by_seg[s] * 0.6) for s in segs},
-        {s: float(remaining_by_seg[s]) for s in segs},
-        {s: network.LEG_DISTANCE_KM[s] for s in segs},
-    )
+    cached_alloc = allocation_cache.get(req.service_run_id, matrix_version, forecast_version)
+    if cached_alloc is None:
+        # matrix_version có thể vừa đổi do hold/expire (không tự refresh cache DLP — chỉ
+        # reset/forecast-refresh/allocation-refresh mới làm) => cache miss ở đây KHÔNG có
+        # nghĩa LP thật sự fail, chỉ là chưa tính cho version mới nhất. Thử tính lại 1 lần
+        # trước khi 503 hẳn — refresh() tự đọc seatmap/forecast MỚI NHẤT từ DB nên khớp
+        # đúng matrix_version/forecast_version đã snapshot ở bước 1.
+        allocation_cache.refresh(req.service_run_id)
+        cached_alloc = allocation_cache.get(req.service_run_id, matrix_version, forecast_version)
+    if cached_alloc is None:
+        raise PolicyUnavailable(
+            "Bid price DLP chưa sẵn sàng cho version hiện tại — cần reset/refresh forecast trước", {})
+    bp_by_seg = cached_alloc["bid_price_theo_lop"].get(req.seat_class, [0] * network.N_SEGMENTS)
+    bid_by_segment = {s: int(bp_by_seg[s - 1]) for s in segs}
 
     # 6. PricingContext — chỉ tín hiệu hợp pháp; KHÔNG user_id/search-count/device (§2.7)
     now = clock.now()
@@ -153,7 +168,7 @@ def create_offer(req: OfferRequest):
     versions = {"matrix_version": matrix_version, "forecast_version": forecast_version,
                 "policy_version": policy_version}
     service = OfferService(
-        engine=PricingEngine(policy),
+        engine=PricingEngine(policy, elasticity=get_pricer().elast),
         products=[{"origin_station_id": req.origin_station_id,
                    "dest_station_id": req.dest_station_id,
                    "seat_class": req.seat_class, "gia_goc_vnd": base_fare}],
@@ -176,10 +191,12 @@ def create_offer(req: OfferRequest):
     with conn.cursor() as cur:
         cur.execute(
             """INSERT INTO offer (offer_id, service_run_id, matrix_version, forecast_version, policy_version,
-                                   decision, seat_plan, final_price_vnd, expires_at)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                   decision, seat_plan, final_price_vnd, expires_at,
+                                   origin_station_id, dest_station_id, seat_class)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (offer.offer_id, req.service_run_id, matrix_version, forecast_version, policy_version,
-             offer.decision, json.dumps([offer.seat_plan]), pb.gia_cuoi_vnd, offer.expires_at),
+             offer.decision, json.dumps(offer.seat_plan), pb.gia_cuoi_vnd, offer.expires_at,
+             req.origin_station_id, req.dest_station_id, req.seat_class),
         )
         cur.execute(
             """INSERT INTO decision_record (decision_id, input_hash, versions, result, base_fare_vnd,
@@ -209,7 +226,10 @@ def create_offer(req: OfferRequest):
         "forecast_version": forecast_version,
         "policy_version": policy_version,
         "decision": offer.decision,
-        "seat_plan": [offer.seat_plan],
+        "seat_plan": offer.seat_plan,
+        "requires_customer_consent": offer.requires_customer_consent,
+        "change_station_ids": offer.change_station_ids,
+        "so_lan_doi_cho": offer.so_lan_doi_cho,
         "pricing": {
             "gia_goc_vnd": pb.gia_goc_vnd,
             "gia_niem_yet_vnd": pb.gia_niem_yet_vnd,
@@ -225,3 +245,14 @@ def create_offer(req: OfferRequest):
         "explanation": dr.explanation,
         "expires_at": offer.expires_at,
     }}
+
+
+@router.post("/offers/{offer_id}/override")
+def override_offer_price(offer_id: str, body: OverrideRequest,
+                         x_actor_role: str = Header(..., alias="X-Actor-Role")):
+    """P7.6 — điều độ viên ghi đè giá TRONG sàn-trần đã duyệt, chỉ khi offer chưa có
+    hold (giá đã khoá thì bất khả xâm phạm)."""
+    require_approver_role(x_actor_role)
+    conn = get_connection()
+    return {"data": override_service.override_price(conn, offer_id, body.new_price_vnd,
+                                                     body.reason, body.decided_by)}
