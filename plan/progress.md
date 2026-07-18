@@ -79,6 +79,8 @@ Trạng thái: `✅ DONE` · `🚧 WIP` · `⛔ BLOCKED` · `⚠️ CONTRACT CHA
 | H+07 | BE1 | atomic hold CAS | ⛔ BLOCKED | chờ seed/scenario.json schema | chờ chính mình xong seed/ |
 -->
 
+| H+?? | — | Kickoff `web/` (chưa scaffold): chia 2 dev — DEV6 (duyệt chặng ngắn A/B **+ đặt vé user**, cần backend mới `review/`; 2 màn gộp về 1 người vì phụ thuộc lẫn nhau, không cần hợp đồng liên-dev) và DEV7 (dashboard/seatmap/forecast/pricing/strategy — thuần read-only, API có sẵn, không viết backend) | 🚧 WIP | `plan/DEV6_FE_SHORT_LEG_REVIEW.md`, `plan/DEV7_FE_SCREENS_BOOKING.md` | DEV6, DEV7 |
+
 ---
 
 ## Bảng checkpoint (BE1 cập nhật tại mỗi mốc)
