@@ -10,7 +10,8 @@ from datetime import date
 
 from fastapi import APIRouter
 
-from ..forecast import bid_price, forecast, network
+from ..allocation import cache as allocation_cache
+from ..forecast import forecast, network
 from ..state.db import get_connection
 from .deps import SEED_DIR, get_clock, get_state_manager
 from .schemas import ResetRequest
@@ -53,6 +54,7 @@ def _latest_forecast_rows(cur, service_run_id: str) -> tuple[list[tuple], int]:
 def reset_scenario(scenario_id: str, body: ResetRequest = ResetRequest()):
     ssm = get_state_manager()
     result = ssm.reset_scenario(SEED_DIR)
+    allocation_cache.refresh(result["service_run_id"])
     return {"data": result, "message": "Scenario reset successfully"}
 
 
@@ -87,6 +89,7 @@ def refresh_forecast(body: dict):
                  seg["confidence"], new["forecast_version"]),
             )
     conn.commit()
+    allocation_cache.refresh(service_run_id)
     return {"message": "Forecast updated", "data": {"forecast_version": new["forecast_version"]}}
 
 
@@ -167,10 +170,15 @@ def get_analytics(service_run_id: str):
          "remaining_capacity": free[s]}
         for s in sorted(sold)
     ]
+    # DLP thật qua cache — chỉ có khi reset/refresh-forecast đã chạy cho version này;
+    # cache miss (chưa refresh) => hiển thị 0, KHÔNG bịa công thức fallback (endpoint
+    # đọc-only, không phải quyết định giá — invariant "không fallback" áp cho /offers).
+    cached = allocation_cache.get(service_run_id, get_state_manager().get_matrix_version(service_run_id),
+                                  forecast_version)
+    bid_by_seg_cached = ({row["khu_gian_id"]: row["bid_price"] for row in cached["lf_theo_doan"]}
+                         if cached else {})
     allocations = [
-        {"segment_id": s,
-         "bid_price_vnd": bid_price.bid_price_segment(
-             forecast_by_seg.get(s, free[s] * 0.6), float(free[s]), network.LEG_DISTANCE_KM[s])}
+        {"segment_id": s, "bid_price_vnd": bid_by_seg_cached.get(s, 0)}
         for s in sorted(sold)
     ]
     return {"data": {"forecast_version": forecast_version, "forecasts": forecasts,

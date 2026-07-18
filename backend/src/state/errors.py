@@ -50,3 +50,9 @@ class HoldExpired(DomainError):
 class PolicyUnavailable(DomainError):
     error_code = "POLICY_UNAVAILABLE"
     http_status = 503
+
+
+class ConsentRequired(DomainError):
+    """Ghép nhiều ghế (P5) — khách phải xác nhận đồng ý đổi chỗ trước khi /holds."""
+    error_code = "CONSENT_REQUIRED"
+    http_status = 422

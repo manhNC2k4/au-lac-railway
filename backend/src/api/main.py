@@ -1,12 +1,22 @@
 # -*- coding: utf-8 -*-
 """FastAPI app — error envelope + router wiring."""
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from ..state.errors import DomainError
 from . import routes_backtests, routes_demo, routes_holds, routes_offers
+from .deps import load_models
 
-app = FastAPI(title="Âu Lạc Railway API v1")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_models()          # Pricer + DemandModel 1 lần lúc boot, fail-closed nếu lỗi
+    yield
+
+
+app = FastAPI(title="Âu Lạc Railway API v1", lifespan=lifespan)
 
 
 @app.exception_handler(DomainError)

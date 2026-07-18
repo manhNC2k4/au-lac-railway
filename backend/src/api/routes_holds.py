@@ -5,7 +5,7 @@ import json
 from fastapi import APIRouter, Header
 
 from ..state.db import get_connection
-from ..state.errors import OfferExpired
+from ..state.errors import ConsentRequired, OfferExpired
 from .deps import get_clock, get_state_manager
 from .schemas import HoldRequest
 
@@ -30,12 +30,17 @@ def create_hold(req: HoldRequest, idempotency_key: str = Header(..., alias="Idem
         raise OfferExpired("Offer đã hết thời gian tồn tại", {"offer_id": req.offer_id})
 
     seat_plan = json.loads(seat_plan_raw) if isinstance(seat_plan_raw, str) else seat_plan_raw
-    plan_entry = seat_plan[0]
-    seat_id = plan_entry["seat_id"]
-    segments = list(range(plan_entry["segment_from"], plan_entry["segment_to"] + 1))
+    # >=2 leg == ghép nhiều ghế (P5) -> bắt buộc khách xác nhận đồng ý đổi chỗ trước khi giữ ghế.
+    if len(seat_plan) > 1 and not req.consent:
+        raise ConsentRequired(
+            "Phương án ghép nhiều ghế cần khách xác nhận đồng ý đổi chỗ trước khi giữ ghế",
+            {"offer_id": req.offer_id, "so_lan_doi_cho": len(seat_plan) - 1},
+        )
+    legs = [(entry["seat_id"], list(range(entry["segment_from"], entry["segment_to"] + 1)))
+            for entry in seat_plan]
 
     ssm = get_state_manager()
-    result = ssm.hold(service_run_id, seat_id, segments, req.expected_matrix_version, idempotency_key, req.offer_id)
+    result = ssm.hold_multi(service_run_id, legs, req.expected_matrix_version, idempotency_key, req.offer_id)
     return {"data": {
         "hold_id": result.hold_id,
         "status": result.status,

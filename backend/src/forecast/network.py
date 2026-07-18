@@ -53,3 +53,15 @@ def od_distance_km(origin_id: str, dest_id: str) -> float:
 
 
 LEG_DISTANCE_KM = {s: leg_distance_km(s) for s in all_segment_ids()}
+
+# dwell_phut (phút dừng ga) — dùng để chặn điểm đổi chỗ (P5 ghép nhiều ghế) tại ga dừng < 5'.
+DWELL_MINUTES = {
+    "HNO": 20.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "NBI": 5.0,   # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "THO": 7.0,   # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "VIN": 10.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "DHO": 7.0,   # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "HUE": 10.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "DNA": 15.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+    "SGO": 20.0,  # nguồn: 2 (YAML DGP §1 mang_luoi.ga dwell_phut)
+}

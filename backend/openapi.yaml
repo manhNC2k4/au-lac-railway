@@ -204,6 +204,15 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HoldResponse" }
+        "422":
+          description: CONSENT_REQUIRED — seat_plan có >=2 leg (ghép nhiều ghế) nhưng consent != true
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error_code: CONSENT_REQUIRED
+                message: "Phương án ghép nhiều ghế cần khách xác nhận đồng ý đổi chỗ trước khi giữ ghế"
+                details: { offer_id: offer_9981, so_lan_doi_cho: 1 }
         "409": { $ref: "#/components/responses/Conflict" }
         "410": { $ref: "#/components/responses/Gone" }
 
@@ -338,6 +347,7 @@ components:
         - OFFER_EXPIRED
         - HOLD_EXPIRED
         - POLICY_UNAVAILABLE
+        - CONSENT_REQUIRED
 
     ErrorEnvelope:
       type: object
@@ -488,6 +498,10 @@ components:
         dest_station_id: { type: string }
         seat_class: { type: string }
         quantity: { type: integer, minimum: 1 }
+        priority_passenger:
+          type: boolean
+          default: false
+          description: Cao tuổi/khuyết tật/trẻ đi một mình — không bao giờ nhận phương án ghép nhiều ghế (P5).
 
     OfferResponse:
       type: object
@@ -511,6 +525,14 @@ components:
                   segment_to: { type: integer }
                   reused_gap: { type: boolean }
                   requires_seat_change: { type: boolean }
+            requires_customer_consent:
+              type: boolean
+              description: true khi seat_plan có >=2 leg (ghép nhiều ghế, P5) — /holds từ chối nếu HoldRequest.consent != true.
+            change_station_ids:
+              type: array
+              items: { type: string }
+              description: Ga đổi chỗ giữa các leg (rỗng nếu same-seat).
+            so_lan_doi_cho: { type: integer, description: "= len(seat_plan) - 1" }
             pricing:
               type: object
               properties:
@@ -542,6 +564,10 @@ components:
         offer_id: { type: string }
         expected_matrix_version: { type: integer }
         passenger_name: { type: string }
+        consent:
+          type: boolean
+          default: false
+          description: Bắt buộc true khi offer.requires_customer_consent — thiếu -> 422 CONSENT_REQUIRED (P5).
 
     HoldResponse:
       type: object

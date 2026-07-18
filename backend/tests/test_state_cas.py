@@ -135,6 +135,52 @@ def test_reset_deterministic_same_checksum(ssm):
     assert r1["checksum"] == r2["checksum"]
 
 
+def test_multiseat_hold_all_or_nothing(reset_state, ssm, clock, conn):
+    """P5 · 2 ghế 2 leg: seat_a đoạn 3 đã HELD trước bởi hold khác -> hold_multi cho
+    [(seat_a,[3]),(seat_b,[4])] fail toàn bộ (SEAT_CONFLICT), seat_b đoạn 4 KHÔNG bị
+    ghi HELD một phần — chứng minh CAS multi-set tất-cả-hoặc-không (G04 mở rộng)."""
+    seat_a, seat_b = "C01-S001", "C01-S002"
+    offer_a, offer_b = "offer_multi_pre", "offer_multi_conflict"
+    expires_at = clock.now() + timedelta(minutes=5)
+    insert_test_offer(conn, offer_a, SERVICE_RUN_ID, expires_at)
+    insert_test_offer(conn, offer_b, SERVICE_RUN_ID, expires_at)
+    mv = reset_state["matrix_version"]
+
+    r0 = ssm.hold(SERVICE_RUN_ID, seat_a, [3], mv, "idem-multi-pre", offer_a)
+
+    with pytest.raises(DomainError) as exc_info:
+        ssm.hold_multi(SERVICE_RUN_ID, [(seat_a, [3]), (seat_b, [4])],
+                        r0.new_matrix_version, "idem-multi-conflict", offer_b)
+    assert exc_info.value.http_status == 409
+
+    seatmap = ssm.get_seatmap(SERVICE_RUN_ID)
+    assert seatmap["seats"][seat_b]["4"] == "FREE"   # không bị HELD một phần
+
+
+def test_multiseat_hold_and_confirm(reset_state, ssm, clock, conn):
+    """P5 · hold_multi thành công trên 2 ghế khác nhau dùng CHUNG 1 hold_id;
+    confirm 1 lần chuyển cả 2 cell sang SOLD (booking 1-1 với hold, không cần đổi schema)."""
+    seat_a, seat_b = "C01-S004", "C01-S003"   # S004 free seg3 (SOLD 5-7), S003 free seg4 (SOLD 1-3)
+    offer_id = "offer_multi_ok"
+    expires_at = clock.now() + timedelta(minutes=5)
+    insert_test_offer(conn, offer_id, SERVICE_RUN_ID, expires_at, final_price_vnd=307000)
+    mv = reset_state["matrix_version"]
+
+    r = ssm.hold_multi(SERVICE_RUN_ID, [(seat_a, [3]), (seat_b, [4])],
+                        mv, "idem-multi-ok", offer_id)
+    assert r.status == "ACTIVE"
+    seatmap = ssm.get_seatmap(SERVICE_RUN_ID)
+    assert seatmap["seats"][seat_a]["3"] == "HELD"
+    assert seatmap["seats"][seat_b]["4"] == "HELD"
+
+    cr = ssm.confirm(r.hold_id, "confirm-multi-ok")
+    assert cr.status == "CONFIRMED"
+    assert cr.final_price_vnd == 307000
+    seatmap2 = ssm.get_seatmap(SERVICE_RUN_ID)
+    assert seatmap2["seats"][seat_a]["3"] == "SOLD"
+    assert seatmap2["seats"][seat_b]["4"] == "SOLD"
+
+
 def test_stale_matrix_version_returns_409(reset_state, ssm, clock, conn):
     offer_id = "offer_stale"
     expires_at = clock.now() + timedelta(minutes=5)
