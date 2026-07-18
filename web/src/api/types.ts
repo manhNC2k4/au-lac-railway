@@ -62,15 +62,17 @@ export interface RuleFired {
 export interface DecisionDetailData {
   decision_id: string;
   input_hash: string;
-  versions: { matrix_version: number; forecast_version: number; policy_version: number };
+  // ponytail: quyết định nạp từ mock dataset (đa số) dùng khoá ngắn matrix/forecast/policy,
+  // quyết định qua /offers thật dùng *_version — chấp cả hai, xem [decisionId]/page.tsx.
+  versions: Record<string, number>;
   action: string;
   base_fare: number;
   ai_suggested_price: number;
   final_price: number;
-  bid_price_total: number;
-  bid_price_breakdown: Record<string, number>;
+  bid_price_total: number | null;
+  bid_price_breakdown: Record<string, number> | null;
   violations: string[];
-  audit_timeline: { explanation: string; rules_fired: RuleFired[] };
+  audit_timeline: { explanation: string; rules_fired: RuleFired[] } | null;
   explanation_code: string;
   actor: string;
   created_at: string;
