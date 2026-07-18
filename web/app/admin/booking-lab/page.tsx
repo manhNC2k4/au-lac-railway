@@ -30,6 +30,7 @@ import {
   type SeatState,
 } from "@/api";
 import { GOLDEN, SEAT_CLASS_LABEL, STATIONS, stationName } from "@/lib/constants";
+import { useCurrentRun } from "@/lib/current-run";
 import { newIdempotencyKey } from "@/lib/idempotency";
 import { ApiError } from "@/lib/errors";
 import { formatCountdown } from "@/lib/format";
@@ -50,6 +51,7 @@ const HOLD_TTL_SECONDS = 600;
 export default function BookingLabPage() {
   const api = getApi();
   const queryClient = useQueryClient();
+  const { isGolden } = useCurrentRun();
 
   const [form, setForm] = useState<OfferRequest>({
     service_run_id: GOLDEN.serviceRunId,
@@ -129,6 +131,22 @@ export default function BookingLabPage() {
     (offerMutation.isError ? offerMutation.error : null) ??
     (holdMutation.isError ? holdMutation.error : null) ??
     (confirmMutation.isError ? confirmMutation.error : null);
+
+  if (!isGolden) {
+    return (
+      <Card>
+        <CardBody className="mx-auto max-w-lg space-y-3 py-14 text-center">
+          <TrainFront className="mx-auto h-10 w-10 text-muted/50" aria-hidden />
+          <h2 className="text-[19px] font-bold text-ink">Chỉ khả dụng với chuyến vàng (golden scenario)</h2>
+          <p className="text-sm text-muted">
+            Booking Lab minh họa ghép chặng trên bộ dữ liệu mẫu {GOLDEN.serviceRunId} (40 ghế, 8 ga) — không dùng
+            được với dữ liệu chuyến thật đang chọn vì khác cấu trúc ghế/ga. Chọn lại chuyến vàng ở góc trên, hoặc bấm
+            &quot;Đặt lại kịch bản&quot; trong Điều khiển kịch bản để nạp lại chuyến này.
+          </p>
+        </CardBody>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">

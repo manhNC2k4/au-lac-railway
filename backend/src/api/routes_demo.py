@@ -151,6 +151,25 @@ def list_stations():
     return {"data": {"stations": stations}}
 
 
+@router.get("/demo/runs/{service_run_id}/stops")
+def get_run_stops(service_run_id: str):
+    """Ga dừng thực tế theo thứ tự của MỘT chuyến — cho FE dựng nhãn chặng/ga động
+    thay vì STATIONS/SEGMENTS cứng theo golden network (8 ga/7 chặng)."""
+    conn = get_connection()
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT ts.stop_sequence, ts.station_id, s.station_name
+                 FROM train_stop ts
+                 JOIN service_run sr ON ts.train_id = sr.train_id
+                 JOIN station s ON ts.station_id = s.station_id
+                WHERE sr.service_run_id = %s ORDER BY ts.stop_sequence""",
+            (service_run_id,),
+        )
+        stops = [{"stop_sequence": r[0], "station_id": r[1], "station_name": r[2]} for r in cur.fetchall()]
+    conn.commit()
+    return {"data": {"stops": stops}}
+
+
 @router.get("/demo/overview")
 def get_overview(service_run_id: str):
     ssm = get_state_manager()
@@ -175,6 +194,9 @@ def get_overview(service_run_id: str):
         total_revenue = int(cur.fetchone()[0])
         cur.execute("SELECT COUNT(*), COUNT(*) FILTER (WHERE result='REJECT') FROM decision_record")
         n_decisions, n_reject = cur.fetchone()
+        # ponytail: decision_record has no service_run_id/offer_id FK (V1 schema gap, see
+        # seat_state_manager.py:340) — recent_decisions is global across all runs, not
+        # scoped to this one. Proper fix needs a migration + backfill; out of scope here.
         cur.execute(
             """SELECT decision_id, result, final_price_vnd, explanation_code, created_at
                FROM decision_record ORDER BY created_at DESC LIMIT 5""",

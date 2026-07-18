@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { getApi, qk, type ResetData } from "@/api";
 import { GOLDEN } from "@/lib/constants";
+import { useCurrentRun } from "@/lib/current-run";
 import { ErrorState } from "@/components/error-state";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 export function ScenarioControlDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const api = getApi();
   const queryClient = useQueryClient();
+  const { isGolden } = useCurrentRun();
   const panelRef = useRef<HTMLDivElement>(null);
   const [applyGoldenGap, setApplyGoldenGap] = useState(true);
   const [resetInfo, setResetInfo] = useState<ResetData | null>(null);
@@ -102,42 +104,51 @@ export function ScenarioControlDrawer({ open, onClose }: { open: boolean; onClos
           />
         </div>
 
-        {/* Cấu hình mô phỏng */}
-        <div className="mt-4 rounded-2xl border border-success/30 bg-success-soft/60 p-4">
-          <h3 className="text-[15px] font-semibold text-ink">Cấu hình mô phỏng</h3>
-          <div className="mt-2 flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[14px] font-medium text-ink">Kích hoạt khoảng ghế mẫu</p>
-              <p className="mt-0.5 text-[12.5px] text-muted">
-                Tạo sẵn một khoảng ghế trống giữa hai lượt đặt vé để kiểm thử chức năng tái sử dụng ghế.
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={applyGoldenGap}
-              aria-label="Kích hoạt khoảng ghế mẫu"
-              onClick={() => setApplyGoldenGap((v) => !v)}
-              className={cn(
-                "relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                applyGoldenGap ? "bg-primary" : "bg-line",
-              )}
-            >
-              <span
-                aria-hidden
+        {/* Cấu hình mô phỏng — chỉ áp dụng cho golden scenario, ẩn khi đang xem chuyến thật */}
+        {isGolden ? (
+          <div className="mt-4 rounded-2xl border border-success/30 bg-success-soft/60 p-4">
+            <h3 className="text-[15px] font-semibold text-ink">Cấu hình mô phỏng</h3>
+            <div className="mt-2 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[14px] font-medium text-ink">Kích hoạt khoảng ghế mẫu</p>
+                <p className="mt-0.5 text-[12.5px] text-muted">
+                  Tạo sẵn một khoảng ghế trống giữa hai lượt đặt vé để kiểm thử chức năng tái sử dụng ghế.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={applyGoldenGap}
+                aria-label="Kích hoạt khoảng ghế mẫu"
+                onClick={() => setApplyGoldenGap((v) => !v)}
                 className={cn(
-                  "absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all",
-                  applyGoldenGap ? "left-6" : "left-1",
+                  "relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                  applyGoldenGap ? "bg-primary" : "bg-line",
                 )}
-              />
-            </button>
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all",
+                    applyGoldenGap ? "left-6" : "left-1",
+                  )}
+                />
+              </button>
+            </div>
+            {applyGoldenGap && (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-success/40 bg-white px-2.5 py-1 text-[12.5px] font-medium text-success">
+                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Đã kích hoạt — áp dụng khi đặt lại kịch bản
+              </p>
+            )}
           </div>
-          {applyGoldenGap && (
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-success/40 bg-white px-2.5 py-1 text-[12.5px] font-medium text-success">
-              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Đã kích hoạt — áp dụng khi đặt lại kịch bản
+        ) : (
+          <div className="mt-4 rounded-2xl border border-line bg-surface/60 p-4">
+            <h3 className="text-[15px] font-semibold text-ink">Cấu hình mô phỏng</h3>
+            <p className="mt-1.5 text-[12.5px] text-muted">
+              Chỉ khả dụng khi đang xem chuyến vàng ({GOLDEN.serviceRunId}) — chọn lại chuyến này ở góc trên để dùng.
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Hành động */}
         <h3 className="mt-4 text-[15px] font-semibold text-ink">Hành động</h3>

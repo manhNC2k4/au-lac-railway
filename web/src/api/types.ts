@@ -262,3 +262,35 @@ export interface OverrideData {
   new_price_vnd: number;
   expires_at: string;
 }
+
+export interface RunSummary {
+  service_run_id: string;
+  train_id: string;
+  service_date: string;
+  direction: string;
+  status: string;
+}
+
+export interface RunsData {
+  runs: RunSummary[];
+}
+
+export interface StationRecord {
+  station_id: string;
+  station_name: string;
+  ly_trinh_km: number;
+}
+
+export interface StationsData {
+  stations: StationRecord[];
+}
+
+export interface StopRecord {
+  stop_sequence: number;
+  station_id: string;
+  station_name: string;
+}
+
+export interface StopsData {
+  stops: StopRecord[];
+}

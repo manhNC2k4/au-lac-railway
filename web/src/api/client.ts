@@ -2,8 +2,8 @@ import { ApiError, type ApiErrorCode } from "@/lib/errors";
 import type {
   AnalyticsData, BacktestReportData, BacktestRequest, ConfirmData, DecisionDetailData,
   GroupQuoteData, GroupQuoteRequest, HoldData, HoldRequest, OfferData, OfferRequest,
-  OverrideData, OverrideRequest, OverviewData, QuotaVersionData, ResetData, SeatmapData,
-  WaitlistAddData, WaitlistAddRequest, WaitlistEntry, WaitlistMatchData,
+  OverrideData, OverrideRequest, OverviewData, QuotaVersionData, ResetData, RunsData, SeatmapData,
+  StationsData, StopsData, WaitlistAddData, WaitlistAddRequest, WaitlistEntry, WaitlistMatchData,
 } from "./types";
 
 export interface AuLacApi {
@@ -13,6 +13,9 @@ export interface AuLacApi {
   getOverview(serviceRunId: string): Promise<OverviewData>;
   getSeatmap(serviceRunId: string): Promise<SeatmapData>;
   getAnalytics(serviceRunId: string): Promise<AnalyticsData>;
+  listRuns(q?: string): Promise<RunsData>;
+  listStations(): Promise<StationsData>;
+  getRunStops(serviceRunId: string): Promise<StopsData>;
   getDecision(decisionId: string): Promise<DecisionDetailData>;
   createOffer(req: OfferRequest): Promise<OfferData>;
   createHold(req: HoldRequest, idempotencyKey: string): Promise<HoldData>;
@@ -77,6 +80,9 @@ export function createHttpClient(baseUrl = ""): AuLacApi {
     getOverview: (service_run_id) => get("/demo/overview", { service_run_id }),
     getSeatmap: (service_run_id) => get("/demo/seatmap", { service_run_id }),
     getAnalytics: (service_run_id) => get("/demo/analytics", { service_run_id }),
+    listRuns: (q) => get("/demo/runs", q ? { q } : undefined),
+    listStations: () => get("/demo/stations"),
+    getRunStops: (service_run_id) => get(`/demo/runs/${encodeURIComponent(service_run_id)}/stops`),
     getDecision: (id) => get(`/decisions/${encodeURIComponent(id)}`),
     createOffer: (req) => post("/offers", req),
     createHold: (req, key) => post("/holds", req, key),

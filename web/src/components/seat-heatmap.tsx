@@ -3,7 +3,7 @@
 import { forwardRef, useMemo } from "react";
 import { CheckCircle2, Circle, Clock } from "lucide-react";
 import type { SeatmapSeat, SeatState } from "@/api/types";
-import { segmentStations, stationName, SEGMENTS } from "@/lib/constants";
+import type { RunSegment } from "@/lib/current-run";
 import { cn } from "@/lib/utils";
 
 /**
@@ -57,15 +57,15 @@ export function HeatmapLegend() {
   );
 }
 
-/** Thanh tuyến ga "Hà Nội → Ninh Bình → …" theo mockup. */
-export function RouteBar() {
+/** Thanh tuyến ga "Hà Nội → Ninh Bình → …" theo mockup — dựng động theo ga dừng của chuyến. */
+export function RouteBar({ segments }: { segments: RunSegment[] }) {
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-line bg-white px-4 py-2.5 text-[13.5px] font-medium text-ink">
-      {SEGMENTS.map((seg, i) => (
-        <span key={seg.id} className="flex items-center gap-2">
-          {i === 0 && <span>{stationName(seg.from)}</span>}
+      {segments.map((seg, i) => (
+        <span key={seg.segment_id} className="flex items-center gap-2">
+          {i === 0 && <span>{seg.from.station_name}</span>}
           <span aria-hidden className="text-muted">→</span>
-          <span>{stationName(seg.to)}</span>
+          <span>{seg.to.station_name}</span>
         </span>
       ))}
     </div>
@@ -83,7 +83,7 @@ export function cellLabel(state: CellVisualState): string {
 
 interface SeatHeatmapProps {
   seats: SeatmapSeat[];
-  segments: { segment_id: number }[];
+  segments: RunSegment[];
   /** seat_id cần làm nổi bật (vd golden gap C01-S017). */
   highlightSeatId?: string;
   onCellSelect?: (seat: SeatmapSeat, segmentId: number, state: CellVisualState) => void;
@@ -94,10 +94,8 @@ export const SeatHeatmap = forwardRef<HTMLTableRowElement, SeatHeatmapProps>(fun
   { seats, segments, highlightSeatId, onCellSelect, selected },
   highlightRowRef,
 ) {
-  const segmentIds = useMemo(
-    () => segments.map((s) => s.segment_id!).filter((x): x is number => x !== undefined),
-    [segments],
-  );
+  const segmentIds = useMemo(() => segments.map((s) => s.segment_id), [segments]);
+  const segmentById = useMemo(() => new Map(segments.map((s) => [s.segment_id, s])), [segments]);
 
   return (
     <div
@@ -116,11 +114,11 @@ export const SeatHeatmap = forwardRef<HTMLTableRowElement, SeatHeatmapProps>(fun
               Mã ghế
             </th>
             {segmentIds.map((id) => {
-              const seg = SEGMENTS[id - 1];
+              const seg = segmentById.get(id);
               return (
                 <th key={id} scope="col" className="border-b border-line px-1 py-2 text-center font-semibold text-ink">
-                  <div className="text-[12.5px]">{stationName(seg.from)}–</div>
-                  <div className="text-[12.5px]">{stationName(seg.to)}</div>
+                  <div className="text-[12.5px]">{seg?.from.station_name ?? `L${id}`}–</div>
+                  <div className="text-[12.5px]">{seg?.to.station_name ?? ""}</div>
                 </th>
               );
             })}
@@ -153,7 +151,7 @@ export const SeatHeatmap = forwardRef<HTMLTableRowElement, SeatHeatmapProps>(fun
                       <button
                         type="button"
                         onClick={() => onCellSelect?.(seat, segId, st)}
-                        aria-label={`${seat.seat_id} · L${segId} ${segmentStations(segId)} · ${c.label}`}
+                        aria-label={`${seat.seat_id} · L${segId} ${segmentById.get(segId)?.from.station_name ?? ""} → ${segmentById.get(segId)?.to.station_name ?? ""} · ${c.label}`}
                         aria-pressed={isSelected}
                         className={cn(
                           "inline-flex h-9 w-full min-w-[52px] items-center justify-center rounded-lg border",
