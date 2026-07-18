@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+psycopg[binary]
+numpy
+pandas
+pyarrow
+pyyaml
+lunardate
+scipy
+scikit-learn==1.9.0
+joblib
+pytest
+pytest-asyncio
+httpx

@@ -1,0 +1,117 @@
+{
+  "theta": 0.87,
+  "kappa0": 1598.947872282371,
+  "san_ty_le": 0.55,
+  "tran_ty_le": 1.6,
+  "varsigma": {
+    "NGOI_MEM_DH": 1.0,
+    "NAM_K6_T3": 1.046,
+    "NAM_K6_T2": 1.215,
+    "NAM_K6_T1": 1.332,
+    "NAM_K4_T2": 1.38,
+    "NAM_K4_T1": 1.462,
+    "VIP2": 1.9
+  },
+  "tier_by_class": {
+    "NGOI_MEM_DH": [
+      "NGOI_MEM_DH"
+    ],
+    "NAM_K6": [
+      "NAM_K6_T1",
+      "NAM_K6_T2",
+      "NAM_K6_T3"
+    ],
+    "NAM_K4": [
+      "NAM_K4_T1",
+      "NAM_K4_T2"
+    ]
+  },
+  "seat_classes": [
+    "NGOI_MEM_DH",
+    "NAM_K6",
+    "NAM_K4"
+  ],
+  "rho_t": {
+    "SE1": 1.1,
+    "SE2": 1.1,
+    "SE3": 1.08,
+    "SE4": 1.08,
+    "SE5": 1.0,
+    "SE6": 1.0,
+    "SE7": 0.98,
+    "SE8": 0.98,
+    "SE9": 1.0,
+    "SE10": 1.0,
+    "SE19": 1.02,
+    "SE20": 1.02,
+    "SE21": 1.05,
+    "SE22": 1.05,
+    "NA1": 0.95,
+    "NA2": 0.95,
+    "SNT1": 1.12,
+    "SNT2": 1.12,
+    "SE29": 1.0,
+    "SE30": 1.0,
+    "SE17": 1.0,
+    "SE18": 1.0,
+    "HD1": 1.15,
+    "HD2": 1.15,
+    "HD3": 1.15,
+    "HD4": 1.15
+  },
+  "km": {
+    "HNO": 0.0,
+    "PLY": 56.0,
+    "NDI": 87.0,
+    "NBI": 115.0,
+    "BSO": 138.0,
+    "THO": 175.0,
+    "VIN": 319.0,
+    "YTR": 348.0,
+    "HPO": 410.0,
+    "DLE": 460.0,
+    "DHO": 522.0,
+    "DHA": 622.0,
+    "HUE": 688.0,
+    "DNA": 791.4,
+    "TKY": 865.0,
+    "QNG": 927.5,
+    "DTR": 1095.0,
+    "THA": 1198.0,
+    "GIA": 1258.0,
+    "NTR": 1314.5,
+    "TCH": 1408.0,
+    "BTH": 1551.0,
+    "BHO": 1697.0,
+    "DAN": 1707.0,
+    "SGO": 1726.0
+  },
+  "ai": {
+    "hieu_luc_tu": "2026-05-01",
+    "bien_do": {
+      "min": 0.15,
+      "max": 0.35
+    },
+    "tran_theo_tuyen": {
+      "THONG_NHAT_CHANG_NGAN": 0.35,
+      "HUE_DANANG": 0.3,
+      "HN_HAIPHONG": 0.25,
+      "HN_LAOCAI": 0.25,
+      "HN_DANANG": 0.25,
+      "SG_PHANTHIET": 0.25,
+      "SG_NHATRANG": 0.25,
+      "SG_QUYNHON": 0.25,
+      "SG_DANANG": 0.25
+    },
+    "kich_hoat": {
+      "max_lf_khu_gian_toi_thieu": 0.6,
+      "min_lf_tren_hanh_trinh_toi_da": 0.5,
+      "lead_time_toi_da_ngay": 14
+    }
+  },
+  "delta_mua": {
+    "tet": 0.045,
+    "he": 0.075
+  },
+  "_source": "04_THAM_SO_CAU_HINH_MO_PHONG.yaml + trains.csv (neo SE1 HN-SG)"
+}

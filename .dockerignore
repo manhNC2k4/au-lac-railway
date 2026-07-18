@@ -1,0 +1,13 @@
+.git/
+generated_data/
+demo/
+web/
+plan/
+plans/
+docs/
+eval/
+tests/
+integration/
+__pycache__/
+*.pyc
+.pytest_cache/

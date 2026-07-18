@@ -1,0 +1,257 @@
+{
+  "service_run_id": "SE1_2026-06-15_LE",
+  "products": [
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HNO",
+      "dest_station_id": "NBI",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 115.0,
+      "gia_goc_vnd": 109000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HNO",
+      "dest_station_id": "THO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 175.0,
+      "gia_goc_vnd": 157000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HNO",
+      "dest_station_id": "VIN",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 319.0,
+      "gia_goc_vnd": 265000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HNO",
+      "dest_station_id": "DHO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 522.0,
+      "gia_goc_vnd": 407000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HNO",
+      "dest_station_id": "HUE",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 688.0,
+      "gia_goc_vnd": 518000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HNO",
+      "dest_station_id": "DNA",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 791.4,
+      "gia_goc_vnd": 585000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HNO",
+      "dest_station_id": "SGO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 1726.0,
+      "gia_goc_vnd": 1152000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "NBI",
+      "dest_station_id": "THO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 60.0,
+      "gia_goc_vnd": 62000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "NBI",
+      "dest_station_id": "VIN",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 204.0,
+      "gia_goc_vnd": 180000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "NBI",
+      "dest_station_id": "DHO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 407.0,
+      "gia_goc_vnd": 328000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "NBI",
+      "dest_station_id": "HUE",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 573.0,
+      "gia_goc_vnd": 441000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "NBI",
+      "dest_station_id": "DNA",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 676.4,
+      "gia_goc_vnd": 510000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "NBI",
+      "dest_station_id": "SGO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 1611.0,
+      "gia_goc_vnd": 1085000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "THO",
+      "dest_station_id": "VIN",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 144.0,
+      "gia_goc_vnd": 133000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "THO",
+      "dest_station_id": "DHO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 347.0,
+      "gia_goc_vnd": 285000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "THO",
+      "dest_station_id": "HUE",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 513.0,
+      "gia_goc_vnd": 401000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "THO",
+      "dest_station_id": "DNA",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 616.4,
+      "gia_goc_vnd": 470000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "THO",
+      "dest_station_id": "SGO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 1551.0,
+      "gia_goc_vnd": 1050000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "VIN",
+      "dest_station_id": "DHO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 203.0,
+      "gia_goc_vnd": 179000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "VIN",
+      "dest_station_id": "HUE",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 369.0,
+      "gia_goc_vnd": 301000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "VIN",
+      "dest_station_id": "DNA",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 472.4,
+      "gia_goc_vnd": 373000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "VIN",
+      "dest_station_id": "SGO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 1407.0,
+      "gia_goc_vnd": 964000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "DHO",
+      "dest_station_id": "HUE",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 166.0,
+      "gia_goc_vnd": 150000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "DHO",
+      "dest_station_id": "DNA",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 269.4,
+      "gia_goc_vnd": 229000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "DHO",
+      "dest_station_id": "SGO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 1204.0,
+      "gia_goc_vnd": 842000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HUE",
+      "dest_station_id": "DNA",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 103.4,
+      "gia_goc_vnd": 100000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "HUE",
+      "dest_station_id": "SGO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 1038.0,
+      "gia_goc_vnd": 740000,
+      "version": 1
+    },
+    {
+      "service_run_id": "SE1_2026-06-15_LE",
+      "origin_station_id": "DNA",
+      "dest_station_id": "SGO",
+      "seat_class": "NGOI_MEM_DH",
+      "distance_km": 934.6,
+      "gia_goc_vnd": 676000,
+      "version": 1
+    }
+  ]
+}

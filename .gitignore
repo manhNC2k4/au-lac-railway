@@ -1,3 +1,23 @@
 generated_data/data/
 demo/features
 generated_data/_ground_truth/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Output lớn / tái tạo được (chạy scripts trong models/ hoặc eval/ để sinh lại)
+models/artifacts/forecast_output_contract.csv
+models/artifacts/forecast_backtest_contract.csv
+models/artifacts/*.log
+demo/eda_out/
+
+# Folder gói nộp (bản sao của integration/ + note để zip gửi — không commit trùng)
+DELIVERY_algomodel/
+__pycache__/
+*.pyc
+.venv/
+# Word lock files
+~$*
+docs/~$*

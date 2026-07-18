@@ -1,0 +1,21 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { BarChart3, Play } from "lucide-react";
+import { getApi, qk, type BacktestReportData } from "@/api";
+import { GOLDEN } from "@/lib/constants";
+import { formatNumber, formatPercent } from "@/lib/format";
+import { Money } from "@/components/money";
+import { ErrorState } from "@/components/error-state";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/status-badge";
+
+export default function BacktestPage(){
+ const api=getApi();const [reportId,setReportId]=useState<string|null>(null);const [selected,setSelected]=useState<number[]>(GOLDEN.backtestSeeds.map(Number));const run=useMutation({mutationFn:()=>api.createBacktest({seeds:selected}),onSuccess:x=>setReportId(x.report_id)});const report=useQuery({queryKey:qk.backtest(reportId??""),queryFn:()=>api.getBacktest(reportId!),enabled:!!reportId,refetchInterval:q=>q.state.data?.status==="RUNNING"?1000:false});
+ const toggle=(seed:number)=>setSelected(v=>v.includes(seed)?v.filter(x=>x!==seed):[...v,seed]);
+ return <div className="space-y-4"><div><h1 className="text-[26px] font-bold text-ink">So sánh Backtest</h1><p className="mt-1 text-sm text-muted">Chạy cùng tập seed đã commit cho phương án cơ sở và Âu Lạc.</p></div><Card><CardHeader title="Tập dữ liệu kiểm thử"/><CardBody><div className="flex flex-wrap gap-2">{GOLDEN.backtestSeeds.map(value=>{const seed=Number(value);return <label key={seed} className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm"><input type="checkbox" checked={selected.includes(seed)} onChange={()=>toggle(seed)} className="accent-primary"/>{seed}</label>})}</div><div className="mt-4 flex items-center gap-3"><Button disabled={!selected.length||run.isPending} onClick={()=>run.mutate()}><Play className="h-4 w-4"/>{run.isPending?"Đang khởi chạy...":"Chạy so sánh"}</Button>{report.data&&<StatusBadge status={report.data.status}/>}</div>{run.isError&&<div className="mt-4"><ErrorState compact error={run.error} onRetry={()=>run.mutate()}/></div>}</CardBody></Card>{report.isPending&&reportId&&<Card><CardBody className="py-12 text-center text-muted">Đang nhận kết quả từ backend...</CardBody></Card>}{report.isError&&<ErrorState error={report.error} onRetry={()=>report.refetch()}/>} {report.data&&<Report data={report.data}/>}</div>;
+}
+function Report({data}:{data:BacktestReportData}){const seeds=Object.entries(data.raw);return <div className="space-y-4"><div className="grid gap-3 md:grid-cols-2"><Metric title="Phương án cơ sở" data={data.baseline_metrics}/><Metric title="Âu Lạc" data={data.ai_metrics}/></div><Card><CardHeader title="Kết quả từng seed" subtitle={`Checksum ${data.checksum}`}/><CardBody className="p-0"><div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead><tr className="border-b border-line bg-surface text-left text-muted"><th className="px-5 py-3">Seed</th><th>Doanh thu cơ sở</th><th>Doanh thu Âu Lạc</th><th>Chấp nhận cơ sở</th><th>Chấp nhận Âu Lạc</th><th>Hết chỗ giả</th></tr></thead><tbody>{seeds.map(([seed,x])=><tr key={seed} className="border-b border-line"><td className="px-5 py-3 font-mono">{seed}</td><td><Money amount={x.baseline.revenue_vnd}/></td><td><Money amount={x.aulac.revenue_vnd} emphasis/></td><td>{formatPercent(x.baseline.acceptance_rate)}</td><td>{formatPercent(x.aulac.acceptance_rate)}</td><td>{formatPercent(x.false_sold_out_rate)}</td></tr>)}</tbody></table></div>{data.failed_seeds.length>0&&<p className="p-5 text-sm text-danger">Seed lỗi: {data.failed_seeds.join(", ")}</p>}</CardBody></Card></div>}
+function Metric({title,data}:{title:string;data:BacktestReportData["baseline_metrics"]}){return <Card><CardHeader title={title}/><CardBody className="grid grid-cols-3 gap-3 text-center"><div><p className="text-xs text-muted">Trung vị</p><Money amount={data.revenue_median} emphasis/></div><div><p className="text-xs text-muted">Thấp nhất</p><Money amount={data.revenue_min}/></div><div><p className="text-xs text-muted">Cao nhất</p><Money amount={data.revenue_max}/></div></CardBody></Card>}

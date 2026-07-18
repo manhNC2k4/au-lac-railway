@@ -1,0 +1,1094 @@
+openapi: 3.0.3
+info:
+  title: Âu Lạc Railway API v1
+  version: "1.0.0"
+  description: >
+    MVP demo API — leg-splitting, gap-merging, flexible pricing.
+    Source of truth per plan/00_MASTER_PLAN.md §7 và docs/API_Contract.md.
+    Money = int64 VND, rounded to 1000. Timestamps = ISO-8601 UTC on the demo
+    scenario clock (2026-06-15), not wall time. segment_id is 1-based (L1..L7).
+servers:
+  - url: /api/v1
+
+paths:
+  /demo/scenarios/{scenario_id}/reset:
+    post:
+      summary: Reset demo scenario (load seed/, all-or-nothing)
+      operationId: resetScenario
+      tags: [demo]
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema: { type: string }
+          example: golden_scenario_1
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reset_clock: { type: boolean }
+                apply_golden_gap: { type: boolean }
+            example: { reset_clock: true, apply_golden_gap: true }
+      responses:
+        "200":
+          description: Scenario reset successfully (deterministic — same seed same checksum)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResetResponse" }
+              example:
+                data:
+                  service_run_id: SE1_2026-06-15_LE
+                  matrix_version: 1
+                  forecast_version: 1
+                  policy_version: 1
+                  checksum: abc123xyz
+                message: Scenario reset successfully
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /demo/forecasts/refresh:
+    post:
+      summary: Refresh forecast for a service run
+      operationId: refreshForecast
+      tags: [demo]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [service_run_id]
+              properties:
+                service_run_id: { type: string }
+            example: { service_run_id: SE1_2026-06-15_LE }
+      responses:
+        "200":
+          description: Forecast updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      forecast_version: { type: integer }
+              example:
+                message: Forecast updated
+                data: { forecast_version: 2 }
+
+  /demo/overview:
+    get:
+      summary: Ops overview dashboard (read-only)
+      operationId: getOverview
+      tags: [demo]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OverviewResponse" }
+
+  /demo/seatmap:
+    get:
+      summary: Seat x segment heatmap (read-only)
+      operationId: getSeatmap
+      tags: [demo]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SeatmapResponse" }
+
+  /demo/analytics:
+    get:
+      summary: Forecast + segment load + bid-price analytics (read-only)
+      operationId: getAnalytics
+      tags: [demo]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnalyticsResponse" }
+
+  /decisions/{decision_id}:
+    get:
+      summary: Decision detail / audit trail
+      operationId: getDecision
+      tags: [decisions]
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DecisionDetailResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /offers:
+    post:
+      summary: Create an offer (same-seat gap search + pricing, no seat held)
+      operationId: createOffer
+      tags: [booking]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OfferRequest" }
+            example:
+              service_run_id: SE1_2026-06-15_LE
+              origin_station_id: THO
+              dest_station_id: DHO
+              seat_class: NGOI_MEM_DH
+              quantity: 1
+      responses:
+        "201":
+          description: Offer created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OfferResponse" }
+        "422":
+          description: NO_SAME_SEAT_OPTION | SOLD_OUT_TRUE | ALLOCATION_REJECTED
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error_code: ALLOCATION_REJECTED
+                message: "Giá vé không bù đủ chi phí cơ hội các đoạn chiếm dụng"
+                details: { final_price_vnd: 380000, bid_price_total_vnd: 420000, decision_record_id: dr_8900 }
+        "503": { $ref: "#/components/responses/PolicyUnavailable" }
+
+  /holds:
+    post:
+      summary: Atomic hold on the offer's seat plan
+      operationId: createHold
+      tags: [booking]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HoldRequest" }
+            example:
+              offer_id: offer_9981
+              expected_matrix_version: 5
+              passenger_name: "Nguyễn Văn A"
+      responses:
+        "201":
+          description: Hold active
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HoldResponse" }
+        "422":
+          description: CONSENT_REQUIRED — seat_plan có >=2 leg (ghép nhiều ghế) nhưng consent != true
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error_code: CONSENT_REQUIRED
+                message: "Phương án ghép nhiều ghế cần khách xác nhận đồng ý đổi chỗ trước khi giữ ghế"
+                details: { offer_id: offer_9981, so_lan_doi_cho: 1 }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "410": { $ref: "#/components/responses/Gone" }
+
+  /bookings/{hold_id}/confirm:
+    post:
+      summary: Confirm hold (HELD -> SOLD), never re-prices, idempotent
+      operationId: confirmBooking
+      tags: [booking]
+      parameters:
+        - name: hold_id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfirmResponse" }
+        "410": { $ref: "#/components/responses/Gone" }
+
+  /backtests:
+    post:
+      summary: Start a backtest run (>=5 seeds)
+      operationId: createBacktest
+      tags: [backtest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_stream_id, seeds]
+              properties:
+                event_stream_id: { type: string }
+                seeds: { type: array, items: { type: string } }
+            example:
+              event_stream_id: stream_demo_1
+              seeds: ["20260717", "20260718", "20260719", "20260720", "20260721"]
+      responses:
+        "202":
+          description: Backtest started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties: { report_id: { type: string } }
+              example:
+                message: Backtest started
+                data: { report_id: bt_12345 }
+
+  /backtests/{report_id}:
+    get:
+      summary: Backtest report (median + range, baseline vs Âu Lạc)
+      operationId: getBacktest
+      tags: [backtest]
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BacktestReportResponse" }
+
+  # ---------------------------------------------------------------------
+  # P7.2 — C2 tái phân bổ + phê duyệt + rollback
+  # ---------------------------------------------------------------------
+  /allocation/refresh:
+    post:
+      summary: Re-solve DLP and propose a new quota/booking-limit version (PENDING)
+      description: >
+        Re-solves the DLP (reuses the P2 bid-price cache, does not solve the LP twice),
+        diffs booking_limit per (segment, journey-length band, seat class) against the
+        current ACTIVE version, and stores the result as a new PENDING quota_version.
+        Proposal-only — does not enforce booking_limit in /offers.
+      operationId: refreshAllocation
+      tags: [allocation]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "201":
+          description: New PENDING quota version created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuotaVersionResponse" }
+        "503": { $ref: "#/components/responses/PolicyUnavailable" }
+
+  /allocation/{version}:
+    get:
+      summary: Get one quota version (PENDING / ACTIVE / REJECTED / ROLLED_BACK)
+      operationId: getAllocationVersion
+      tags: [allocation]
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuotaVersionResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /allocation/{version}/approve:
+    post:
+      summary: Approve a PENDING quota version (becomes ACTIVE)
+      description: Requires X-Actor-Role revenue_manager|admin. Demotes the previously ACTIVE version to ROLLED_BACK.
+      operationId: approveAllocation
+      tags: [allocation]
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/ActorRole"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AllocationDecisionRequest" }
+            example: { decided_by: nguyen_van_dieu_do }
+      responses:
+        "200":
+          description: Version is now ACTIVE
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuotaVersionResponse" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /allocation/{version}/reject:
+    post:
+      summary: Reject a PENDING quota version
+      description: Requires X-Actor-Role revenue_manager|admin.
+      operationId: rejectAllocation
+      tags: [allocation]
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/ActorRole"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AllocationDecisionRequest" }
+      responses:
+        "200":
+          description: Version is now REJECTED
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuotaVersionResponse" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /allocation/{version}/rollback:
+    post:
+      summary: Re-activate an old quota version (emergency revert)
+      description: >
+        Requires X-Actor-Role revenue_manager|admin. Unlike approve, the source version
+        may be in any status (PENDING/REJECTED/ROLLED_BACK) — rollback is meant for
+        an operator returning to any known-good version quickly.
+      operationId: rollbackAllocation
+      tags: [allocation]
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/ActorRole"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AllocationDecisionRequest" }
+      responses:
+        "200":
+          description: Version is now ACTIVE again
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuotaVersionResponse" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ---------------------------------------------------------------------
+  # P7.3 — C5 hàng chờ thông minh
+  # ---------------------------------------------------------------------
+  /waitlist:
+    post:
+      summary: Join the waitlist (customer opts in after NO_SAME_SEAT_OPTION)
+      description: Not auto-added on offer failure — the customer must actively choose to wait.
+      operationId: addWaitlist
+      tags: [waitlist]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WaitlistAddRequest" }
+            example:
+              service_run_id: SE1_2026-06-15_LE
+              origin_station_id: HNO
+              dest_station_id: NBI
+              seat_class: NGOI_MEM_DH
+              u: 10
+      responses:
+        "201":
+          description: Entry queued as PENDING
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WaitlistAddResponse" }
+    get:
+      summary: List PENDING waitlist entries (priority score descending)
+      operationId: listWaitlist
+      tags: [waitlist]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WaitlistListResponse" }
+
+  /waitlist/match:
+    post:
+      summary: Try to match PENDING waitlist entries against currently free seats
+      description: >
+        ponytail: no background worker in this demo — an operator (or a future
+        scheduler) triggers this explicitly after cancellations/hold-expiries.
+        A match reuses the real /offers -> /holds pipeline (no separate pricing/CAS
+        logic) so a matched entry gets a real Hold the customer can pay within the
+        normal hold TTL.
+      operationId: matchWaitlist
+      tags: [waitlist]
+      parameters:
+        - name: service_run_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WaitlistMatchResponse" }
+
+  # ---------------------------------------------------------------------
+  # P7.4 — C4 xếp nhóm
+  # ---------------------------------------------------------------------
+  /group/quote:
+    post:
+      summary: Propose a same-car/compartment seat plan for a group (proposal only, no hold)
+      operationId: quoteGroup
+      tags: [group]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GroupQuoteRequest" }
+            example:
+              service_run_id: SE1_2026-06-15_LE
+              origin_station_id: HNO
+              dest_station_id: NBI
+              seat_class: NGOI_MEM_DH
+              n_khach: 8
+      responses:
+        "200":
+          description: Feasible plan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupQuoteResponse" }
+        "422":
+          description: NO_SAME_SEAT_OPTION — not enough seats free the whole journey for the group
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  # ---------------------------------------------------------------------
+  # P7.6 — ghi đè giá thủ công
+  # ---------------------------------------------------------------------
+  /offers/{offer_id}/override:
+    post:
+      summary: Manually override an offer's price, within the approved guardrail
+      description: >
+        Requires X-Actor-Role revenue_manager|admin. Only allowed before a Hold exists
+        for the offer (a held price is honored/immutable). New price must stay within
+        [floor_ratio, ceiling_ratio] * base_fare — never outside the approved band.
+      operationId: overrideOfferPrice
+      tags: [booking]
+      parameters:
+        - name: offer_id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/ActorRole"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OverrideRequest" }
+            example:
+              new_price_vnd: 109000
+              reason: "Khách VIP - đại lý yêu cầu giữ giá gốc"
+              decided_by: nguyen_van_dieu_do
+      responses:
+        "200":
+          description: Price overridden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OverrideResponse" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: SEAT_CONFLICT — offer already has an ACTIVE/CONFIRMED hold (locked price is immutable)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+        "422":
+          description: GUARDRAIL_VIOLATION — requested price outside [floor_ratio, ceiling_ratio] * F0
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+              example:
+                error_code: GUARDRAIL_VIOLATION
+                message: "Giá override 545.000đ ngoài dải guardrail [59.950;174.400]đ"
+                details: { offer_id: offer_34f261613c42, floor: 59950, ceiling: 174400, requested: 545000 }
+        "503": { $ref: "#/components/responses/PolicyUnavailable" }
+
+components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    ActorRole:
+      name: X-Actor-Role
+      in: header
+      required: true
+      description: >
+        P7.2/P7.6 — role check thô qua header (KHÔNG phải RBAC/JWT thật, chỉ đủ để
+        demo quy trình cần role duyệt). Chỉ revenue_manager|admin được phép.
+      schema: { type: string, enum: [user, revenue_manager, admin] }
+      example: revenue_manager
+
+  responses:
+    BadRequest:
+      description: 400 Bad Request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    NotFound:
+      description: 404 Not Found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Conflict:
+      description: "409 STALE_SNAPSHOT | SEAT_CONFLICT"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Gone:
+      description: "410 OFFER_EXPIRED | HOLD_EXPIRED"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    PolicyUnavailable:
+      description: 503 POLICY_UNAVAILABLE — never silently fall back to a default price
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Forbidden:
+      description: 403 FORBIDDEN — role không đủ quyền (X-Actor-Role không phải revenue_manager/admin)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  schemas:
+    SeatState:
+      type: string
+      enum: [FREE, HELD, SOLD]
+    OfferDecision:
+      type: string
+      enum: [ACCEPT, REJECT]
+    HoldStatus:
+      type: string
+      enum: [ACTIVE, CONFIRMED, EXPIRED, CANCELLED]
+    ErrorCode:
+      type: string
+      enum:
+        - NO_SAME_SEAT_OPTION
+        - SOLD_OUT_TRUE
+        - ALLOCATION_REJECTED
+        - STALE_SNAPSHOT
+        - SEAT_CONFLICT
+        - OFFER_EXPIRED
+        - HOLD_EXPIRED
+        - POLICY_UNAVAILABLE
+        - CONSENT_REQUIRED
+        - RESOURCE_NOT_FOUND
+        - FORBIDDEN
+        - GUARDRAIL_VIOLATION
+
+    ErrorEnvelope:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code: { $ref: "#/components/schemas/ErrorCode" }
+        message: { type: string }
+        details: { type: object }
+
+    ResetResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            service_run_id: { type: string }
+            matrix_version: { type: integer }
+            forecast_version: { type: integer }
+            policy_version: { type: integer }
+            checksum: { type: string }
+        message: { type: string }
+
+    OverviewResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            overall_occupancy: { type: number }
+            total_revenue_vnd: { type: integer }
+            empty_seat_km: { type: integer }
+            passenger_km: { type: integer }
+            false_sold_out_rate: { type: number }
+            bottlenecks:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  name: { type: string }
+                  occupancy: { type: number }
+            underused:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  name: { type: string }
+                  occupancy: { type: number }
+            recent_decisions:
+              type: array
+              items:
+                type: object
+                properties:
+                  decision_id: { type: string }
+                  action: { type: string }
+                  time: { type: string, format: date-time }
+
+    SeatmapResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            matrix_version: { type: integer }
+            segments:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  name: { type: string }
+            seats:
+              type: array
+              items:
+                type: object
+                properties:
+                  seat_id: { type: string }
+                  seat_class: { type: string }
+                  states:
+                    type: object
+                    additionalProperties: { $ref: "#/components/schemas/SeatState" }
+                  reused_gap_segments:
+                    type: array
+                    items: { type: integer }
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            forecasts:
+              type: array
+              items:
+                type: object
+                properties:
+                  origin: { type: string }
+                  dest: { type: string }
+                  demand_predicted: { type: number }
+                  confidence: { type: number }
+            segment_loads:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  occupancy: { type: number }
+                  remaining_capacity: { type: integer }
+            allocations:
+              type: array
+              items:
+                type: object
+                properties:
+                  segment_id: { type: integer }
+                  bid_price_vnd: { type: integer }
+                  protection_level: { type: string }
+
+    DecisionDetailResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            decision_id: { type: string }
+            action: { type: string }
+            base_fare: { type: integer }
+            ai_suggested_price: { type: integer }
+            final_price: { type: integer }
+            bid_price_total: { type: integer }
+            bid_price_breakdown: { type: object, additionalProperties: { type: integer } }
+            violations: { type: array, items: { type: string } }
+            audit_timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  step: { type: string }
+                  time: { type: string, format: date-time }
+                  note: { type: string }
+
+    OfferRequest:
+      type: object
+      required: [service_run_id, origin_station_id, dest_station_id, seat_class, quantity]
+      properties:
+        service_run_id: { type: string }
+        origin_station_id: { type: string }
+        dest_station_id: { type: string }
+        seat_class: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        priority_passenger:
+          type: boolean
+          default: false
+          description: Cao tuổi/khuyết tật/trẻ đi một mình — không bao giờ nhận phương án ghép nhiều ghế (P5).
+
+    OfferResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            offer_id: { type: string }
+            service_run_id: { type: string }
+            matrix_version: { type: integer }
+            forecast_version: { type: integer }
+            policy_version: { type: integer }
+            decision: { $ref: "#/components/schemas/OfferDecision" }
+            seat_plan:
+              type: array
+              items:
+                type: object
+                properties:
+                  seat_id: { type: string }
+                  segment_from: { type: integer }
+                  segment_to: { type: integer }
+                  reused_gap: { type: boolean }
+                  requires_seat_change: { type: boolean }
+            requires_customer_consent:
+              type: boolean
+              description: true khi seat_plan có >=2 leg (ghép nhiều ghế, P5) — /holds từ chối nếu HoldRequest.consent != true.
+            change_station_ids:
+              type: array
+              items: { type: string }
+              description: Ga đổi chỗ giữa các leg (rỗng nếu same-seat).
+            so_lan_doi_cho: { type: integer, description: "= len(seat_plan) - 1" }
+            pricing:
+              type: object
+              properties:
+                gia_goc_vnd: { type: integer }
+                gia_niem_yet_vnd: { type: integer }
+                gia_cuoi_vnd: { type: integer }
+                rules_fired:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      rule_id: { type: string }
+                      he_so: { type: number }
+                      thu_tu: { type: integer }
+                clamped: { type: boolean }
+                che_do_gia: { type: string }
+            bid:
+              type: object
+              properties:
+                total_vnd: { type: integer }
+                by_segment: { type: object, additionalProperties: { type: integer } }
+            decision_record_id: { type: string }
+            expires_at: { type: string, format: date-time }
+
+    HoldRequest:
+      type: object
+      required: [offer_id, expected_matrix_version]
+      properties:
+        offer_id: { type: string }
+        expected_matrix_version: { type: integer }
+        passenger_name: { type: string }
+        consent:
+          type: boolean
+          default: false
+          description: Bắt buộc true khi offer.requires_customer_consent — thiếu -> 422 CONSENT_REQUIRED (P5).
+
+    HoldResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            hold_id: { type: string }
+            status: { $ref: "#/components/schemas/HoldStatus" }
+            expires_at: { type: string, format: date-time }
+            new_matrix_version: { type: integer }
+
+    ConfirmResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            booking_id: { type: string }
+            status: { type: string }
+            final_price_vnd: { type: integer }
+            decision_record_id: { type: string }
+
+    BacktestReportResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status: { type: string }
+            baseline_metrics:
+              type: object
+              properties:
+                revenue_median: { type: integer }
+                acceptance_rate: { type: number }
+            ai_metrics:
+              type: object
+              properties:
+                revenue_median: { type: integer }
+                acceptance_rate: { type: number }
+
+    # -----------------------------------------------------------------
+    # P7.2 — allocation / quota_version
+    # -----------------------------------------------------------------
+    QuotaRow:
+      type: object
+      properties:
+        khu_gian_id: { type: integer, description: "1-based segment_id (L1..L7)" }
+        loai_hanh_trinh: { type: string, enum: [ngan, trung, dai] }
+        seat_class: { type: string }
+        quota: { type: integer, description: "Demand accepted by the DLP for this key" }
+        booking_limit: { type: integer, description: "Nested booking limit — ngan = remaining − protected trung/dai" }
+        bid_price: { type: integer }
+
+    AllocationDecisionRequest:
+      type: object
+      properties:
+        decided_by:
+          type: string
+          default: revenue_manager
+          description: Display name recorded in the audit log — role itself is checked via X-Actor-Role.
+
+    QuotaVersionResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            version: { type: integer }
+            status: { type: string, enum: [PENDING, ACTIVE, REJECTED, ROLLED_BACK] }
+            quota:
+              type: array
+              items: { $ref: "#/components/schemas/QuotaRow" }
+            proposal:
+              type: array
+              description: Diff vs the previous ACTIVE version — empty on the very first version.
+              items:
+                type: object
+                properties:
+                  khu_gian_id: { type: integer }
+                  loai_hanh_trinh: { type: string }
+                  seat_class: { type: string }
+                  action: { type: string, enum: [MO_THEM, SIET_LAI] }
+                  limit_cu: { type: integer }
+                  limit_moi: { type: integer }
+            decided_by: { type: string, nullable: true }
+            created_at: { type: string, format: date-time }
+            decided_at: { type: string, format: date-time, nullable: true }
+
+    # -----------------------------------------------------------------
+    # P7.3 — waitlist
+    # -----------------------------------------------------------------
+    WaitlistAddRequest:
+      type: object
+      required: [service_run_id, origin_station_id, dest_station_id, seat_class]
+      properties:
+        service_run_id: { type: string }
+        origin_station_id: { type: string }
+        dest_station_id: { type: string }
+        seat_class: { type: string }
+        quantity: { type: integer, minimum: 1, default: 1 }
+        u: { type: number, minimum: 0, default: 14.0, description: "Lead time (days before departure)" }
+        priority_passenger: { type: boolean, default: false }
+        csxh_doi_tuong: { type: string, default: KHONG }
+
+    WaitlistAddResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            waitlist_id: { type: string, format: uuid }
+            priority_score:
+              type: number
+              description: >
+                Deterministic score (fare value 0.4 + urgency 0.3 + segment scarcity 0.2 +
+                CSXH flag 0.1) — same formula as app.waitlist.WaitlistManager, no personal
+                data used to differentiate.
+            status: { type: string, enum: [PENDING] }
+
+    WaitlistEntry:
+      type: object
+      properties:
+        waitlist_id: { type: string, format: uuid }
+        origin_station_id: { type: string }
+        dest_station_id: { type: string }
+        seat_class: { type: string }
+        priority_score: { type: number }
+        priority_passenger: { type: boolean }
+        quantity: { type: integer }
+        created_at: { type: string, format: date-time }
+
+    WaitlistListResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            pending:
+              type: array
+              items: { $ref: "#/components/schemas/WaitlistEntry" }
+
+    WaitlistMatchResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            matched:
+              type: array
+              items:
+                type: object
+                properties:
+                  waitlist_id: { type: string, format: uuid }
+                  hold_id: { type: string }
+                  expires_at: { type: string, format: date-time }
+            still_pending: { type: integer }
+
+    # -----------------------------------------------------------------
+    # P7.4 — group seating
+    # -----------------------------------------------------------------
+    GroupQuoteRequest:
+      type: object
+      required: [service_run_id, origin_station_id, dest_station_id, seat_class, n_khach]
+      properties:
+        service_run_id: { type: string }
+        origin_station_id: { type: string }
+        dest_station_id: { type: string }
+        seat_class: { type: string }
+        n_khach: { type: integer, minimum: 2 }
+
+    GroupQuoteResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            kha_thi: { type: boolean }
+            seat_class: { type: string }
+            assignments:
+              type: array
+              items:
+                type: object
+                properties:
+                  seat_idx: { type: integer }
+                  seg_from: { type: integer }
+                  seg_to: { type: integer }
+                  ga_di: { type: string }
+                  ga_den: { type: string }
+                  seat_id: { type: string }
+            toa:
+              type: array
+              items: { type: integer }
+              description: Car indices used (fewest cars is the top-priority objective).
+            diem_lien_ke: { type: number, description: "0..1 — fraction of seats that are adjacent" }
+            so_lan_tach: { type: integer, description: "Number of distinct compartments used, minus 1" }
+            ghi_chu: { type: string }
+
+    # -----------------------------------------------------------------
+    # P7.6 — manual override
+    # -----------------------------------------------------------------
+    OverrideRequest:
+      type: object
+      required: [new_price_vnd, reason]
+      properties:
+        new_price_vnd: { type: integer, minimum: 1 }
+        reason: { type: string }
+        decided_by: { type: string, default: revenue_manager }
+
+    OverrideResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            offer_id: { type: string }
+            old_price_vnd: { type: integer }
+            new_price_vnd: { type: integer }
+            expires_at: { type: string, format: date-time }

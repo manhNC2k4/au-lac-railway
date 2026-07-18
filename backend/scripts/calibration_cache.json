@@ -1,0 +1,25 @@
+{
+  "source": "transactions+search_log thang=2026-06, SE1 LE, 2026-06-08..2026-06-22 (15 ngày), NGOI_MEM_DH cap=168/448",
+  "target_occ": {
+    "1": 0.3476,
+    "2": 0.4599,
+    "3": 0.552,
+    "4": 0.6262,
+    "5": 0.6286,
+    "6": 0.6687,
+    "7": 0.1563
+  },
+  "intensity": {
+    "1": 0.3796,
+    "2": 0.5063,
+    "3": 0.6148,
+    "4": 0.7039,
+    "5": 0.7083,
+    "6": 0.7603,
+    "7": 0.172
+  },
+  "confidence": 0.74,
+  "confidence_source": "1 - MASE_model/2, MASE_model=0.5145 (models/artifacts/bt1_feature_spec.json)",
+  "rho_t": 1.1,
+  "rho_t_source": "generated_data/data/trains.csv row SE1/LE"
+}

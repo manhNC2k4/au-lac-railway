@@ -1,0 +1,33 @@
+{
+  "lambda_per_day_scaled": {
+    "DHO|DNA": 1.3631,
+    "DHO|HUE": 0.7143,
+    "DHO|SGO": 0.7976,
+    "DNA|SGO": 3.5893,
+    "HNO|DHO": 1.6667,
+    "HNO|DNA": 5.9583,
+    "HNO|HUE": 3.3095,
+    "HNO|NBI": 0.7381,
+    "HNO|SGO": 2.2321,
+    "HNO|THO": 3.1131,
+    "HNO|VIN": 3.3631,
+    "HUE|DNA": 1.8571,
+    "HUE|SGO": 1.8274,
+    "NBI|DHO": 0.5417,
+    "NBI|DNA": 1.1429,
+    "NBI|HUE": 0.6786,
+    "NBI|SGO": 0.6726,
+    "NBI|THO": 0.369,
+    "NBI|VIN": 0.5179,
+    "THO|DHO": 0.9107,
+    "THO|DNA": 2.3512,
+    "THO|HUE": 1.2143,
+    "THO|SGO": 1.244,
+    "THO|VIN": 0.9643,
+    "VIN|DHO": 0.744,
+    "VIN|DNA": 3.7262,
+    "VIN|HUE": 1.4048,
+    "VIN|SGO": 1.244
+  },
+  "source": "search_log thang=2026-06, SE1, 2026-06-08..2026-06-22 (15 chuyến), scale 40/448"
+}
