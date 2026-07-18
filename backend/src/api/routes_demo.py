@@ -11,6 +11,7 @@ from datetime import date
 from fastapi import APIRouter
 
 from ..allocation import cache as allocation_cache
+from ..audit import log as audit_log
 from ..forecast import forecast, network
 from ..state.db import get_connection
 from .deps import SEED_DIR, get_clock, get_state_manager
@@ -90,7 +91,15 @@ def refresh_forecast(body: dict):
             )
     conn.commit()
     allocation_cache.refresh(service_run_id)
-    return {"message": "Forecast updated", "data": {"forecast_version": new["forecast_version"]}}
+
+    # P7.5 — persist divergence/alert của lần refresh này (trước bị log rồi bỏ, xem
+    # forecast.py::refresh_forecast); GET /demo/overview đọc lại bản mới nhất để cảnh báo.
+    audit_log.persist(conn, {"loai": "FORECAST", "input": {"forecast_version": new["forecast_version"]},
+                             "output": new["drift"],
+                             "explain": f"{len(new['drift']['alerts'])} đoạn lệch dự báo ≥{new['drift']['threshold']:.0%}",
+                             "model_version": "1.0"}, service_run_id)
+    return {"message": "Forecast updated", "data": {"forecast_version": new["forecast_version"],
+                                                     "drift_alerts": new["drift"]["alerts"]}}
 
 
 @router.get("/demo/overview")
@@ -123,6 +132,14 @@ def get_overview(service_run_id: str):
         )
         recent = [{"decision_id": r[0], "result": r[1], "final_price_vnd": r[2],
                    "explanation_code": r[3], "created_at": r[4].isoformat()} for r in cur.fetchall()]
+        # P7.5 — cảnh báo lệch dự báo của lần refresh gần nhất (rỗng nếu chưa refresh lần nào)
+        cur.execute(
+            """SELECT output FROM proposal_log WHERE service_run_id=%s AND loai='FORECAST'
+               ORDER BY id DESC LIMIT 1""",
+            (service_run_id,),
+        )
+        drift_row = cur.fetchone()
+        drift_alerts = drift_row[0].get("alerts", []) if drift_row else []
     conn.commit()
 
     return {"data": {
@@ -134,6 +151,7 @@ def get_overview(service_run_id: str):
         "bottlenecks": [{"segment_id": s, "occupancy": round(o, 3)} for s, o in bottlenecks],
         "underused": [{"segment_id": s, "occupancy": round(o, 3)} for s, o in underused],
         "recent_decisions": recent,
+        "drift_alerts": drift_alerts,
     }}
 
 

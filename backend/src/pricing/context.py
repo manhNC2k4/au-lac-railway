@@ -37,7 +37,7 @@ class PricingContext:
 class SafetyContext:
     """Người cao tuổi/khuyết tật/trẻ đi một mình → so_lan_doi_cho=0, chỉ same-seat."""
     passenger_type: str = "THUONG"        # THUONG | NGUOI_CAO_TUOI | NGUOI_KHUYET_TAT | ...
-    so_lan_doi_cho: int = 999             # ưu tiên ⇒ 0 (không bao giờ bị đổi ghế)
+    so_lan_doi_cho: int = 999             # ponytail: sentinel "chưa gán" (ưu tiên ⇒ 0, không bao giờ bị đổi ghế)
     entitlements: tuple[str, ...] = ()    # các doi_tuong CSXH đủ điều kiện
 
     @property

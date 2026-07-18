@@ -39,7 +39,7 @@ _logger = logging.getLogger(__name__)
 SEED_FORECAST_PATH = BACKEND_ROOT / "seed" / "forecast.json"
 CURVES_PATH = REPO_ROOT / "models" / "artifacts" / "bt1_booking_curves.json"
 
-BLEND_W = 0.5  # app.bt1_forecast.DemandModel.BLEND_W — cùng hệ số, một nguồn
+BLEND_W = 0.5  # nguồn: 4 (app.bt1_forecast.DemandModel.BLEND_W — cùng hệ số, một nguồn)
 
 
 def _load_curves(path: Path = CURVES_PATH) -> dict:
@@ -73,7 +73,7 @@ def _F(band: str, is_tet: bool, u: float) -> float:
     curves = _CURVES["curves"]
     F = curves.get(f"{band}|{int(is_tet)}") or curves.get(f"trung|{int(is_tet)}")
     ui = min(max(int(round(u)), 0), len(F) - 1)
-    return max(F[ui], 1e-4)
+    return max(F[ui], 1e-4)  # ponytail: chặn floor tránh chia 0 ở update()/divergence(), không phải số đo
 
 
 def compute_forecast(sold_by_segment: dict[int, int], capacity_by_segment: dict[int, int],
@@ -88,7 +88,7 @@ def compute_forecast(sold_by_segment: dict[int, int], capacity_by_segment: dict[
         tot_pickup = sold / F
         total = (1 - BLEND_W) * tot_seed + BLEND_W * tot_pickup
         remaining = max(total - sold, 0.0)
-        confidence = round(0.5 + 0.5 * F, 2)
+        confidence = round(0.5 + 0.5 * F, 2)  # ponytail: công thức confidence heuristic (nền 0.5 + nửa trọng số F)
         segments.append({"segment_id": seg_id, "forecast_remaining": round(remaining, 1),
                          "confidence": confidence})
     return {
@@ -108,12 +108,17 @@ def refresh_forecast(prev_forecast: dict, sold_by_segment: dict[int, int],
     Giữ nguyên `service_run_id`/`che_do_gia` của bản trước nếu bên gọi không override —
     bất biến trung tâm (Master §7.1): một offer dùng cùng bộ version, refresh chỉ tạo bản MỚI.
 
-    Ghi divergence log per-segment (P4 — tín hiệu bán chậm/nhanh hơn kỳ vọng, `app.bt1_forecast
-    .DemandModel.divergence` cùng công thức, anchor = seed thay vì HGB — xem module docstring)."""
+    Tính divergence per-segment (P4 — tín hiệu bán chậm/nhanh hơn kỳ vọng, `app.bt1_forecast
+    .DemandModel.divergence` cùng công thức, anchor = seed thay vì HGB — xem module docstring).
+    P7.5: trả kèm `drift` (per-segment + alert khi |lệch| vượt ngưỡng) thay vì chỉ log rồi bỏ —
+    caller (`routes_demo.py`) persist vào `proposal_log` + trả cảnh báo qua `GET /demo/overview`."""
+    from app.reallocation import DIV_THRESHOLD  # ngưỡng cảnh báo dùng chung với app.reallocation
+
     kw.setdefault("service_run_id", prev_forecast["service_run_id"])
     kw.setdefault("che_do_gia", prev_forecast.get("che_do_gia", "AI"))
     new = compute_forecast(sold_by_segment, capacity_by_segment, days_to_departure,
                            forecast_version=prev_forecast["forecast_version"] + 1, **kw)
+    divergence_by_segment, alerts = {}, []
     for seg_id, sold in sold_by_segment.items():
         tot_seed = _SEED_TOTALS.get(seg_id)
         if tot_seed is None:
@@ -121,7 +126,13 @@ def refresh_forecast(prev_forecast: dict, sold_by_segment: dict[int, int],
         band = _band(LEG_DISTANCE_KM.get(seg_id, 0.0))
         F = _F(band, kw.get("tet_window", False), days_to_departure)
         expected = tot_seed * F
-        divergence = (sold - expected) / max(expected, 1e-6)
+        divergence = (sold - expected) / max(expected, 1e-6)  # ponytail: chặn floor tránh chia 0
         _logger.info("forecast divergence seg=%s u=%.0f expected=%.1f actual=%s divergence=%+.0f%%",
                     seg_id, days_to_departure, expected, sold, divergence * 100)
+        divergence_by_segment[seg_id] = round(divergence, 4)
+        if abs(divergence) >= DIV_THRESHOLD:
+            alerts.append({"segment_id": seg_id, "divergence": round(divergence, 4),
+                           "expected_sold": round(expected, 1), "actual_sold": sold})
+    new["drift"] = {"divergence_by_segment": divergence_by_segment, "alerts": alerts,
+                    "threshold": DIV_THRESHOLD}
     return new

@@ -7,8 +7,10 @@ from pathlib import Path
 
 from ..state.clock import Clock
 from ..state.db import get_connection
-from ..state.errors import PolicyUnavailable
+from ..state.errors import Forbidden, PolicyUnavailable
 from ..state.seat_state_manager import SeatStateManager
+
+APPROVER_ROLES = {"revenue_manager", "admin"}
 
 SEED_DIR = Path(__file__).resolve().parent.parent.parent / "seed"
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -67,3 +69,11 @@ def set_clock(clock: Clock) -> None:
 def get_state_manager() -> SeatStateManager:
     conn = get_connection()
     return SeatStateManager(conn, _clock)
+
+
+def require_approver_role(actor_role: str | None) -> None:
+    """P7.2/P7.6 — chỉ `X-Actor-Role: revenue_manager|admin` được duyệt/ghi đè.
+    ponytail: header check thô, không phải RBAC thật — xem `state/errors.py::Forbidden`."""
+    if actor_role not in APPROVER_ROLES:
+        raise Forbidden(
+            f"Cần role revenue_manager/admin để thực hiện thao tác này (nhận: {actor_role!r})", {})

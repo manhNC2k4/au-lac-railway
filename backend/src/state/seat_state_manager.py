@@ -20,7 +20,7 @@ import psycopg
 from .clock import Clock
 from .errors import HoldExpired, SeatConflict, StaleSnapshot
 
-HOLD_TTL_SECONDS = 600  # 10 phút, khớp API_Contract "hold_expires_at ~10p sau"
+HOLD_TTL_SECONDS = 600  # nguồn: spec (docs/API_Contract.md — hold_expires_at ~10 phút sau)
 
 
 @dataclass
@@ -172,6 +172,12 @@ class SeatStateManager:
                 cur.execute("DELETE FROM seat_hold WHERE offer_id IN (SELECT offer_id FROM offer WHERE service_run_id=%s)", (service_run_id,))
                 cur.execute("DELETE FROM offer WHERE service_run_id=%s", (service_run_id,))
                 cur.execute("DELETE FROM seat_segment_state WHERE service_run_id=%s", (service_run_id,))
+                # P7: reset cũng dọn sạch bảng vận hành scoped theo service_run_id — nếu
+                # không, waitlist/quota/audit cũ từ trước reset sẽ tồn đọng và bị match()/
+                # rollback() nhầm là dữ liệu hiện hành của phiên mới.
+                cur.execute("DELETE FROM waiting_list WHERE service_run_id=%s", (service_run_id,))
+                cur.execute("DELETE FROM quota_version WHERE service_run_id=%s", (service_run_id,))
+                cur.execute("DELETE FROM proposal_log WHERE service_run_id=%s", (service_run_id,))
                 rows = [(service_run_id, seat_id, seg) for seat_id in seats for seg in range(1, n_segments + 1)]
                 cur.executemany(
                     """INSERT INTO seat_segment_state (service_run_id, seat_id, segment_id, status, version)

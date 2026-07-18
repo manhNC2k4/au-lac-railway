@@ -6,7 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from ..state.errors import DomainError
-from . import routes_backtests, routes_demo, routes_holds, routes_offers
+from . import (routes_allocation, routes_backtests, routes_demo, routes_group,
+              routes_holds, routes_offers, routes_waitlist)
 from .deps import load_models
 
 
@@ -31,3 +32,6 @@ app.include_router(routes_demo.router, prefix="/api/v1")
 app.include_router(routes_offers.router, prefix="/api/v1")
 app.include_router(routes_holds.router, prefix="/api/v1")
 app.include_router(routes_backtests.router, prefix="/api/v1")
+app.include_router(routes_group.router, prefix="/api/v1")
+app.include_router(routes_waitlist.router, prefix="/api/v1")
+app.include_router(routes_allocation.router, prefix="/api/v1")

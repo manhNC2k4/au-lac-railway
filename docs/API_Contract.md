@@ -2,7 +2,7 @@
 
 Tài liệu này đặc tả chi tiết các endpoints giao tiếp giữa Frontend (FE) và Backend (BE). Mọi request đều tuân theo chuẩn RESTful.
 
-> ⚠️ **Nguồn chân lý cuối cùng là `backend/openapi.yaml`.** File này đã đối chiếu lại với code thật (`backend/src/api/`) ngày 18/07/2026 sau khi P5 (ghép nhiều ghế) merge — mọi ví dụ JSON dưới đây là **output thật** chạy qua `TestClient`, không phải minh họa tay. Nếu có mâu thuẫn, `openapi.yaml` thắng.
+> ⚠️ **Nguồn chân lý cuối cùng là `backend/openapi.yaml`.** File này đã đối chiếu lại với code thật (`backend/src/api/`) ngày 18/07/2026, cập nhật thêm mục 6/7/8 + §3.4 sau khi P7 (tính năng vận hành: phân bổ/duyệt/rollback, hàng chờ, xếp nhóm, ghi đè giá) merge — mọi ví dụ JSON dưới đây là **output thật** chạy qua `TestClient`, không phải minh họa tay. Nếu có mâu thuẫn, `openapi.yaml` thắng.
 
 ## 1. Thông tin chung
 - **Base URL:** `/api/v1`
@@ -38,6 +38,9 @@ Tài liệu này đặc tả chi tiết các endpoints giao tiếp giữa Fronte
   | `OFFER_EXPIRED` | 410 | Offer quá `expires_at` |
   | `HOLD_EXPIRED` | 410 | Hold quá hạn thanh toán, ghế đã tự release |
   | `POLICY_UNAVAILABLE` | 503 | Pricing policy / forecast / DLP bid-price chưa sẵn sàng — fail closed |
+  | `RESOURCE_NOT_FOUND` | 404 | Không tìm thấy resource (`GET /backtests/{id}`, `GET /decisions/{id}`, `GET /allocation/{version}`) |
+  | `FORBIDDEN` | 403 | **(P7.2/P7.6, mới)** Header `X-Actor-Role` không phải `revenue_manager`/`admin` cho thao tác duyệt/ghi đè |
+  | `GUARDRAIL_VIOLATION` | 422 | **(P7.6, mới)** Giá override nằm ngoài dải `[floor_ratio, ceiling_ratio] × F0` |
 
 ---
 
@@ -315,6 +318,39 @@ Khóa **toàn bộ leg** trong `seat_plan` của offer (1 leg = same-seat, ≥2 
   ⚠️ `decision_record_id` luôn `null` trong response confirm (schema V1 `offer` không có cột này, khóa từ đầu, không sửa migration) — FE tra decision qua `POST /offers`' `decision_record_id` đã nhận trước đó, hoặc `GET /demo/overview`'s `recent_decisions`.
 - **Lỗi phổ biến:** `410 Gone` — Hold đã quá hạn thanh toán (10 phút), ghế đã tự release.
 
+### 3.4. Ghi đè giá thủ công (P7.6, mới)
+**`POST /offers/{offer_id}/override`**
+
+Điều độ viên (`revenue_manager`/`admin`) ghi đè `final_price_vnd` của một offer **TRONG** dải guardrail đã duyệt `[floor_ratio, ceiling_ratio] × F0` — bất biến "không bao giờ tự định giá ngoài dải đã duyệt" áp dụng cho cả override thủ công, không chỉ engine tự động. Chỉ override được khi offer **chưa có hold** (giá đã khoá lúc hold là bất khả xâm phạm — xem §3.2).
+
+- **Headers:** `X-Actor-Role: revenue_manager|admin` (required — kiểm qua header, **KHÔNG phải RBAC/JWT thật**, xem ghi chú `ponytail` trong `state/errors.py::Forbidden`)
+- **Request Body:**
+  ```json
+  { "new_price_vnd": 109000, "reason": "Khách VIP - đại lý yêu cầu giữ giá gốc", "decided_by": "nguyen_van_dieu_do" }
+  ```
+- **Response (200 OK)** — output thật:
+  ```json
+  {
+    "data": {
+      "offer_id": "offer_34f261613c42",
+      "old_price_vnd": 113000,
+      "new_price_vnd": 109000,
+      "expires_at": "2026-06-15T09:05:00+00:00"
+    }
+  }
+  ```
+- **Lỗi phổ biến:**
+  - `403 FORBIDDEN`: thiếu header hoặc role không phải `revenue_manager`/`admin`.
+  - `422 GUARDRAIL_VIOLATION`: giá đề nghị ngoài dải — output thật:
+    ```json
+    { "error_code": "GUARDRAIL_VIOLATION",
+      "message": "Giá override 545.000đ ngoài dải guardrail [59.950;174.400]đ",
+      "details": { "offer_id": "offer_34f261613c42", "floor": 59950, "ceiling": 174400, "requested": 545000 } }
+    ```
+  - `409 SEAT_CONFLICT`: offer đã có hold `ACTIVE`/`CONFIRMED` — `"Offer đã có hold — giá đã khoá bất khả xâm phạm, không override được"`.
+  - `503 POLICY_UNAVAILABLE`: chưa có `pricing_policy`/`fare_product` để tính dải guardrail.
+- Mọi lần override được ghi vào `proposal_log` (`loai=OVERRIDE`, kèm `reason`, giá cũ/mới, `decided_by` là `actor`) — truy vết qua audit, chưa có endpoint đọc riêng (dùng chung cơ chế `GET /decisions/{id}` không phủ override, xem §6 ghi chú).
+
 ---
 
 ## 4. API Khảo sát So sánh (Backtest)
@@ -362,3 +398,126 @@ Khóa **toàn bộ leg** trong `seat_plan` của offer (1 leg = same-seat, ≥2 
 - `web/` **chưa được xây** trong repo này — mục 3.1.1 và 3.2 là hợp đồng API sẵn sàng cho FE khi bắt đầu dựng disclosure UI.
 - Khi dựng UI ghép nhiều ghế: hiển thị RÕ trước khi khách bấm "đồng ý" — số lần đổi ghế (`so_lan_doi_cho`), ga đổi (`change_station_ids`), và toàn bộ `seat_plan` (từng leg seat_id + đoạn). Chỉ gọi `POST /holds` với `consent: true` SAU khi khách xác nhận — không tự động coi im lặng là đồng ý.
 - Hành khách thuộc diện ưu tiên (cao tuổi/khuyết tật/trẻ đi một mình) **luôn** gửi `priority_passenger: true` trong `POST /offers` — không hiển thị lựa chọn ghép ghế cho nhóm này (bất biến cứng, không phải gợi ý UX).
+
+---
+
+## 6. API Phân bổ & Hạn mức (P7.2, mới — Dành cho Điều độ viên)
+
+Đề xuất/duyệt/rollback hạn mức bán theo `(khu_gian, loại hành trình ngắn/trung/dài, lớp ghế)` — thuần workflow, **chưa enforce** `booking_limit` trong `/offers` (route hiện chỉ so giá vs bid DLP như trước, xem `allocation/reallocation.py` docstring).
+
+### 6.1. Đề xuất hạn mức mới
+**`POST /allocation/refresh?service_run_id=...`**
+
+Re-solve DLP (tái dùng cache P2, không giải LP lần 2), diff `booking_limit` cũ/mới → tạo bản `PENDING` mới.
+
+- **Response (201 Created)** — output thật (rút gọn, `quota` đủ 63 dòng = 7 đoạn × 3 loại hành trình × 3 lớp ghế):
+  ```json
+  {
+    "data": {
+      "version": 1,
+      "status": "PENDING",
+      "proposal": [],
+      "quota": [
+        { "khu_gian_id": 1, "loai_hanh_trinh": "ngan", "seat_class": "NGOI_MEM_DH", "quota": 5, "booking_limit": 5, "bid_price": 0 },
+        { "khu_gian_id": 1, "loai_hanh_trinh": "trung", "seat_class": "NGOI_MEM_DH", "quota": 0, "booking_limit": 30, "bid_price": 0 },
+        "... 61 dòng còn lại"
+      ]
+    }
+  }
+  ```
+  `proposal` rỗng ở bản đầu tiên (chưa có bản ACTIVE để so); từ bản thứ 2 trở đi liệt kê từng `{khu_gian_id, loai_hanh_trinh, seat_class, action: MO_THEM|SIET_LAI, limit_cu, limit_moi}`.
+- **Lỗi:** `503 POLICY_UNAVAILABLE` nếu DLP không giải được.
+
+### 6.2. Xem một bản hạn mức
+**`GET /allocation/{version}?service_run_id=...`** → `200` cùng shape §6.1, hoặc `404 RESOURCE_NOT_FOUND`.
+
+### 6.3. Duyệt / Từ chối / Rollback
+**`POST /allocation/{version}/approve|reject|rollback?service_run_id=...`**
+
+- **Headers:** `X-Actor-Role: revenue_manager|admin` bắt buộc — thiếu/sai → `403 FORBIDDEN`:
+  ```json
+  { "error_code": "FORBIDDEN", "message": "Cần role revenue_manager/admin để thực hiện thao tác này (nhận: 'user')", "details": {} }
+  ```
+- **Request Body:** `{ "decided_by": "nguyen_van_dieu_do" }` (chỉ là tên hiển thị trong audit — role được kiểm qua header, không qua field này).
+- **`approve`**: chỉ áp dụng cho bản `PENDING` → chuyển `ACTIVE`, bản `ACTIVE` cũ (nếu có) tự lùi về `ROLLED_BACK` (tại một thời điểm chỉ có đúng 1 bản `ACTIVE`).
+- **`reject`**: chỉ áp dụng cho bản `PENDING` → chuyển `REJECTED`.
+- **`rollback`**: áp dụng cho **bất kỳ** bản nào (kể cả đã `REJECTED`/`ROLLED_BACK` từ trước) → chuyển `ACTIVE`, dùng khi cần quay lại nhanh một bản cũ đã biết là đúng.
+- Không tìm thấy version hoặc version không ở đúng trạng thái nguồn (vd `approve` một bản đã `ACTIVE`) → `404 RESOURCE_NOT_FOUND`.
+- Mọi quyết định ghi vào `proposal_log` (`loai=ALLOCATION`) qua `audit/log.py::persist`.
+
+---
+
+## 7. API Hàng chờ thông minh (P7.3, mới)
+
+Bảng `waiting_list` (đã có sẵn từ schema V1). Điểm ưu tiên tất định, tái dùng đúng công thức `app.waitlist.WaitlistManager` (không dùng dữ liệu cá nhân để phân biệt giá): `score = 0.4·(F0 chuẩn hoá) + 0.3·1/(1+u) + 0.2·(bid chuẩn hoá) + 0.1·(cờ CSXH)`.
+
+### 7.1. Vào hàng chờ
+**`POST /waitlist`** — khách **chủ động** vào chờ sau khi `/offers` trả `422 NO_SAME_SEAT_OPTION` (không tự động thêm).
+
+- **Request Body:**
+  ```json
+  { "service_run_id": "SE1_2026-06-15_LE", "origin_station_id": "HNO", "dest_station_id": "NBI",
+    "seat_class": "NGOI_MEM_DH", "u": 10 }
+  ```
+- **Response (201 Created)** — output thật:
+  ```json
+  { "data": { "waitlist_id": "a4c6191f-ff00-476a-aa62-bac6cd08ac87", "priority_score": 0.0537, "status": "PENDING" } }
+  ```
+
+### 7.2. Xem hàng chờ
+**`GET /waitlist?service_run_id=...`** → danh sách `PENDING`, sắp theo `priority_score` giảm dần rồi `created_at` tăng dần:
+```json
+{ "data": { "pending": [
+  { "waitlist_id": "a4c6191f-...", "origin_station_id": "HNO", "dest_station_id": "NBI",
+    "seat_class": "NGOI_MEM_DH", "priority_score": 0.0537, "priority_passenger": false,
+    "quantity": 1, "created_at": "2026-07-18T08:25:35.190144+00:00" } ] } }
+```
+
+### 7.3. Khớp hàng chờ
+**`POST /waitlist/match?service_run_id=...`**
+
+Duyệt các entry `PENDING` theo score giảm dần; khớp được thì gọi lại **nguyên** pipeline `/offers` → `/holds` (không viết pipeline giá/CAS thứ hai) — có ghế thì tạo **Hold thật** để khách thanh toán trong TTL bình thường (10 phút), entry chuyển `MATCHED`. Chưa khớp được thì giữ `PENDING`, không phải lỗi.
+
+- **Response (200 OK)** — output thật:
+  ```json
+  { "data": { "matched": [
+      { "waitlist_id": "a4c6191f-...", "hold_id": "hold_d06e23c037f7", "expires_at": "2026-06-15T09:10:00+00:00" } ],
+    "still_pending": 0 } }
+  ```
+- ⚠️ **ponytail — không có worker nền trong demo này.** Endpoint là ops-trigger tường minh, gọi sau khi có hủy vé/hold hết hạn. Nâng cấp: cron/scheduler gọi định kỳ khi cần vận hành thật.
+
+---
+
+## 8. API Xếp nhóm (P7.4, mới)
+
+**`POST /group/quote`** — đề xuất ghế cùng toa/khoang cho nhóm/gia đình (CP-SAT, fallback greedy nếu thiếu `ortools`). **Thuần đề xuất — không giữ ghế**; khách đồng ý thì gọi `/offers` + `/holds` bình thường cho từng ghế trong `assignments`.
+
+- **Request Body:**
+  ```json
+  { "service_run_id": "SE1_2026-06-15_LE", "origin_station_id": "HNO", "dest_station_id": "NBI",
+    "seat_class": "NGOI_MEM_DH", "n_khach": 8 }
+  ```
+- **Response (200 OK)** — output thật (`n_khach=8`, 40 ghế còn trống hết → gọn 1 toa):
+  ```json
+  {
+    "data": {
+      "kha_thi": true,
+      "seat_class": "NGOI_MEM_DH",
+      "assignments": [
+        { "seat_idx": 7, "seg_from": 0, "seg_to": 1, "ga_di": "HNO", "ga_den": "NBI", "seat_id": "C01-S008" },
+        { "seat_idx": 8, "seg_from": 0, "seg_to": 1, "ga_di": "HNO", "ga_den": "NBI", "seat_id": "C01-S009" },
+        "... 6 ghế còn lại"
+      ],
+      "toa": [0],
+      "diem_lien_ke": 0.857,
+      "so_lan_tach": 2,
+      "ghi_chu": "greedy: 8 khách / 1 toa / 3 khoang, liền kề 86%"
+    }
+  }
+  ```
+  ⚠️ Môi trường không cài `ortools` thì luôn chạy nhánh `greedy` (fallback tự động, không lỗi) — ví dụ trên đo bằng `greedy`. `solver` trong `ghi_chu` đổi thành `CP-SAT` nếu môi trường có cài.
+- **Lỗi:** `422 NO_SAME_SEAT_OPTION` khi không đủ ghế trống suốt cho cả nhóm:
+  ```json
+  { "error_code": "NO_SAME_SEAT_OPTION", "message": "chỉ còn 19 ghế trống suốt, cần 100",
+    "details": { "origin_station_id": "THO", "dest_station_id": "DHO", "n_khach": 100 } }
+  ```

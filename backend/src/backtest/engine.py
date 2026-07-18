@@ -26,8 +26,8 @@ from src.backtest.seat_matrix import SegmentSeatMatrix
 
 # --- golden pre-state (§1 Master Plan) — cố định, dùng riêng cho test golden request,
 # KHÔNG dùng làm state khởi đầu của backtest 5-seed (xem run_seed: bắt đầu trống) ---
-GOLDEN_SEAT_IDX = 16  # C01-S017 (S001=idx0 .. S040=idx39)
-FULL_BOOKED_SEATS = 39  # toàn bộ 39 ghế còn lại đã bán trọn — đúng "quota" khiến baseline hết ghế trinh nguyên
+GOLDEN_SEAT_IDX = 16  # nguồn: spec — C01-S017 (S001=idx0 .. S040=idx39)
+FULL_BOOKED_SEATS = 39  # nguồn: spec — toàn bộ 39 ghế còn lại đã bán trọn (golden 40 ghế − 1 golden gap)
 
 
 def fixed_fare(distance_km: float) -> int:

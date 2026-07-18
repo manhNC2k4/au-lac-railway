@@ -30,7 +30,7 @@ YAML_PATH = (REPO_ROOT / "generated_data" / "Synthetic_DATA_guide"
 # tính từ search_log thang=2026-06 SE1 08..22/06 cho đúng 8 ga golden, scale 40/448) —
 # thay TARGET_TOTAL_REQUESTS=400 bịa cũ. Sinh lại: python backend/scripts/calibrate_backtest_lambda.py
 LAMBDA_CACHE_PATH = REPO_ROOT / "backend" / "scripts" / "backtest_lambda_cache.json"
-SEEDS = [20260717, 20260718, 20260719, 20260720, 20260721]
+SEEDS = [20260717, 20260718, 20260719, 20260720, 20260721]  # nguồn: spec — 5 seed đã commit (DoD "backtest ≥5 seeds")
 HORIZON_DAYS = 65.0  # nguồn: generated_data/data/calendar_events.csv ngay=2026-06-15, H_horizon (đợt HE_2026)
 
 
@@ -40,9 +40,9 @@ def _load_curves() -> list[dict]:
 
 
 def _curve_for_distance(curves: list[dict], d_km: float) -> dict:
-    if d_km >= 900:
+    if d_km >= 900:  # nguồn: 2 (YAML band DAI_THUONG, khớp app.config.BAND_EDGES)
         return curves[0]
-    if d_km >= 300:
+    if d_km >= 300:  # nguồn: 2 (YAML band TRUNG, khớp app.config.BAND_EDGES)
         return curves[1]
     return curves[2]
 

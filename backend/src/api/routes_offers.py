@@ -12,19 +12,20 @@ import json
 from datetime import date
 
 import numpy as np
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 
 from ..adapters import model_adapter
 from ..allocation import cache as allocation_cache
 from ..forecast import network
 from ..merging import resolver
+from ..offer import override as override_service
 from ..offer.service import OfferService
 from ..pricing.context import PricingContext
 from ..pricing.engine import PolicyUnavailableError, PricingEngine
 from ..state.db import get_connection
 from ..state.errors import AllocationRejected, NoSameSeatOption, PolicyUnavailable
-from .deps import SEED_DIR, get_clock, get_pricer, get_state_manager
-from .schemas import OfferRequest
+from .deps import SEED_DIR, get_clock, get_pricer, get_state_manager, require_approver_role
+from .schemas import OfferRequest, OverrideRequest
 
 router = APIRouter(tags=["booking"])
 
@@ -35,8 +36,7 @@ _SCENARIO = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
 # csxh table sống ở seed (bảng pricing_policy V1 không có cột csxh — không sửa migration P0).
 _SEED_POLICY = json.loads((SEED_DIR / "pricing_policy.json").read_text(encoding="utf-8"))
 
-# Cao điểm hè 2026: 15/05 → 16/08 (Master §1.1)
-PEAK_SUMMER = (date(2026, 5, 15), date(2026, 8, 16))
+PEAK_SUMMER = (date(2026, 5, 15), date(2026, 8, 16))  # nguồn: spec (Master §1.1 — cao điểm hè 2026)
 
 
 def seg_range(origin: str, dest: str) -> tuple[int, int]:
@@ -129,6 +129,14 @@ def create_offer(req: OfferRequest):
     segs = list(range(seg_from, seg_to + 1))
     cached_alloc = allocation_cache.get(req.service_run_id, matrix_version, forecast_version)
     if cached_alloc is None:
+        # matrix_version có thể vừa đổi do hold/expire (không tự refresh cache DLP — chỉ
+        # reset/forecast-refresh/allocation-refresh mới làm) => cache miss ở đây KHÔNG có
+        # nghĩa LP thật sự fail, chỉ là chưa tính cho version mới nhất. Thử tính lại 1 lần
+        # trước khi 503 hẳn — refresh() tự đọc seatmap/forecast MỚI NHẤT từ DB nên khớp
+        # đúng matrix_version/forecast_version đã snapshot ở bước 1.
+        allocation_cache.refresh(req.service_run_id)
+        cached_alloc = allocation_cache.get(req.service_run_id, matrix_version, forecast_version)
+    if cached_alloc is None:
         raise PolicyUnavailable(
             "Bid price DLP chưa sẵn sàng cho version hiện tại — cần reset/refresh forecast trước", {})
     bp_by_seg = cached_alloc["bid_price_theo_lop"].get(req.seat_class, [0] * network.N_SEGMENTS)
@@ -183,10 +191,12 @@ def create_offer(req: OfferRequest):
     with conn.cursor() as cur:
         cur.execute(
             """INSERT INTO offer (offer_id, service_run_id, matrix_version, forecast_version, policy_version,
-                                   decision, seat_plan, final_price_vnd, expires_at)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                   decision, seat_plan, final_price_vnd, expires_at,
+                                   origin_station_id, dest_station_id, seat_class)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (offer.offer_id, req.service_run_id, matrix_version, forecast_version, policy_version,
-             offer.decision, json.dumps(offer.seat_plan), pb.gia_cuoi_vnd, offer.expires_at),
+             offer.decision, json.dumps(offer.seat_plan), pb.gia_cuoi_vnd, offer.expires_at,
+             req.origin_station_id, req.dest_station_id, req.seat_class),
         )
         cur.execute(
             """INSERT INTO decision_record (decision_id, input_hash, versions, result, base_fare_vnd,
@@ -235,3 +245,14 @@ def create_offer(req: OfferRequest):
         "explanation": dr.explanation,
         "expires_at": offer.expires_at,
     }}
+
+
+@router.post("/offers/{offer_id}/override")
+def override_offer_price(offer_id: str, body: OverrideRequest,
+                         x_actor_role: str = Header(..., alias="X-Actor-Role")):
+    """P7.6 — điều độ viên ghi đè giá TRONG sàn-trần đã duyệt, chỉ khi offer chưa có
+    hold (giá đã khoá thì bất khả xâm phạm)."""
+    require_approver_role(x_actor_role)
+    conn = get_connection()
+    return {"data": override_service.override_price(conn, offer_id, body.new_price_vnd,
+                                                     body.reason, body.decided_by)}

@@ -56,3 +56,22 @@ class ConsentRequired(DomainError):
     """Ghép nhiều ghế (P5) — khách phải xác nhận đồng ý đổi chỗ trước khi /holds."""
     error_code = "CONSENT_REQUIRED"
     http_status = 422
+
+
+class GuardrailViolation(DomainError):
+    """P7.6 — manual override yêu cầu giá ngoài dải [floor_ratio, ceiling_ratio]·F0.
+    Bất biến "không bao giờ tự định giá ngoài dải đã duyệt" áp dụng CẢ cho override
+    thủ công, không chỉ engine tự động."""
+    error_code = "GUARDRAIL_VIOLATION"
+    http_status = 422
+
+
+class Forbidden(DomainError):
+    """P7.2/P7.6 — role không đủ quyền duyệt/ghi đè (kiểm qua header `X-Actor-Role`).
+
+    ponytail: đây LÀ header check thô, KHÔNG phải RBAC thật (không JWT/session, không
+    xác thực danh tính) — chỉ đủ để demo quy trình "cần role revenue_manager/admin mới
+    được duyệt". RBAC thật (đăng nhập, token, gắn với bảng `users` có sẵn) là việc lớn
+    hơn, ngoài phạm vi P7."""
+    error_code = "FORBIDDEN"
+    http_status = 403
