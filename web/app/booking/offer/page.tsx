@@ -20,7 +20,15 @@ export default function BookingOfferPage() {
   const [session, setSession] = useState<BookingSession | null>(null); const [consent, setConsent] = useState(false);
   const holdKey = useRef(newIdempotencyKey());
   useEffect(() => setSession(loadBookingSession()), []);
-  const hold = useMutation({ mutationFn: () => api.createHold({ offer_id:session!.offer.offer_id, expected_matrix_version:session!.offer.matrix_version, passenger_name:session!.passengerName, consent }, holdKey.current), onSuccess: data => { const next={...session!, hold:data, holdDeadline:apiDeadline(data.expires_at,600)}; saveBookingSession(next); router.push("/booking/hold"); } });
+  const hold = useMutation({ mutationFn: () => {
+    const passengerName = session!.passengerName.trim();
+    return api.createHold({
+      offer_id: session!.offer.offer_id,
+      expected_matrix_version: session!.offer.matrix_version,
+      ...(passengerName ? { passenger_name: passengerName } : {}),
+      consent,
+    }, holdKey.current);
+  }, onSuccess: data => { const next={...session!, hold:data, holdDeadline:apiDeadline(data.expires_at,600)}; saveBookingSession(next); router.push("/booking/hold"); } });
   if (!session) return <Missing />;
   const { offer, request } = session;
   return <PassengerPage><div className="space-y-4"><JourneyBanner request={request} /><BookingSteps current={2} />
