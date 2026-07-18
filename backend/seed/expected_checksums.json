@@ -1,9 +1,9 @@
 {
   "scenario_checksum": "fb307368be82383d6f8f67d5d36405e8b727c58d7b7579d30179034805867dd2",
-  "initial_bookings_checksum": "3f4935ea0d8a7e3700fbfb97b4337207b42eaeebae6501384fa7cd8ed5e9fc02",
+  "initial_bookings_checksum": "ad9b6e6a1ca00012ec4a63a00fb5f3355fe47bd00464d58a418b327b7ef84729",
   "fare_products_checksum": "726bb32a8ef1a624afb074900a6d7609059465a4a4f8fcb48d90b4294aa8f418",
   "pricing_policy_checksum": "b36ed32211360adaa9eab719ecbc7cc642c176bd98477635233f73045ebaa885",
-  "forecast_checksum": "328886f5f663af00114a4541982bd92b09155a650e44e3b74db5af252d1df78c",
+  "forecast_checksum": "d5065adb48f0a694cf1e1801a54fd4be629dbf842b01b8d2d72f4dd0cdc37984",
   "backtest_events_checksums": {
     "20260717": "c379ea47e4fbe6e65f5f579d74c8b062b55678603ed0b980114d4bdd2d631133",
     "20260718": "10daa2cf39de6eb2ae9f82d10c006f1e0a8e419edfe9b639715fc8a8836dd83d",

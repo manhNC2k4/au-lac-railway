@@ -1,7 +1,9 @@
 import { ApiError, type ApiErrorCode } from "@/lib/errors";
 import type {
   AnalyticsData, BacktestReportData, BacktestRequest, ConfirmData, DecisionDetailData,
-  HoldData, HoldRequest, OfferData, OfferRequest, OverviewData, ResetData, SeatmapData,
+  GroupQuoteData, GroupQuoteRequest, HoldData, HoldRequest, OfferData, OfferRequest,
+  OverrideData, OverrideRequest, OverviewData, QuotaVersionData, ResetData, SeatmapData,
+  WaitlistAddData, WaitlistAddRequest, WaitlistEntry, WaitlistMatchData,
 } from "./types";
 
 export interface AuLacApi {
@@ -17,6 +19,17 @@ export interface AuLacApi {
   confirmBooking(holdId: string, idempotencyKey: string): Promise<ConfirmData>;
   createBacktest(req: BacktestRequest): Promise<{ report_id: string }>;
   getBacktest(reportId: string): Promise<BacktestReportData>;
+  // P7 ops — client wired, no UI yet
+  overrideOfferPrice(offerId: string, req: OverrideRequest, actorRole: string): Promise<OverrideData>;
+  refreshAllocation(serviceRunId: string): Promise<QuotaVersionData>;
+  getAllocationVersion(version: number, serviceRunId: string): Promise<QuotaVersionData>;
+  approveAllocation(version: number, serviceRunId: string, decidedBy: string, actorRole: string): Promise<QuotaVersionData>;
+  rejectAllocation(version: number, serviceRunId: string, decidedBy: string, actorRole: string): Promise<QuotaVersionData>;
+  rollbackAllocation(version: number, serviceRunId: string, decidedBy: string, actorRole: string): Promise<QuotaVersionData>;
+  addWaitlist(req: WaitlistAddRequest): Promise<WaitlistAddData>;
+  listWaitlist(serviceRunId: string): Promise<{ pending: WaitlistEntry[] }>;
+  matchWaitlist(serviceRunId: string): Promise<WaitlistMatchData>;
+  quoteGroup(req: GroupQuoteRequest): Promise<GroupQuoteData>;
 }
 
 const KNOWN_CODES: ApiErrorCode[] = [
@@ -50,10 +63,12 @@ export function createHttpClient(baseUrl = ""): AuLacApi {
     const qs = params ? `?${new URLSearchParams(params)}` : "";
     return unwrap<T>(await fetch(`${root}${path}${qs}`, { cache: "no-store" }));
   };
-  const post = async <T>(path: string, body?: unknown, key?: string) => {
+  const post = async <T>(path: string, body?: unknown, key?: string, actorRole?: string, params?: Record<string, string>) => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (key) headers["Idempotency-Key"] = key;
-    return unwrap<T>(await fetch(`${root}${path}`, { method: "POST", headers, body: JSON.stringify(body ?? {}) }));
+    if (actorRole) headers["X-Actor-Role"] = actorRole;
+    const qs = params ? `?${new URLSearchParams(params)}` : "";
+    return unwrap<T>(await fetch(`${root}${path}${qs}`, { method: "POST", headers, body: JSON.stringify(body ?? {}) }));
   };
   return {
     mode: "http",
@@ -68,5 +83,19 @@ export function createHttpClient(baseUrl = ""): AuLacApi {
     confirmBooking: (id, key) => post(`/bookings/${encodeURIComponent(id)}/confirm`, {}, key),
     createBacktest: (req) => post("/backtests", req),
     getBacktest: (id) => get(`/backtests/${encodeURIComponent(id)}`),
+    overrideOfferPrice: (offerId, req, actorRole) =>
+      post(`/offers/${encodeURIComponent(offerId)}/override`, req, undefined, actorRole),
+    refreshAllocation: (service_run_id) => post("/allocation/refresh", {}, undefined, undefined, { service_run_id }),
+    getAllocationVersion: (version, service_run_id) => get(`/allocation/${version}`, { service_run_id }),
+    approveAllocation: (version, service_run_id, decided_by, actorRole) =>
+      post(`/allocation/${version}/approve`, { decided_by }, undefined, actorRole, { service_run_id }),
+    rejectAllocation: (version, service_run_id, decided_by, actorRole) =>
+      post(`/allocation/${version}/reject`, { decided_by }, undefined, actorRole, { service_run_id }),
+    rollbackAllocation: (version, service_run_id, decided_by, actorRole) =>
+      post(`/allocation/${version}/rollback`, { decided_by }, undefined, actorRole, { service_run_id }),
+    addWaitlist: (req) => post("/waitlist", req),
+    listWaitlist: (service_run_id) => get("/waitlist", { service_run_id }),
+    matchWaitlist: (service_run_id) => post("/waitlist/match", {}, undefined, undefined, { service_run_id }),
+    quoteGroup: (req) => post("/group/quote", req),
   };
 }

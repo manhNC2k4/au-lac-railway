@@ -48,7 +48,7 @@ export interface SeatmapData {
 
 export interface AnalyticsData {
   forecast_version: number;
-  forecasts: { segment_id: number; forecast_remaining: number; confidence: number }[];
+  forecasts: { segment_id: number; forecast_remaining: number; confidence: number | null }[];
   segment_loads: SegmentLoad[];
   allocations: { segment_id: number; bid_price_vnd: number }[];
 }
@@ -125,7 +125,7 @@ export interface OfferData {
 export interface HoldRequest {
   offer_id: string;
   expected_matrix_version: number;
-  passenger_name: string;
+  passenger_name?: string;
   consent: boolean;
 }
 
@@ -168,3 +168,97 @@ export interface BacktestReportData {
 
 export type DecisionDetailExtended = DecisionDetailData;
 export type BacktestReportExtended = BacktestReportData;
+
+// --- P7 ops (client wired, no UI yet) ---
+
+export interface QuotaRow {
+  khu_gian_id: number;
+  loai_hanh_trinh: "ngan" | "trung" | "dai";
+  seat_class: string;
+  quota: number;
+  booking_limit: number;
+  bid_price: number;
+}
+
+export interface QuotaProposalRow {
+  khu_gian_id: number;
+  loai_hanh_trinh: string;
+  seat_class: string;
+  action: "MO_THEM" | "SIET_LAI";
+  limit_cu: number;
+  limit_moi: number;
+}
+
+export interface QuotaVersionData {
+  version: number;
+  status: "PENDING" | "ACTIVE" | "REJECTED" | "ROLLED_BACK";
+  quota: QuotaRow[];
+  proposal: QuotaProposalRow[];
+  decided_by: string | null;
+  created_at: string;
+  decided_at: string | null;
+}
+
+export interface WaitlistAddRequest {
+  service_run_id: string;
+  origin_station_id: string;
+  dest_station_id: string;
+  seat_class: string;
+  quantity?: number;
+  u?: number;
+  priority_passenger?: boolean;
+  csxh_doi_tuong?: string;
+}
+
+export interface WaitlistAddData {
+  waitlist_id: string;
+  priority_score: number;
+  status: "PENDING";
+}
+
+export interface WaitlistEntry {
+  waitlist_id: string;
+  origin_station_id: string;
+  dest_station_id: string;
+  seat_class: string;
+  priority_score: number;
+  priority_passenger: boolean;
+  quantity: number;
+  created_at: string;
+}
+
+export interface WaitlistMatchData {
+  matched: { waitlist_id: string; hold_id: string; expires_at: string }[];
+  still_pending: number;
+}
+
+export interface GroupQuoteRequest {
+  service_run_id: string;
+  origin_station_id: string;
+  dest_station_id: string;
+  seat_class: string;
+  n_khach: number;
+}
+
+export interface GroupQuoteData {
+  kha_thi: boolean;
+  seat_class: string;
+  assignments: { seat_idx: number; seg_from: number; seg_to: number; ga_di: string; ga_den: string; seat_id: string }[];
+  toa: number[];
+  diem_lien_ke: number;
+  so_lan_tach: number;
+  ghi_chu: string;
+}
+
+export interface OverrideRequest {
+  new_price_vnd: number;
+  reason: string;
+  decided_by?: string;
+}
+
+export interface OverrideData {
+  offer_id: string;
+  old_price_vnd: number;
+  new_price_vnd: number;
+  expires_at: string;
+}
