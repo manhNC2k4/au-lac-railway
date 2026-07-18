@@ -6,6 +6,8 @@ export const qk = {
   decision: (decisionId: string) => ["decision", decisionId] as const,
   backtest: (reportId: string) => ["backtest", reportId] as const,
   compliance: (serviceRunId: string) => ["compliance", serviceRunId] as const,
+  runs: () => ["runs"] as const,
+  runStops: (serviceRunId: string) => ["runStops", serviceRunId] as const,
 } as const;
 
 /** Nhóm key bị ảnh hưởng khi ma trận ghế đổi (hold/confirm/reset). */

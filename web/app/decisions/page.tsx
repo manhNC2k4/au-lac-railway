@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { BrainCircuit, ChevronRight } from "lucide-react";
 import { getApi, qk } from "@/api";
-import { GOLDEN } from "@/lib/constants";
+import { useCurrentRun } from "@/lib/current-run";
 import { formatDemoTime } from "@/lib/format";
 import { ErrorState } from "@/components/error-state";
 import { PageSkeleton } from "@/components/ui/skeleton";
@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 /** Danh sách quyết định AI — cổng vào màn Chi tiết quyết định (S05). */
 export default function DecisionsIndexPage() {
   const api = getApi();
+  const { serviceRunId } = useCurrentRun();
   const overview = useQuery({
-    queryKey: qk.overview(GOLDEN.serviceRunId),
-    queryFn: () => api.getOverview(GOLDEN.serviceRunId),
+    queryKey: qk.overview(serviceRunId),
+    queryFn: () => api.getOverview(serviceRunId),
   });
 
   if (overview.isPending) return <PageSkeleton />;
@@ -35,7 +36,7 @@ export default function DecisionsIndexPage() {
       </div>
 
       <Card>
-        <CardHeader title="Quyết định gần đây" subtitle={`Chuyến ${GOLDEN.serviceRunId}`} />
+        <CardHeader title="Quyết định gần đây" subtitle={`Chuyến ${serviceRunId}`} />
         <CardBody className="p-0">
           {decisions.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-5 py-14 text-center">

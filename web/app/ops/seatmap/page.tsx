@@ -4,7 +4,8 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Crosshair, Database, Filter, X, ChevronDown } from "lucide-react";
 import { getApi, qk, type SeatmapSeat } from "@/api";
-import { GOLDEN, SEGMENTS, segmentStations } from "@/lib/constants";
+import { GOLDEN } from "@/lib/constants";
+import { segmentLabel, useCurrentRun } from "@/lib/current-run";
 import { ErrorState } from "@/components/error-state";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ const FILTERS: { value: StatusFilter; label: string }[] = [
 
 export default function SeatmapPage() {
   const api = getApi();
-  const serviceRunId = GOLDEN.serviceRunId;
+  const { serviceRunId, segments } = useCurrentRun();
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [techOpen, setTechOpen] = useState(true);
   const [selected, setSelected] = useState<{
@@ -78,7 +79,7 @@ export default function SeatmapPage() {
       {/* Tuyến ga + phiên bản dữ liệu */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
-          <RouteBar />
+          <RouteBar segments={segments} />
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2.5 text-[13px] font-medium text-ink">
           <Database className="h-4 w-4 text-primary" aria-hidden />
@@ -127,7 +128,7 @@ export default function SeatmapPage() {
             <SeatHeatmap
               ref={goldenRowRef}
               seats={filteredSeats}
-              segments={SEGMENTS.map((segment) => ({ segment_id: segment.id }))}
+              segments={segments}
               highlightSeatId={GOLDEN.goldenSeatId}
               selected={selected ? { seatId: selected.seat.seat_id!, segmentId: selected.segmentId } : null}
               onCellSelect={(seat, segmentId, state) => setSelected({ seat, segmentId, state })}
@@ -161,7 +162,7 @@ export default function SeatmapPage() {
                     <span className="text-[15px] font-semibold tabular-nums text-ink">{selected.seat.seat_id}</span>
                   </DetailRow>
                   <DetailRow label="Chặng">
-                    <span className="font-medium text-ink">{segmentStations(selected.segmentId)}</span>
+                    <span className="font-medium text-ink">{segmentLabel(segments, selected.segmentId)}</span>
                   </DetailRow>
                   <DetailRow label="Trạng thái">
                     <StatusBadge status={selected.state} label={cellLabel(selected.state)} />
@@ -189,11 +190,12 @@ export default function SeatmapPage() {
                   </DetailRow>
                   <DetailRow label="Segment ID">
                     <span className="font-mono text-[12.5px] text-ink">
-                      {SEGMENTS[selected.segmentId - 1].from}-{SEGMENTS[selected.segmentId - 1].to}
+                      {segments.find((s) => s.segment_id === selected.segmentId)?.from.station_id ?? "—"}-
+                      {segments.find((s) => s.segment_id === selected.segmentId)?.to.station_id ?? "—"}
                     </span>
                   </DetailRow>
                   <DetailRow label="Service run ID">
-                    <span className="font-mono text-[12px] text-ink">{GOLDEN.serviceRunId}</span>
+                    <span className="font-mono text-[12px] text-ink">{serviceRunId}</span>
                   </DetailRow>
                 </CardBody>
               )}
