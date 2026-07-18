@@ -1,0 +1,49 @@
+# BE3 · Luật giá KHAI BÁO (không hard-code Python) — DEV3 §Bẫy #3, generated_data CLAUDE.md.
+# Rule engine đọc file này, áp theo `thu_tu` tăng dần, nhân dồn `he_so` lên F0 (giá gốc O-D),
+# và GHI LẠI mỗi rule đã bắn -> đây chính là audit trail + XAI (liệt kê luật, không cần SHAP).
+#
+# Điều kiện (`when`): mỗi key so với thuộc tính PricingContext.
+#   key            -> bằng đúng (eq)         ví dụ  che_do_gia: AI
+#   key + _gte/_lte-> >= / <=                ví dụ  lead_time_days_gte: 20
+#   key: true/false-> thuộc tính boolean
+# `he_so` > 1 = phụ thu, < 1 = giảm. Thứ tự phép toán khớp class Pricer (generate_data.py:421).
+# CSXH KHÔNG ở đây — nó áp SAU guardrail bằng `max`, xem policy_constraints.yaml.
+
+version: 1
+rules:
+  - rule_id: R_MUA_VU_HE2026
+    mo_ta: "Cao điểm hè 2026 (15/05–30/06): +7.5%"
+    thu_tu: 1
+    when: {peak_summer: true}
+    he_so: 1.075
+
+  - rule_id: R_TET_CAO_DIEM
+    mo_ta: "Cửa sổ Tết (|tau|<=21 ngày): +4.5%"
+    thu_tu: 1
+    when: {tet_window: true}
+    he_so: 1.045
+
+  - rule_id: R_HE2026_XA_NGAY
+    mo_ta: "Xả ngày chặng dài đặt sớm (AI, lead>=20, >=900km): -8%"
+    thu_tu: 2
+    when: {che_do_gia: AI, lead_time_days_gte: 20, distance_km_gte: 900}
+    he_so: 0.92
+
+  - rule_id: R_SAT_NGAY
+    mo_ta: "Sát ngày (lead<=3): phụ thu +6%"
+    thu_tu: 3
+    when: {lead_time_days_lte: 3}
+    he_so: 1.06
+
+  - rule_id: R_AI_LINH_HOAT
+    mo_ta: "Giá linh hoạt AI: giảm chặng chưa lấp đầy để lấp ghế rỗng"
+    thu_tu: 4
+    when: {che_do_gia: AI, load_factor_route_lte: 0.75}
+    he_so: 0.85
+
+  - rule_id: R_GIO_CHOT
+    mo_ta: "Phụ thu giờ chót AI (lead=0, ngày khởi hành): +70% — cố ý VƯỢT trần 1.6
+      để guardrail clamp thật (DoD 'có case vượt ceiling', S06 hiển thị TRAN)"
+    thu_tu: 5
+    when: {che_do_gia: AI, lead_time_days_lte: 0}
+    he_so: 1.7

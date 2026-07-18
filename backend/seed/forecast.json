@@ -1,0 +1,55 @@
+{
+  "service_run_id": "SE1_2026-06-15_LE",
+  "forecast_version": 1,
+  "segments": [
+    {
+      "segment_id": 1,
+      "seat_class": "NGOI_MEM_DH",
+      "remaining_capacity": 25,
+      "forecast_remaining_demand": 15.0,
+      "confidence": 0.85
+    },
+    {
+      "segment_id": 2,
+      "seat_class": "NGOI_MEM_DH",
+      "remaining_capacity": 25,
+      "forecast_remaining_demand": 15.0,
+      "confidence": 0.85
+    },
+    {
+      "segment_id": 3,
+      "seat_class": "NGOI_MEM_DH",
+      "remaining_capacity": 14,
+      "forecast_remaining_demand": 8.4,
+      "confidence": 0.85
+    },
+    {
+      "segment_id": 4,
+      "seat_class": "NGOI_MEM_DH",
+      "remaining_capacity": 28,
+      "forecast_remaining_demand": 16.8,
+      "confidence": 0.85
+    },
+    {
+      "segment_id": 5,
+      "seat_class": "NGOI_MEM_DH",
+      "remaining_capacity": 26,
+      "forecast_remaining_demand": 15.6,
+      "confidence": 0.85
+    },
+    {
+      "segment_id": 6,
+      "seat_class": "NGOI_MEM_DH",
+      "remaining_capacity": 26,
+      "forecast_remaining_demand": 15.6,
+      "confidence": 0.85
+    },
+    {
+      "segment_id": 7,
+      "seat_class": "NGOI_MEM_DH",
+      "remaining_capacity": 26,
+      "forecast_remaining_demand": 15.6,
+      "confidence": 0.85
+    }
+  ]
+}

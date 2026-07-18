@@ -15,3 +15,9 @@ demo/eda_out/
 
 # Folder gói nộp (bản sao của integration/ + note để zip gửi — không commit trùng)
 DELIVERY_algomodel/
+__pycache__/
+*.pyc
+.venv/
+# Word lock files
+~$*
+docs/~$*

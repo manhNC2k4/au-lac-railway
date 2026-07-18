@@ -1,0 +1,26 @@
+{
+  "policy_id": "pp_v1",
+  "service_run_id": "SE1_2026-06-15_LE",
+  "floor_ratio": 0.55,
+  "ceiling_ratio": 1.6,
+  "max_delta_ratio": 0.05,
+  "csxh": [
+    {
+      "doi_tuong": "NGUOI_CAO_TUOI",
+      "muc_giam_ty_le": 0.15
+    },
+    {
+      "doi_tuong": "NGUOI_KHUYET_TAT",
+      "muc_giam_ty_le": 0.25
+    },
+    {
+      "doi_tuong": "TRE_EM",
+      "muc_giam_ty_le": 0.1
+    },
+    {
+      "doi_tuong": "NGUOI_CO_CONG",
+      "muc_giam_ty_le": 0.3
+    }
+  ],
+  "policy_version": 1
+}
