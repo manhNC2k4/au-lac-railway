@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
 COPY models/artifacts/ ./models/artifacts/
+COPY integration/ ./integration/
 COPY backend/ ./backend/
 
 WORKDIR /app/backend

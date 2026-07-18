@@ -7,7 +7,6 @@ plans/
 docs/
 eval/
 tests/
-integration/
 __pycache__/
 *.pyc
 .pytest_cache/
