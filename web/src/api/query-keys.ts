@@ -7,6 +7,7 @@ export const qk = {
   backtest: (reportId: string) => ["backtest", reportId] as const,
   compliance: (serviceRunId: string) => ["compliance", serviceRunId] as const,
   runs: () => ["runs"] as const,
+  stations: () => ["stations"] as const,
   runStops: (serviceRunId: string) => ["runStops", serviceRunId] as const,
 } as const;
 
