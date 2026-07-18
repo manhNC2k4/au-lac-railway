@@ -34,8 +34,11 @@ export function CurrentRunProvider({ children }: { children: React.ReactNode }) 
     staleTime: 60_000,
   });
   const runs = runsQuery.data?.runs ?? [];
-  // /demo/runs sắp xếp tăng dần theo service_date — mặc định lấy chuyến gần nhất (cuối danh sách).
-  const serviceRunId = selected ?? runs[runs.length - 1]?.service_run_id ?? GOLDEN.serviceRunId;
+  // Mặc định vào golden run (duy nhất có forecast/DLP cache đầy đủ) — KHÔNG lấy "cuối danh
+  // sách /demo/runs": DB hiện mock-load ~500 chuyến/tháng (invariant SUSPENDED), tuyệt đại
+  // đa số chưa được tính forecast confidence/allocation cache nên "gần nhất theo ngày" toàn
+  // ra dữ liệu rỗng (confidence=null, bid=0). Picker vẫn cho chọn tay bất kỳ chuyến nào.
+  const serviceRunId = selected ?? GOLDEN.serviceRunId;
 
   const stopsQuery = useQuery({
     queryKey: qk.runStops(serviceRunId),

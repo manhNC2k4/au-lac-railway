@@ -70,7 +70,7 @@ export default function DecisionsIndexPage() {
                       <td className="px-3 py-3 tabular-nums text-muted">{formatDemoTime(r.created_at)}</td>
                       <td className="px-5 py-3 text-right">
                         <Link
-                          href={`/decisions/${r.decision_id}`}
+                          href={`/admin/decisions/${r.decision_id}`}
                           className="inline-flex min-h-[36px] items-center gap-1 rounded-lg border border-primary/30 px-3 text-[13px] font-medium text-primary hover:bg-primary-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                         >
                           Xem chi tiết <ChevronRight className="h-4 w-4" aria-hidden />
