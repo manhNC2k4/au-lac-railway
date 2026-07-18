@@ -16,7 +16,7 @@ from app.bt2_ssm import SeatStateMatrix
 from app.bt4_merge import find_options
 from app.bt5_pricing import VOLATILITY_CAP, Pricer
 from app.contracts import PassengerProfile
-from app.config import DA_BAN, TRONG
+from app.config import DA_BAN, TRONG, make_chuyen_id
 
 DATE, TRAIN = "2026-02-14", "SE1"
 _ssm_cache = {}
@@ -32,7 +32,7 @@ def get_ssm():
 
 def lfr(pr, ssm):
     from app.bt3_allocation import load_factor_route
-    return load_factor_route(ssm, f"{TRAIN}_{DATE}", "HNO", "DNA")
+    return load_factor_route(ssm, make_chuyen_id(TRAIN, DATE), "HNO", "DNA")
 
 
 CTX = {"che_do_gia": "LUAT", "tau_tet": -3, "dot_ban_ve": "TET_2026", "dow": 5, "la_le": True}
@@ -87,12 +87,12 @@ def test_uu_tien_khong_ghep():
     ssm = get_ssm()
     for prof in (PassengerProfile(cao_tuoi=True), PassengerProfile(khuyet_tat=True),
                  PassengerProfile(tre_di_mot_minh=True), PassengerProfile(can_ho_tro=True)):
-        r = find_options(ssm, f"{TRAIN}_{DATE}", "NGOI_MEM_DH", "HNO", "DNA", prof)
+        r = find_options(ssm, make_chuyen_id(TRAIN, DATE), "NGOI_MEM_DH", "HNO", "DNA", prof)
         assert not any(o["loai"] == "ghep_nhieu" for o in r["phuong_an"])
 
 
 def test_ghep_co_disclosure_va_dwell():
-    r = find_options(get_ssm(), f"{TRAIN}_{DATE}", "NGOI_MEM_DH", "HNO", "DNA",
+    r = find_options(get_ssm(), make_chuyen_id(TRAIN, DATE), "NGOI_MEM_DH", "HNO", "DNA",
                      PassengerProfile())
     merges = [o for o in r["phuong_an"] if o["loai"] == "ghep_nhieu"]
     for o in merges:

@@ -15,7 +15,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from app.config import (DA_BAN, DANG_GIU, DATA, MACRO_CLASS, SEAT_CLASSES, TRONG)
+from app.config import (DA_BAN, DANG_GIU, DATA, MACRO_CLASS, SEAT_CLASSES, TRONG,
+                        mac_tau_of)
 
 _TC = re.compile(r"TC\d+$")   # SE1TC3 -> SE1 (chuyến tăng cường dùng sức chứa tàu gốc)
 
@@ -26,7 +27,9 @@ class SeatStateMatrix:
         self.data_dir = Path(data_dir)
         self.st = st
         self.st_idx = {r.ga_id: i for i, r in st.iterrows()}
-        self.trains = pd.read_csv(data_dir / "trains.csv").set_index("mac_tau")
+        # data V2 có dòng lặp y hệt theo mac_tau -> dedupe để .loc trả Series
+        self.trains = (pd.read_csv(data_dir / "trains.csv")
+                       .drop_duplicates("mac_tau").set_index("mac_tau"))
         self._store: dict[tuple[str, str], np.ndarray] = {}   # (chuyen_id, cls) -> matrix int8
         self._span: dict[str, tuple[int, int]] = {}           # chuyen_id -> (lo, hi) ga idx
         self._holds: list[dict] = []                          # giữ chỗ có hạn (A2)
@@ -42,7 +45,7 @@ class SeatStateMatrix:
     def _ensure(self, chuyen_id: str):
         if chuyen_id in self._span:
             return
-        mac_tau = chuyen_id.rsplit("_", 1)[0]
+        mac_tau = mac_tau_of(chuyen_id)
         row = self._base_train(mac_tau)
         lo, hi = sorted((self.st_idx[row.ga_dau], self.st_idx[row.ga_cuoi]))
         self._span[chuyen_id] = (lo, hi)

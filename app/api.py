@@ -28,7 +28,7 @@ from app.bt2_ssm import SeatStateMatrix
 from app.bt3_allocation import analyze_run, load_factor_route
 from app.bt4_merge import find_options
 from app.bt5_pricing import Pricer
-from app.config import DATA
+from app.config import DATA, mac_tau_of
 
 app = FastAPI(title="Au Lac Railway — 5 sub-problems", version="1.0")
 
@@ -171,7 +171,7 @@ def bt5_price(r: PriceReq):
     ssm = get_ssm(r.ngay_chay, r.mac_tau_filter)
     lf = load_factor_route(ssm, r.chuyen_id, r.ga_di, r.ga_den)
     ctx = _ctx(r.ngay_chay)
-    mac_tau = r.chuyen_id.rsplit("_", 1)[0]
+    mac_tau = mac_tau_of(r.chuyen_id)
     return _pricer.quote(mac_tau, r.ga_di, r.ga_den, r.tier, ctx, lf, r.policy)
 
 
@@ -187,7 +187,7 @@ def booking_quote(r: BookingReq):
     chosen = opts["phuong_an"][0]
     lf = load_factor_route(ssm, r.chuyen_id, r.ga_di, r.ga_den)
     ctx = _ctx(r.ngay_chay)
-    mac_tau = r.chuyen_id.rsplit("_", 1)[0]
+    mac_tau = mac_tau_of(r.chuyen_id)
     price = _pricer.quote(mac_tau, r.ga_di, r.ga_den, r.tier, ctx, lf, r.policy)
     return {"kha_thi": True, "phuong_an_ghe_chon": chosen,
             "tat_ca_phuong_an": opts["phuong_an"], "dinh_gia": price}

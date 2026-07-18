@@ -23,7 +23,7 @@ except ImportError:
     HAS_SCIPY = False
 
 from app.config import (BAND_EDGES, BAND_LABELS, BOTTLENECK_LF, SEAT_CLASSES,
-                        SLACK_LF, TRONG)
+                        SLACK_LF, TRONG, mac_tau_of)
 from app.contracts import ProposalLog, QuotaRow, SegmentLoad
 
 # map nhãn seat_class của BT1 (NGOI/K6/K4) -> macro class của SSM
@@ -58,7 +58,7 @@ def _od_candidates(ssm, pricer, chuyen_id, forecast, cls, remaining_cls):
     (UB = chỗ trống) nhưng bid price khi đó VÔ NGHĨA về khan hiếm => caller phải
     zero-out (không có dự báo = không có thông tin khan hiếm, không được ép giá)."""
     lo, hi = ssm._span[chuyen_id]
-    mac_tau = chuyen_id.rsplit("_", 1)[0]
+    mac_tau = mac_tau_of(chuyen_id)
     tier0 = {"NGOI_MEM_DH": "NGOI_MEM_DH", "NAM_K6": "NAM_K6_T2", "NAM_K4": "NAM_K4_T1"}[cls]
     fc_lookup = {}
     if forecast is not None and len(forecast):

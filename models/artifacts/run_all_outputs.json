@@ -1,161 +1,46 @@
 {
   "bt1": {
-    "sample_forecast": 117.836,
+    "sample_forecast": 9.838,
     "metrics": {
-      "test_rows": 507764,
-      "MASE_model": 0.5145,
-      "MASE_baseline_pickup": 0.7961,
-      "poisson_deviance_model": 0.3932,
-      "bias_model_pct": -0.056,
-      "n_iter": 600
+      "test_rows": 543707,
+      "MASE_model": 0.5395,
+      "MASE_baseline_pickup": 1.305,
+      "poisson_deviance_model": 0.2772,
+      "bias_model_pct": -0.0507,
+      "n_iter": 189
     }
   },
   "scenario_A_AI": {
     "ngay": "2026-05-20",
-    "chuyen_id": "SE7_2026-05-20",
+    "chuyen_id": "RUN:SE7:2026-05-20",
     "ga_di": "HNO",
     "ga_den": "DNA",
     "tier": "NAM_K4_T1",
     "bt2_lf": {
-      "mean": 0.535,
-      "min": 0.299,
-      "max": 0.704
+      "mean": 0.51,
+      "min": 0.057,
+      "max": 0.781
     },
     "bt3": {
-      "lf_bq": 0.5353,
+      "lf_bq": 0.5099,
       "so_doan_nghen": 0,
-      "so_doan_trong": 4,
-      "z_opt_dlp": 408967377
-    },
-    "bt4_phuong_an": [
-      {
-        "loai": "xuyen_suot",
-        "seat_class": "NAM_K4",
-        "ghe_theo_doan": [
-          {
-            "seat_idx": 64,
-            "seg_from": 0,
-            "seg_to": 13,
-            "ga_di": "HNO",
-            "ga_den": "DNA"
-          }
-        ],
-        "so_lan_doi_cho": 0,
-        "ga_doi": [],
-        "can_doi_cho": false,
-        "can_khach_chap_nhan": false,
-        "dwell_du": true,
-        "cung_hang_cho": true,
-        "rank": 1,
-        "do_khit": null,
-        "ghi_chu": "48 ghế pristine khả dụng"
-      },
-      {
-        "loai": "gap_khit",
-        "seat_class": "NAM_K4",
-        "ghe_theo_doan": [
-          {
-            "seat_idx": 58,
-            "seg_from": 0,
-            "seg_to": 13,
-            "ga_di": "HNO",
-            "ga_den": "DNA"
-          }
-        ],
-        "so_lan_doi_cho": 0,
-        "ga_doi": [],
-        "can_doi_cho": false,
-        "can_khach_chap_nhan": false,
-        "dwell_du": true,
-        "cung_hang_cho": true,
-        "rank": 2,
-        "do_khit": 0,
-        "ghi_chu": "lấp gap, biên trống thừa=0 đoạn"
-      },
-      {
-        "loai": "gap_khit",
-        "seat_class": "NAM_K4",
-        "ghe_theo_doan": [
-          {
-            "seat_idx": 62,
-            "seg_from": 0,
-            "seg_to": 13,
-            "ga_di": "HNO",
-            "ga_den": "DNA"
-          }
-        ],
-        "so_lan_doi_cho": 0,
-        "ga_doi": [],
-        "can_doi_cho": false,
-        "can_khach_chap_nhan": false,
-        "dwell_du": true,
-        "cung_hang_cho": true,
-        "rank": 3,
-        "do_khit": 0,
-        "ghi_chu": "lấp gap, biên trống thừa=0 đoạn"
-      }
-    ],
-    "bt5_dinh_gia": {
-      "gia_de_xuat": 592612,
-      "gia_goc_F0": 761399,
-      "gia_mua_vu": 761399,
-      "delta_mua": 0.0,
-      "delta_dong": -0.2217,
-      "bid_price_route": 0,
-      "rule_ids": [
-        "AI_DISCOUNT:0.222"
-      ],
-      "giai_thich": "giá giảm -22% (AI xả chỗ ế sát ngày u=10) vì đoạn HNO→PLY chỉ lấp 32%",
-      "thanh_phan": [
-        {
-          "buoc": "mua_vu",
-          "delta": 0.0,
-          "gia": 761399
-        },
-        {
-          "buoc": "dong",
-          "delta": -0.2217,
-          "bp_route": 0,
-          "lf_max": 0.668,
-          "lf_min": 0.321,
-          "gia": 592612
-        }
-      ],
-      "held": false,
-      "csxh_muc": 0.0
-    }
-  },
-  "scenario_B_TET_merge": {
-    "ngay": "2026-02-14",
-    "chuyen_id": "SE1_2026-02-14",
-    "ga_di": "HNO",
-    "ga_den": "DNA",
-    "tier": "NGOI_MEM_DH",
-    "bt2_lf": {
-      "mean": 0.722,
-      "min": 0.424,
-      "max": 0.911
-    },
-    "bt3": {
-      "lf_bq": 0.722,
-      "so_doan_nghen": 10,
-      "so_doan_trong": 0,
-      "z_opt_dlp": 236648746
+      "so_doan_trong": 7,
+      "z_opt_dlp": 379444823
     },
     "bt4_phuong_an": [
       {
         "loai": "ghep_nhieu",
-        "seat_class": "NGOI_MEM_DH",
+        "seat_class": "NAM_K4",
         "ghe_theo_doan": [
           {
-            "seat_idx": 167,
+            "seat_idx": 79,
             "seg_from": 0,
             "seg_to": 12,
             "ga_di": "HNO",
             "ga_den": "HUE"
           },
           {
-            "seat_idx": 30,
+            "seat_idx": 19,
             "seg_from": 12,
             "seg_to": 13,
             "ga_di": "HUE",
@@ -176,30 +61,96 @@
       }
     ],
     "bt5_dinh_gia": {
-      "gia_de_xuat": 688094,
+      "gia_de_xuat": 752529,
+      "gia_goc_F0": 761399,
+      "gia_mua_vu": 761399,
+      "delta_mua": 0.0,
+      "delta_dong": -0.0117,
+      "bid_price_route": 0,
+      "rule_ids": [
+        "ELASTIC:r=0.99"
+      ],
+      "giai_thich": "giá tối ưu doanh thu r=0.99 (P(mua)=58%, E[DT]=434,615đ); trần động r≤1.12 theo LF max 77%; chi phí cơ hội 0đ",
+      "thanh_phan": [
+        {
+          "buoc": "elastic",
+          "r": 0.988,
+          "prob_buy": 0.5775,
+          "ceil_r": 1.115,
+          "floor_r": 0.988,
+          "lf_max": 0.767,
+          "bp_route": 0,
+          "exp_rev": 434614,
+          "gia": 752529
+        }
+      ],
+      "held": false,
+      "csxh_muc": 0.0
+    }
+  },
+  "scenario_B_TET_merge": {
+    "ngay": "2026-02-14",
+    "chuyen_id": "RUN:SE1:2026-02-14",
+    "ga_di": "HNO",
+    "ga_den": "DNA",
+    "tier": "NGOI_MEM_DH",
+    "bt2_lf": {
+      "mean": 0.332,
+      "min": 0.031,
+      "max": 0.545
+    },
+    "bt3": {
+      "lf_bq": 0.3318,
+      "so_doan_nghen": 0,
+      "so_doan_trong": 13,
+      "z_opt_dlp": 638883459
+    },
+    "bt4_phuong_an": [
+      {
+        "loai": "xuyen_suot",
+        "seat_class": "NGOI_MEM_DH",
+        "ghe_theo_doan": [
+          {
+            "seat_idx": 116,
+            "seg_from": 0,
+            "seg_to": 13,
+            "ga_di": "HNO",
+            "ga_den": "DNA"
+          }
+        ],
+        "so_lan_doi_cho": 0,
+        "ga_doi": [],
+        "can_doi_cho": false,
+        "can_khach_chap_nhan": false,
+        "dwell_du": true,
+        "cung_hang_cho": true,
+        "rank": 1,
+        "do_khit": null,
+        "ghi_chu": "52 ghế pristine khả dụng"
+      }
+    ],
+    "bt5_dinh_gia": {
+      "gia_de_xuat": 610868,
       "gia_goc_F0": 584563,
       "gia_mua_vu": 610868,
       "delta_mua": 0.045,
-      "delta_dong": 0.1264,
+      "delta_dong": 0.045,
       "bid_price_route": 0,
       "rule_ids": [
-        "MUA_VU:TET",
-        "LF_SURCHARGE:0.126"
+        "ELASTIC:r=1.04"
       ],
-      "giai_thich": "giá tăng +13% vì đoạn DHA→HUE (khu gian 12) lấp 91%",
+      "giai_thich": "giá tối ưu doanh thu r=1.04 (P(mua)=45%, E[DT]=273,204đ); trần động r≤1.13 theo LF max 54%; chi phí cơ hội 0đ",
       "thanh_phan": [
         {
-          "buoc": "mua_vu",
-          "delta": 0.045,
-          "gia": 610868
-        },
-        {
-          "buoc": "dong",
-          "delta": 0.1264,
+          "buoc": "elastic",
+          "r": 1.045,
+          "prob_buy": 0.4472,
+          "ceil_r": 1.127,
+          "floor_r": 1.045,
+          "lf_max": 0.545,
           "bp_route": 0,
-          "lf_max": 0.911,
-          "lf_min": 0.424,
-          "gia": 688094
+          "exp_rev": 273204,
+          "gia": 610868
         }
       ],
       "held": false,
@@ -208,47 +159,67 @@
   },
   "scenario_B_priority": {
     "ngay": "2026-02-14",
-    "chuyen_id": "SE1_2026-02-14",
+    "chuyen_id": "RUN:SE1:2026-02-14",
     "ga_di": "HNO",
     "ga_den": "DNA",
     "tier": "NGOI_MEM_DH",
     "bt2_lf": {
-      "mean": 0.722,
-      "min": 0.424,
-      "max": 0.911
+      "mean": 0.332,
+      "min": 0.031,
+      "max": 0.545
     },
     "bt3": {
-      "lf_bq": 0.722,
-      "so_doan_nghen": 10,
-      "so_doan_trong": 0,
-      "z_opt_dlp": 236648746
+      "lf_bq": 0.3318,
+      "so_doan_nghen": 0,
+      "so_doan_trong": 13,
+      "z_opt_dlp": 638883459
     },
-    "bt4_phuong_an": [],
+    "bt4_phuong_an": [
+      {
+        "loai": "xuyen_suot",
+        "seat_class": "NGOI_MEM_DH",
+        "ghe_theo_doan": [
+          {
+            "seat_idx": 116,
+            "seg_from": 0,
+            "seg_to": 13,
+            "ga_di": "HNO",
+            "ga_den": "DNA"
+          }
+        ],
+        "so_lan_doi_cho": 0,
+        "ga_doi": [],
+        "can_doi_cho": false,
+        "can_khach_chap_nhan": false,
+        "dwell_du": true,
+        "cung_hang_cho": true,
+        "rank": 1,
+        "do_khit": null,
+        "ghi_chu": "52 ghế pristine khả dụng"
+      }
+    ],
     "bt5_dinh_gia": {
-      "gia_de_xuat": 688094,
+      "gia_de_xuat": 610868,
       "gia_goc_F0": 584563,
       "gia_mua_vu": 610868,
       "delta_mua": 0.045,
-      "delta_dong": 0.1264,
+      "delta_dong": 0.045,
       "bid_price_route": 0,
       "rule_ids": [
-        "MUA_VU:TET",
-        "LF_SURCHARGE:0.126"
+        "ELASTIC:r=1.04"
       ],
-      "giai_thich": "giá tăng +13% vì đoạn DHA→HUE (khu gian 12) lấp 91%",
+      "giai_thich": "giá tối ưu doanh thu r=1.04 (P(mua)=45%, E[DT]=273,204đ); trần động r≤1.13 theo LF max 54%; chi phí cơ hội 0đ",
       "thanh_phan": [
         {
-          "buoc": "mua_vu",
-          "delta": 0.045,
-          "gia": 610868
-        },
-        {
-          "buoc": "dong",
-          "delta": 0.1264,
+          "buoc": "elastic",
+          "r": 1.045,
+          "prob_buy": 0.4472,
+          "ceil_r": 1.127,
+          "floor_r": 1.045,
+          "lf_max": 0.545,
           "bp_route": 0,
-          "lf_max": 0.911,
-          "lf_min": 0.424,
-          "gia": 688094
+          "exp_rev": 273204,
+          "gia": 610868
         }
       ],
       "held": false,
@@ -259,63 +230,25 @@
     "c2": {
       "loai": "RELEASE",
       "input": {
-        "chuyen_id": "SE7_2026-05-20",
+        "chuyen_id": "RUN:SE7:2026-05-20",
         "u": 8.5
       },
       "output": {
         "n_expired": 1,
         "n_proposals": 0
       },
-      "explain": "nhả 1 hold quá hạn; lệch dự báo: trung=-42%; 0 thay đổi limit đề xuất",
+      "explain": "nhả 1 hold quá hạn; lệch dự báo: trung=+657%; 0 thay đổi limit đề xuất",
       "model_version": "1.0",
-      "timestamp": "2026-07-17T22:20:33.607162"
+      "timestamp": "2026-07-19T04:38:20.521648"
     },
     "c4": {
-      "kha_thi": true,
+      "kha_thi": false,
       "seat_class": "NAM_K6",
-      "assignments": [
-        {
-          "seat_idx": 102,
-          "seg_from": 0,
-          "seg_to": 13,
-          "ga_di": "HNO",
-          "ga_den": "DNA"
-        },
-        {
-          "seat_idx": 106,
-          "seg_from": 0,
-          "seg_to": 13,
-          "ga_di": "HNO",
-          "ga_den": "DNA"
-        },
-        {
-          "seat_idx": 107,
-          "seg_from": 0,
-          "seg_to": 13,
-          "ga_di": "HNO",
-          "ga_den": "DNA"
-        },
-        {
-          "seat_idx": 110,
-          "seg_from": 0,
-          "seg_to": 13,
-          "ga_di": "HNO",
-          "ga_den": "DNA"
-        },
-        {
-          "seat_idx": 111,
-          "seg_from": 0,
-          "seg_to": 13,
-          "ga_di": "HNO",
-          "ga_den": "DNA"
-        }
-      ],
-      "toa": [
-        2
-      ],
-      "diem_lien_ke": 0.5,
-      "so_lan_tach": 1,
-      "ghi_chu": "CP-SAT: 5 khách / 1 toa / 2 khoang, liền kề 50%"
+      "assignments": [],
+      "toa": [],
+      "diem_lien_ke": 0.0,
+      "so_lan_tach": 0,
+      "ghi_chu": "chỉ còn 1 ghế trống suốt, cần 5"
     },
     "c5": {
       "loai": "WAITLIST",
@@ -327,7 +260,7 @@
       },
       "explain": "khớp 2 yêu cầu hàng chờ, còn 0 chưa khớp",
       "model_version": "1.0",
-      "timestamp": "2026-07-17T22:20:33.649905"
+      "timestamp": "2026-07-19T04:38:20.524058"
     }
   }
 }

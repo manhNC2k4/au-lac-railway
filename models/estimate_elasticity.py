@@ -48,7 +48,8 @@ def main():
     excl = set(args.exclude_dates.split(","))
 
     # tết: ngày có |tau_tet| <= 21
-    cal = pd.read_csv(DATA / "calendar_events.csv")
+    from app.config import load_calendar
+    cal = load_calendar()
     cal = cal[pd.to_numeric(cal.tau_tet, errors="coerce").notna()]
     tet_days = set(cal[cal.tau_tet.astype(int).abs() <= 21].ngay)
 

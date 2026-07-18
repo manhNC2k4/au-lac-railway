@@ -10,6 +10,7 @@ Khớp: duyệt theo score giảm dần; thử ghế đơn trước (xuyen_suot/
 xuất ghép nếu hồ sơ cho phép. Kết quả là ĐỀ XUẤT — backend xác nhận mới gán thật.
 """
 from app.bt4_merge import find_options
+from app.config import mac_tau_of
 from app.contracts import BookingRequest, ProposalLog, WaitlistEntry
 
 W = {"fare": 0.4, "urgency": 0.3, "scarcity": 0.2, "csxh": 0.1}
@@ -24,7 +25,7 @@ class WaitlistManager:
         self._next_id = 1
 
     def add(self, req: BookingRequest, bid_price_route: int = 0) -> WaitlistEntry:
-        mac_tau = req.chuyen_id.rsplit("_", 1)[0]
+        mac_tau = mac_tau_of(req.chuyen_id)
         tier = req.loai_cho if req.loai_cho in self.pricer.varsigma else "NGOI_MEM_DH"
         f0 = self.pricer.f0(mac_tau, req.ga_di, req.ga_den, tier)
         score = (W["fare"] * min(f0 / F0_NORM, 1.0)

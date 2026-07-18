@@ -21,7 +21,7 @@ from app.bt2_ssm import SeatStateMatrix
 from app.bt3_allocation import analyze_run, load_factor_route
 from app.bt4_merge import find_options
 from app.bt5_pricing import Pricer
-from app.config import ARTIFACTS, MACRO_CLASS
+from app.config import ARTIFACTS, MACRO_CLASS, make_chuyen_id
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -54,7 +54,7 @@ def scenario(ngay, mac_tau, filt, tier, ga_di, ga_den, uu_tien=False, label=""):
     print(f"\n{'='*70}\n{label}  [{mac_tau} {ngay}] {ga_di}→{ga_den} tier={tier} uu_tien={uu_tien}\n{'='*70}")
     ssm = SeatStateMatrix()
     ssm.build_date(ngay, filt)
-    chuyen = f"{mac_tau}_{ngay}"
+    chuyen = make_chuyen_id(mac_tau, ngay)
 
     # BT2
     lf = ssm.load_factor(chuyen)
@@ -118,16 +118,17 @@ def demo_extras():
            "da_ban_truoc_u14": 120, "toc_do_ban_7d": 35, "cu_ly_km": 791.0,
            "tau_tet": 94, "la_le": 0, "H_horizon": 60, "sau_15_5": 1,
            "q_lag_7": 140, "rolling_mean_28": 150}
-    a, b = ssm.seg_range("SE7_2026-05-20", "HNO", "VIN")
-    ssm.hold_with_expiry("SE7_2026-05-20", "NAM_K4", a, b, now_u=10, ttl_ngay=1)
-    re_ = propose_reallocation(ssm, pricer, dm, "SE7_2026-05-20",
+    cid = make_chuyen_id("SE7", "2026-05-20")
+    a, b = ssm.seg_range(cid, "HNO", "VIN")
+    ssm.hold_with_expiry(cid, "NAM_K4", a, b, now_u=10, ttl_ngay=1)
+    re_ = propose_reallocation(ssm, pricer, dm, cid,
                                {"trung": row}, {"trung": 60}, u=8.5)
     print(f"[C2] {re_['_log']['explain']}")
-    gp = plan_group(ssm, "SE7_2026-05-20", "NAM_K6", "HNO", "DNA", 5)
+    gp = plan_group(ssm, cid, "NAM_K6", "HNO", "DNA", 5)
     print(f"[C4] {gp['plan']['ghi_chu']}")
     wm = WaitlistManager(pricer)
-    wm.add(BookingRequest("SE7_2026-05-20", "HNO", "DNA", "NAM_K4", "2026-05-20", u=3), 50000)
-    wm.add(BookingRequest("SE7_2026-05-20", "HNO", "VIN", "NGOI_MEM_DH", "2026-05-20", u=20,
+    wm.add(BookingRequest(cid, "HNO", "DNA", "NAM_K4", "2026-05-20", u=3), 50000)
+    wm.add(BookingRequest(cid, "HNO", "VIN", "NGOI_MEM_DH", "2026-05-20", u=20,
                           profile=PassengerProfile(doi_tuong_csxh="HSSV", muc_giam_csxh=0.1)))
     m = wm.match(ssm)
     print(f"[C5] {m['_log']['explain']}")
