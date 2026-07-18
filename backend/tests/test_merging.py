@@ -5,8 +5,11 @@ import unittest
 
 import numpy as np
 
-from src.merging.resolver import (FREE, HELD, SOLD, best_same_seat,
-                                   continuous_same_seat, resolve_same_seat_options)
+from src.merging.resolver import (FREE, HELD, SOLD, best_multiseat,
+                                   best_same_seat, continuous_same_seat,
+                                   resolve_multiseat_options, resolve_same_seat_options)
+
+STATION_IDS = ["HNO", "NBI", "THO", "VIN", "DHO", "HUE", "DNA", "SGO"]  # 8 ga golden
 
 SEATS = [f"C01-S{n:03d}" for n in range(1, 41)]
 S017 = 16  # index của C01-S017
@@ -65,6 +68,53 @@ class TestMerging(unittest.TestCase):
         for _ in range(1000):
             continuous_same_seat(m, SEG_FROM, SEG_TO)
         self.assertLess((time.perf_counter() - t0) / 1000, 0.2)
+
+
+class TestMultiseat(unittest.TestCase):
+    """P5 · ghép nhiều ghế (đổi chỗ) — gọi khi same-seat rỗng."""
+
+    def _split_matrix(self) -> np.ndarray:
+        """Không ghế nào FREE cả L3 lẫn L4; ghế0 FREE mỗi L3, ghế1 FREE mỗi L4."""
+        m = np.full((40, 7), SOLD, dtype=np.int8)
+        m[0, 2] = FREE   # C01-S001 free L3
+        m[1, 3] = FREE   # C01-S002 free L4
+        return m
+
+    def test_same_seat_empty_but_multiseat_covers(self):
+        m = self._split_matrix()
+        self.assertEqual(list(continuous_same_seat(m, SEG_FROM, SEG_TO)), [])  # same-seat hết
+        plans = resolve_multiseat_options(m, SEATS, STATION_IDS, SEG_FROM, SEG_TO)
+        self.assertEqual(len(plans), 1)
+        p = plans[0]
+        self.assertEqual(p.so_lan_doi_cho, 1)
+        self.assertEqual([(l.seat_id, l.segment_from, l.segment_to) for l in p.legs],
+                         [("C01-S001", 3, 3), ("C01-S002", 4, 4)])
+        self.assertEqual(p.change_station_ids, ["VIN"])  # biên seg3/seg4
+        self.assertTrue(p.requires_seat_change and p.requires_customer_consent)
+
+    def test_priority_passenger_never_gets_multiseat(self):
+        m = self._split_matrix()
+        self.assertEqual(
+            resolve_multiseat_options(m, SEATS, STATION_IDS, SEG_FROM, SEG_TO,
+                                      priority_passenger=True), [])
+
+    def test_dwell_too_short_blocks_change_point(self):
+        m = self._split_matrix()
+        # VIN dwell 2' < 5' -> không được đổi chỗ tại VIN -> không có phương án
+        plans = resolve_multiseat_options(m, SEATS, STATION_IDS, SEG_FROM, SEG_TO,
+                                          dwell_minutes={"VIN": 2.0})
+        self.assertEqual(plans, [])
+
+    def test_deterministic(self):
+        m = self._split_matrix()
+        a = best_multiseat(m, SEATS, STATION_IDS, SEG_FROM, SEG_TO)
+        b = best_multiseat(m, SEATS, STATION_IDS, SEG_FROM, SEG_TO)
+        self.assertEqual(a.to_dict(), b.to_dict())
+
+    def test_golden_single_seat_still_wins_no_multiseat(self):
+        # golden gap có ghế same-seat -> KHÔNG động tới nhánh multiseat (luồng chính không đổi)
+        m = golden_matrix()
+        self.assertEqual(list(continuous_same_seat(m, SEG_FROM, SEG_TO)), [S017])
 
 
 if __name__ == "__main__":

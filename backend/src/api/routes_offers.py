@@ -13,6 +13,7 @@ from datetime import date
 import numpy as np
 from fastapi import APIRouter
 
+from ..adapters import model_adapter
 from ..forecast import bid_price, network
 from ..merging import resolver
 from ..offer.service import OfferService
@@ -32,8 +33,6 @@ _SCENARIO = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
 # csxh table sống ở seed (bảng pricing_policy V1 không có cột csxh — không sửa migration P0).
 _SEED_POLICY = json.loads((SEED_DIR / "pricing_policy.json").read_text(encoding="utf-8"))
 
-STATE_CODE = {"FREE": resolver.FREE, "SOLD": resolver.SOLD, "HELD": resolver.HELD}
-
 # Cao điểm hè 2026: 15/05 → 16/08 (Master §1.1)
 PEAK_SUMMER = (date(2026, 5, 15), date(2026, 8, 16))
 
@@ -48,13 +47,8 @@ def seg_range(origin: str, dest: str) -> tuple[int, int]:
 
 
 def _matrix_from_seatmap(seatmap: dict) -> tuple[np.ndarray, list[str]]:
-    seat_ids = sorted(seatmap["seats"])
-    n_seg = network.N_SEGMENTS
-    m = np.zeros((len(seat_ids), n_seg), dtype=np.int8)
-    for i, sid in enumerate(seat_ids):
-        for seg_str, status in seatmap["seats"][sid].items():
-            m[i, int(seg_str) - 1] = STATE_CODE.get(status, resolver.SOLD)
-    return m, seat_ids
+    # Chuyển hoá đi qua adapter duy nhất (§3.4) — không convert tay trong route.
+    return model_adapter.seatmap_to_matrix(seatmap, network.N_SEGMENTS)
 
 
 def _latest_forecast(cur, service_run_id: str, seat_class: str) -> tuple[dict[int, float], int]:
