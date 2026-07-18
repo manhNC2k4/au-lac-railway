@@ -1,0 +1,11 @@
+# Runtime cho 5 bài toán con + FastAPI (đã kiểm trên Python 3.13, Windows)
+numpy
+pandas>=2.2
+pyarrow
+scipy
+scikit-learn>=1.6      # HistGradientBoostingRegressor(loss="poisson") + categorical_features="from_dtype"
+joblib
+pyyaml
+fastapi
+uvicorn[standard]
+pydantic>=2

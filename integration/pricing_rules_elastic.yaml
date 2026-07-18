@@ -1,0 +1,66 @@
+# REFERENCE cho owner BE3 — pricing_rules.yaml calibrate từ ĐƯỜNG CẦU (elasticity).
+# Cùng schema với backend/rules/pricing_rules.yaml (rule_id, mo_ta, thu_tu, when, he_so).
+# KHÔNG đổi engine: vẫn nhân dồn he_so lên F0 theo thu_tu, guardrail + CSXH sau cùng.
+#
+# Vì sao thay 2 luật LF của dev:
+#   - Đường cầu ước lượng từ search_log: β_ln(r) = -1.19 => cầu KÉM co giãn trong dải
+#     giá quan sát. Giảm sâu (dev R_AI_LINH_HOAT -15%) trên cầu kém co giãn là LỖ doanh
+#     thu (backtest: markdown 10% không cải thiện). => giảm nhẹ hơn, và cho phép TĂNG
+#     theo mức lấp đầy đoạn (khan hiếm) — xấp xỉ bậc thang của tối ưu E[đóng góp]=P(mua)·(p-c).
+#   - Trần động theo LF ~ 1 + 0.15·LF (elasticity §BT5). Bậc thang hoá để hợp schema rule.
+# Nguồn số: models/artifacts/elasticity_params.json + backtest_report.json.
+
+version: 2
+rules:
+  # ---- mùa vụ (giữ nguyên như dev) ----
+  - rule_id: R_MUA_VU_HE2026
+    mo_ta: "Cao điểm hè 2026 (15/05–30/06): +7.5%"
+    thu_tu: 1
+    when: {peak_summer: true}
+    he_so: 1.075
+
+  - rule_id: R_TET_CAO_DIEM
+    mo_ta: "Cửa sổ Tết (|tau|<=21 ngày): +4.5%"
+    thu_tu: 1
+    when: {tet_window: true}
+    he_so: 1.045
+
+  # ---- xả ngày / sát ngày (giữ nguyên) ----
+  - rule_id: R_HE2026_XA_NGAY
+    mo_ta: "Xả ngày chặng dài đặt sớm (AI, lead>=20, >=900km): -8%"
+    thu_tu: 2
+    when: {che_do_gia: AI, lead_time_days_gte: 20, distance_km_gte: 900}
+    he_so: 0.92
+
+  - rule_id: R_SAT_NGAY
+    mo_ta: "Sát ngày (lead<=3): phụ thu +6%"
+    thu_tu: 3
+    when: {lead_time_days_lte: 3}
+    he_so: 1.06
+
+  # ---- ĐỘNG theo khan hiếm (ELASTICITY-CALIBRATED, thay R_AI_LINH_HOAT của dev) ----
+  # Bậc thang xấp xỉ trần động r ≈ 1 + 0.15·LF; giảm nhẹ khi ế (cầu kém co giãn).
+  - rule_id: R_ELASTIC_NGHEN
+    mo_ta: "Đoạn nghẽn (LF route >=0.85): +12% — bảo vệ chỗ cho khách giá trị cao"
+    thu_tu: 4
+    when: {load_factor_route_gte: 0.85}
+    he_so: 1.12
+
+  - rule_id: R_ELASTIC_DONG_VUA
+    mo_ta: "Đoạn tải cao (0.70<=LF<0.85): +6%"
+    thu_tu: 4
+    when: {load_factor_route_gte: 0.70, load_factor_route_lt: 0.85}
+    he_so: 1.06
+
+  - rule_id: R_ELASTIC_XA_NHE
+    mo_ta: "Đoạn ế (AI, LF route <=0.40): -3% (giảm NHẸ vì cầu kém co giãn, tránh lỗ DT)"
+    thu_tu: 4
+    when: {che_do_gia: AI, load_factor_route_lte: 0.40}
+    he_so: 0.97
+
+  # ---- giờ chót (giữ nguyên — cố ý vượt trần để test guardrail clamp) ----
+  - rule_id: R_GIO_CHOT
+    mo_ta: "Phụ thu giờ chót AI (lead=0): +70% — cố ý VƯỢT trần 1.6 để guardrail clamp"
+    thu_tu: 5
+    when: {che_do_gia: AI, lead_time_days_lte: 0}
+    he_so: 1.7
