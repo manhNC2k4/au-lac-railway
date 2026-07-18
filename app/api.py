@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """FastAPI phục vụ 5 bài toán con — nạp model artifact, expose REST.
 
-Chạy:  uvicorn app.api:app --reload --port 8000
-Docs :  http://127.0.0.1:8000/docs
+Chạy:  uvicorn app.api:app --reload --port 8001
+Docs :  http://127.0.0.1:8001/docs
+
+Lưu ý: cổng 8000 là của backend/docker-compose (tier 3, backend/src) — dùng 8001
+ở đây để hai API không đụng cổng khi chạy song song.
 
 Endpoint:
   GET  /health

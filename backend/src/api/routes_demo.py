@@ -24,18 +24,34 @@ SEAT_CLASS = _SCENARIO.get("seat_class", "NGOI_MEM_DH")
 
 
 def _seg_counts(seatmap: dict) -> tuple[dict[int, int], dict[int, int], int]:
-    """(sold_by_segment [non-FREE], free_by_segment, n_seats) từ một snapshot seatmap."""
-    n_segments = network.N_SEGMENTS
-    sold = {s: 0 for s in range(1, n_segments + 1)}
-    free = {s: 0 for s in range(1, n_segments + 1)}
+    """(sold_by_segment [non-FREE], free_by_segment, n_seats) từ một snapshot seatmap.
+    Số chặng suy TRỰC TIẾP từ seatmap của run (không khóa cứng golden 7 chặng)."""
+    sold: dict[int, int] = {}
+    free: dict[int, int] = {}
     for states in seatmap["seats"].values():
         for seg_str, status in states.items():
             seg = int(seg_str)
+            sold.setdefault(seg, 0)
+            free.setdefault(seg, 0)
             if status == "FREE":
                 free[seg] += 1
             else:
                 sold[seg] += 1
     return sold, free, len(seatmap["seats"])
+
+
+def _leg_km(cur, service_run_id: str) -> dict[int, float]:
+    """segment_id 1-based -> chiều dài leg (km), lấy từ train_stop + station của run.
+    Rỗng nếu thiếu topology; caller coi khoảng cách = 0 (không khóa cứng golden)."""
+    cur.execute(
+        """SELECT s.ly_trinh_km FROM train_stop ts
+             JOIN service_run sr ON ts.train_id = sr.train_id
+             JOIN station s ON ts.station_id = s.station_id
+            WHERE sr.service_run_id = %s ORDER BY ts.stop_sequence""",
+        (service_run_id,),
+    )
+    km = [float(r[0]) for r in cur.fetchall()]
+    return {i + 1: abs(km[i + 1] - km[i]) for i in range(len(km) - 1)}
 
 
 def _latest_forecast_rows(cur, service_run_id: str) -> tuple[list[tuple], int]:
@@ -102,6 +118,39 @@ def refresh_forecast(body: dict):
                                                      "drift_alerts": new["drift"]["alerts"]}}
 
 
+@router.get("/demo/runs")
+def list_runs(limit: int = 500, q: str | None = None):
+    """Danh sách chuyến thật trong DB cho run-picker (thay golden run cứng)."""
+    conn = get_connection()
+    with conn.cursor() as cur:
+        sql = ("SELECT service_run_id, train_id, service_date, direction, status "
+               "FROM service_run")
+        params: list = []
+        if q:
+            sql += " WHERE service_run_id ILIKE %s OR train_id ILIKE %s"
+            params += [f"%{q}%", f"%{q}%"]
+        sql += " ORDER BY service_date, service_run_id LIMIT %s"
+        params.append(limit)
+        cur.execute(sql, params)
+        runs = [{"service_run_id": r[0], "train_id": r[1],
+                 "service_date": r[2].isoformat(), "direction": r[3], "status": r[4]}
+                for r in cur.fetchall()]
+    conn.commit()
+    return {"data": {"runs": runs}}
+
+
+@router.get("/demo/stations")
+def list_stations():
+    """Danh mục ga (id -> tên) cho nhãn hiển thị, thay STATIONS hardcode ở FE."""
+    conn = get_connection()
+    with conn.cursor() as cur:
+        cur.execute("SELECT station_id, station_name, ly_trinh_km FROM station ORDER BY ly_trinh_km")
+        stations = [{"station_id": r[0], "station_name": r[1], "ly_trinh_km": float(r[2])}
+                    for r in cur.fetchall()]
+    conn.commit()
+    return {"data": {"stations": stations}}
+
+
 @router.get("/demo/overview")
 def get_overview(service_run_id: str):
     ssm = get_state_manager()
@@ -111,11 +160,11 @@ def get_overview(service_run_id: str):
     bottlenecks = sorted(occupancy.items(), key=lambda kv: -kv[1])[:3]
     underused = sorted(occupancy.items(), key=lambda kv: kv[1])[:3]
 
-    passenger_km = sum(sold[s] * network.LEG_DISTANCE_KM[s] for s in sold)
-    empty_seat_km = sum(free[s] * network.LEG_DISTANCE_KM[s] for s in free)
-
     conn = get_connection()
     with conn.cursor() as cur:
+        leg_km = _leg_km(cur, service_run_id)
+        passenger_km = sum(sold[s] * leg_km.get(s, 0.0) for s in sold)
+        empty_seat_km = sum(free[s] * leg_km.get(s, 0.0) for s in free)
         cur.execute(
             """SELECT COALESCE(SUM(o.final_price_vnd),0)
                FROM booking b JOIN seat_hold sh ON b.hold_id=sh.hold_id
