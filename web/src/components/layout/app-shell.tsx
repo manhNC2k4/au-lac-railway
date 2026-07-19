@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Grid3X3,
@@ -18,9 +17,7 @@ import {
   LineChart,
   BrainCircuit,
   SlidersHorizontal,
-  Layers,
 } from "lucide-react";
-import { getApi, qk } from "@/api";
 import { cn } from "@/lib/utils";
 import { CurrentRunProvider, useCurrentRun } from "@/lib/current-run";
 import { Tooltip, TooltipProvider } from "@/components/ui/tooltip";
@@ -64,22 +61,6 @@ const BREADCRUMB: [string, string][] = [
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return compact ? <BrandLogo compact className="w-12" /> : <BrandLogo className="w-[190px]" />;
-}
-
-function MatrixVersionChip() {
-  const api = getApi();
-  const { serviceRunId } = useCurrentRun();
-  const seatmap = useQuery({
-    queryKey: qk.seatmap(serviceRunId),
-    queryFn: () => api.getSeatmap(serviceRunId),
-    staleTime: 5_000,
-  });
-  return (
-    <span className="hidden items-center gap-1.5 rounded-xl border border-primary/25 bg-primary-soft px-3 py-2 text-[13px] font-medium text-primary md:inline-flex">
-      <Layers className="h-4 w-4" aria-hidden />
-      Ma trận {seatmap.isPending ? "đang tải" : seatmap.data ? `v${seatmap.data.matrix_version}` : "không khả dụng"}
-    </span>
-  );
 }
 
 /** Chọn chuyến thật đang xem — thay badge "Chuyến đang vận hành" cứng theo golden run. */
@@ -245,7 +226,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="ml-auto flex flex-wrap items-center gap-2.5">
             <RunPicker />
-            <MatrixVersionChip />
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
