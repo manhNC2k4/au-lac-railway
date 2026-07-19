@@ -1,23 +1,29 @@
-import { ShieldCheck, Sparkles } from "lucide-react";
+import Image from "next/image";
 import { BrandLogo } from "@/components/brand-logo";
-import { RailwayScene } from "@/components/railway-scene";
 
-export function AuthVisual({ mode }: { mode: "login" | "register" }) {
+/** Nhận diện dành riêng cho cổng đăng nhập nhân viên quản lý. */
+export function AuthVisual() {
   return (
-    <aside className="relative hidden min-h-[720px] overflow-hidden bg-[#dceeff] lg:block">
-      <RailwayScene className="absolute inset-0 h-full min-h-0" />
-      <div className="relative z-10 flex h-full flex-col p-12">
-        <BrandLogo className="w-[180px]" />
-        <div className="mt-16 max-w-[530px]">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-primary">
-            {mode === "login" ? <ShieldCheck className="h-4 w-4" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
-            {mode === "login" ? "Không gian làm việc bảo mật" : "Một tài khoản cho mọi hành trình"}
-          </p>
-          <h2 className="mt-5 text-[42px] font-bold leading-tight text-ink">
-            {mode === "login" ? "Chào mừng bạn trở lại" : "Bắt đầu hành trình cùng Âu Lạc"}
+    <aside className="relative hidden h-full min-h-0 overflow-hidden bg-[#dceeff] lg:block">
+      <Image
+        src="/images/booking-hero.png"
+        alt="Đoàn tàu Âu Lạc trên hành trình qua miền núi"
+        fill
+        priority
+        sizes="(max-width: 1280px) 60vw, 980px"
+        className="object-cover object-[62%_center]"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(231,243,255,.98)_0%,rgba(231,243,255,.90)_32%,rgba(231,243,255,.26)_62%,rgba(8,43,92,.08)_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/35 to-transparent" />
+
+      <div className="relative z-10 flex h-full flex-col px-10 py-7 xl:px-14 xl:py-9">
+        <BrandLogo className="w-[126px] xl:w-[148px]" />
+        <div className="mt-7 max-w-[590px] xl:mt-9">
+          <h2 className="text-[36px] font-bold leading-[1.1] tracking-[-0.035em] text-ink xl:text-[44px]">
+            Kết nối hành trình –<br />Tối ưu vận hành
           </h2>
-          <p className="mt-4 max-w-[470px] text-[17px] leading-7 text-[#42526b]">
-            {mode === "login" ? "Đăng nhập để tiếp tục đặt vé hoặc theo dõi hoạt động vận hành." : "Lưu thông tin hành khách và quản lý các chuyến đi thuận tiện hơn."}
+          <p className="mt-4 max-w-[520px] text-[15px] leading-6 text-[#42526b] xl:text-[17px] xl:leading-7">
+            Một nền tảng thống nhất cho trải nghiệm đặt vé và quản lý doanh thu theo từng chặng.
           </p>
         </div>
       </div>
