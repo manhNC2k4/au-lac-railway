@@ -187,8 +187,19 @@ def get_overview(service_run_id: str):
     sold, free, n_seats = _seg_counts(ssm.get_seatmap(service_run_id))
     occupancy = {s: (sold[s] / n_seats if n_seats else 0.0) for s in sold}
     overall = sum(occupancy.values()) / len(occupancy) if occupancy else 0.0
-    bottlenecks = sorted(occupancy.items(), key=lambda kv: -kv[1])[:3]
-    underused = sorted(occupancy.items(), key=lambda kv: kv[1])[:3]
+    # Ngưỡng tuyệt đối (khớp loadColor ở FE: occ>=.8 mới "sắp đầy") — top-3 tương đối
+    # trước đây gắn nhãn "sắp hết chỗ"/"còn nhiều chỗ" cho mọi run bất kể giá trị thật,
+    # ra cảnh báo sai nghĩa (vd 44.8% bị gọi "sắp hết chỗ").
+    BOTTLENECK_THRESHOLD = 0.8
+    UNDERUSED_THRESHOLD = 0.2
+    bottlenecks = sorted(
+        (kv for kv in occupancy.items() if kv[1] >= BOTTLENECK_THRESHOLD),
+        key=lambda kv: -kv[1],
+    )[:3]
+    underused = sorted(
+        (kv for kv in occupancy.items() if kv[1] <= UNDERUSED_THRESHOLD),
+        key=lambda kv: kv[1],
+    )[:3]
 
     conn = get_connection()
     with conn.cursor() as cur:
