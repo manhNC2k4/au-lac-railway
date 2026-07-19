@@ -70,6 +70,58 @@ def build_shim(scenario: dict, matrix: np.ndarray) -> PostgresSeatStateMatrix:
     return PostgresSeatStateMatrix(scenario, matrix)
 
 
+class RuntimePostgresSeatStateMatrix:
+    """Dataset-compatible shim with dynamic topology and all three seat classes."""
+
+    def __init__(self, topology: dict, matrices: dict[str, np.ndarray]):
+        stations = topology["stations"]
+        self.st = pd.DataFrame({
+            "ga_id": [station["id"] for station in stations],
+            "ly_trinh_km": [float(station["km"]) for station in stations],
+        })
+        self._ga_idx = {station_id: i for i, station_id in enumerate(self.st.ga_id)}
+        self._n_segments = topology["n_segments"]
+        self.chuyen_id = topology["model_run_id"]
+        self._span = {self.chuyen_id: (0, self._n_segments)}
+        self._matrices = matrices
+
+    def get_state(self, chuyen_id: str, seat_class: str) -> np.ndarray:
+        matrix = self._matrices.get(seat_class)
+        return matrix.copy() if matrix is not None else np.zeros((0, self._n_segments), dtype=np.int8)
+
+    def get_segment_meta(self, chuyen_id: str) -> pd.DataFrame:
+        rows = []
+        for index in range(self._n_segments):
+            rows.append({
+                "khu_gian_id": index + 1,
+                "ga_dau": self.st.ga_id.iloc[index],
+                "ga_cuoi": self.st.ga_id.iloc[index + 1],
+                "km_dau": float(self.st.ly_trinh_km.iloc[index]),
+                "km_cuoi": float(self.st.ly_trinh_km.iloc[index + 1]),
+            })
+        return pd.DataFrame(rows, index=pd.RangeIndex(self._n_segments, name="seg_idx"))
+
+    def load_factor(self, chuyen_id: str) -> np.ndarray:
+        occupied = np.zeros(self._n_segments, dtype=float)
+        capacity = 0
+        for matrix in self._matrices.values():
+            occupied += (matrix != 0).sum(axis=0)
+            capacity += matrix.shape[0]
+        return occupied / max(capacity, 1)
+
+    def seg_range(self, chuyen_id: str, ga_di: str, ga_den: str) -> tuple[int, int]:
+        if ga_di not in self._ga_idx or ga_den not in self._ga_idx:
+            raise ValueError(f"ga không tồn tại: {ga_di} / {ga_den}")
+        start, end = self._ga_idx[ga_di], self._ga_idx[ga_den]
+        if start >= end:
+            raise ValueError(f"O-D ngược chiều chạy: {ga_di} / {ga_den}")
+        return start, end
+
+
+def build_runtime_shim(topology: dict, matrices: dict[str, np.ndarray]) -> RuntimePostgresSeatStateMatrix:
+    return RuntimePostgresSeatStateMatrix(topology, matrices)
+
+
 def build_forecast_df(fc_rows: list[dict]) -> "pd.DataFrame | None":
     """`analyze_run` cần `forecast_df` là DataFrame — literal pandas ở lại trong
     `integration/`, `backend/src/allocation/cache.py` chỉ truyền list[dict] thuần."""

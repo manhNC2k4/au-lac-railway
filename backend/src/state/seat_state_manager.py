@@ -92,17 +92,24 @@ class SeatStateManager:
             row = cur.fetchone()
             return row[0] if row else 0
 
-    def get_seatmap(self, service_run_id: str) -> dict:
+    def get_seatmap(self, service_run_id: str, seat_class: str | None = None) -> dict:
         self.expire_due_holds(service_run_id)
         with self.conn.cursor() as cur:
             cur.execute("SELECT matrix_version FROM service_run WHERE service_run_id=%s", (service_run_id,))
             row = cur.fetchone()
             matrix_version = row[0] if row else 0
-            cur.execute(
-                """SELECT seat_id, segment_id, status FROM seat_segment_state
-                   WHERE service_run_id=%s ORDER BY seat_id, segment_id""",
-                (service_run_id,),
-            )
+            if seat_class:
+                cur.execute(
+                    """SELECT seat_id, segment_id, status FROM seat_segment_state
+                       WHERE service_run_id=%s AND seat_class=%s ORDER BY seat_index, segment_id""",
+                    (service_run_id, seat_class),
+                )
+            else:
+                cur.execute(
+                    """SELECT seat_id, segment_id, status FROM seat_segment_state
+                       WHERE service_run_id=%s ORDER BY seat_class, seat_index, segment_id""",
+                    (service_run_id,),
+                )
             rows = cur.fetchall()
         seats: dict[str, dict] = {}
         for seat_id, segment_id, status in rows:
@@ -146,7 +153,7 @@ class SeatStateManager:
                            VALUES (%s,%s,%s)
                            ON CONFLICT (station_id) DO UPDATE
                            SET station_name=EXCLUDED.station_name, ly_trinh_km=EXCLUDED.ly_trinh_km""",
-                        (st["station_id"], st["name"], round(st["ly_trinh_km"])),
+                        (st["station_id"], st["name"], st["ly_trinh_km"]),
                     )
                 cur.execute(
                     """INSERT INTO train (train_id, train_name, capacity)
@@ -178,10 +185,13 @@ class SeatStateManager:
                 cur.execute("DELETE FROM waiting_list WHERE service_run_id=%s", (service_run_id,))
                 cur.execute("DELETE FROM quota_version WHERE service_run_id=%s", (service_run_id,))
                 cur.execute("DELETE FROM proposal_log WHERE service_run_id=%s", (service_run_id,))
-                rows = [(service_run_id, seat_id, seg) for seat_id in seats for seg in range(1, n_segments + 1)]
+                rows = [(service_run_id, seat_id, seg, "NGOI_MEM_DH", seat_index)
+                        for seat_index, seat_id in enumerate(seats)
+                        for seg in range(1, n_segments + 1)]
                 cur.executemany(
-                    """INSERT INTO seat_segment_state (service_run_id, seat_id, segment_id, status, version)
-                       VALUES (%s,%s,%s,'FREE',1)""",
+                    """INSERT INTO seat_segment_state
+                       (service_run_id, seat_id, segment_id, status, version, seat_class, seat_index)
+                       VALUES (%s,%s,%s,'FREE',1,%s,%s)""",
                     rows,
                 )
                 for b in bookings:
@@ -234,13 +244,16 @@ class SeatStateManager:
     # Hold — atomic multi-cell CAS (H6-H10 hardest part)
     # ------------------------------------------------------------------
     def hold(self, service_run_id: str, seat_id: str, segments: list[int],
-              expected_matrix_version: int, idempotency_key: str, offer_id: str) -> HoldResult:
+              expected_matrix_version: int, idempotency_key: str, offer_id: str,
+              hold_expires_at: datetime | None = None) -> HoldResult:
         """1 ghế nhiều đoạn — trường hợp riêng của hold_multi (same-seat, MVP)."""
         return self.hold_multi(service_run_id, [(seat_id, segments)],
-                               expected_matrix_version, idempotency_key, offer_id)
+                               expected_matrix_version, idempotency_key, offer_id,
+                               hold_expires_at)
 
     def hold_multi(self, service_run_id: str, legs: list[tuple[str, list[int]]],
-                    expected_matrix_version: int, idempotency_key: str, offer_id: str) -> HoldResult:
+                    expected_matrix_version: int, idempotency_key: str, offer_id: str,
+                    hold_expires_at: datetime | None = None) -> HoldResult:
         """CAS nhiều ghế·nhiều đoạn (P5 ghép nhiều ghế) — MỘT transaction, tất-cả-hoặc-không:
         khoá + verify FREE toàn bộ leg trước, chỉ UPDATE khi mọi leg đều sạch; 1 hold_id
         dùng chung cho mọi cell (schema seat_hold không ràng buộc 1 seat_id — không cần migration)."""
@@ -291,7 +304,7 @@ class SeatStateManager:
 
                 # Pha 2: mọi leg đã sạch — UPDATE tất cả dùng chung 1 hold_id.
                 now = self.clock.now()
-                expires_at = now + timedelta(seconds=HOLD_TTL_SECONDS)
+                expires_at = hold_expires_at or now + timedelta(seconds=HOLD_TTL_SECONDS)
                 hold_id = f"hold_{uuid.uuid4().hex[:12]}"
 
                 for seat_id, segs_sorted in legs_sorted:

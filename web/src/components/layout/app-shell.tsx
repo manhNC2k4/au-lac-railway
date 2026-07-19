@@ -19,6 +19,7 @@ import {
   BrainCircuit,
   SlidersHorizontal,
   Layers,
+  ClipboardCheck,
 } from "lucide-react";
 import { getApi, qk } from "@/api";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ const NAV: NavItem[] = [
     ],
   },
   { href: "/admin/decisions", label: "Quyết định AI", icon: BrainCircuit },
+  { href: "/admin/booking-requests", label: "Duyệt yêu cầu vé", icon: ClipboardCheck },
   { href: "/admin/backtest", label: "So sánh Backtest", icon: BarChart3 },
   { href: "/admin/booking-lab", label: "Booking Lab", icon: TicketCheck },
 ];
@@ -58,6 +60,7 @@ const BREADCRUMB: [string, string][] = [
   ["/admin/overview", "Tổng quan vận hành"],
   ["/admin/analytics", "Dự báo & Phân bổ"],
   ["/admin/booking-lab", "Booking Lab"],
+  ["/admin/booking-requests", "Duyệt yêu cầu đặt vé"],
   ["/admin/backtest", "So sánh chiến lược"],
   ["/admin/decisions", "Chi tiết quyết định AI"],
 ];

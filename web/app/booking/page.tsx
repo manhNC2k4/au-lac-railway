@@ -9,6 +9,7 @@ import {
   getApi,
   qk,
   type AuLacApi,
+  type BookingRequestData,
   type OfferRequest,
   type RunSummary,
   type StationRecord,
@@ -18,10 +19,9 @@ import { BookingHeader, BookingSteps, PassengerPage } from "@/components/passeng
 import { ErrorState } from "@/components/error-state";
 import { Tooltip } from "@/components/ui/tooltip";
 import {
-  apiDeadline,
   clearPendingReturnJourney,
   loadPendingReturnJourney,
-  saveBookingSession,
+  saveApprovalSession,
   type ReturnJourneyDraft,
 } from "@/lib/booking-session";
 
@@ -39,7 +39,7 @@ interface SearchCriteria {
 
 interface SearchResult {
   request: OfferRequest;
-  offer: Awaited<ReturnType<AuLacApi["createOffer"]>>;
+  approval: BookingRequestData;
   returnJourney?: ReturnJourneyDraft;
 }
 
@@ -111,18 +111,16 @@ export default function BookingPage() {
         quantity: criteria.quantity,
         priority_passenger: false,
       };
-      const offer = await api.createOffer(request);
-      return { request, offer, returnJourney };
+      const approval = await api.createBookingRequest(request);
+      return { request, approval, returnJourney };
     },
-    onSuccess: ({ offer, request, returnJourney }) => {
-      saveBookingSession({
+    onSuccess: ({ approval, request, returnJourney }) => {
+      saveApprovalSession({
+        requestId: approval.request_id,
         request,
-        passengerName: "",
-        offer,
-        offerDeadline: apiDeadline(offer.expires_at, 300),
         returnJourney,
       });
-      router.push("/booking/offer");
+      router.push(`/booking/requests/${encodeURIComponent(approval.request_id)}/waiting`);
     },
   });
 
@@ -174,7 +172,7 @@ export default function BookingPage() {
                 Tìm phương án phù hợp cho hành trình của bạn
               </h1>
               <p className="mt-3 max-w-[520px] text-[14px] leading-5 text-[#42526b] md:text-[16px] md:leading-6">
-                Nhập ga và ngày đi, hệ thống sẽ tìm chuyến cùng phương án ghế đang khả dụng.
+                Nhập hành trình để AI đề xuất ghế và giá; phương án sẽ được nhân viên duyệt trước khi hiển thị.
               </p>
             </div>
           </div>
@@ -257,7 +255,7 @@ export default function BookingPage() {
               ) : (
                 <Search className="h-5 w-5" aria-hidden />
               )}
-              {search.isPending ? "Đang tìm chuyến phù hợp…" : stationsQuery.isPending ? "Đang tải danh mục ga…" : "Tìm phương án"}
+              {search.isPending ? "Đang gửi yêu cầu…" : stationsQuery.isPending ? "Đang tải danh mục ga…" : "Gửi yêu cầu tìm vé"}
             </button>
 
             {stationsQuery.isError && (

@@ -5,7 +5,7 @@ import { ArrowLeft, CalendarDays, Check, Clock3, Home, MapPin, TrainFront } from
 import { BrandLogo } from "@/components/brand-logo";
 import { TrainArt } from "@/components/train-art";
 import { cn } from "@/lib/utils";
-import { GOLDEN, SEAT_CLASS_LABEL, stationName } from "@/lib/constants";
+import { SEAT_CLASS_LABEL, stationName, trainDisplayName } from "@/lib/constants";
 import type { OfferRequest } from "@/api";
 
 export function BookingHeader() {
@@ -30,8 +30,8 @@ export function JourneyBanner({ request }: { request: OfferRequest }) {
     <div className="relative mx-auto grid max-w-[1640px] overflow-hidden rounded-lg border border-line bg-white shadow-card md:grid-cols-[1fr_330px]">
       <div className="p-5 md:p-7">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-lg bg-primary px-3 py-1.5 text-sm font-bold text-white">{request.service_run_id}</span>
-          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted"><CalendarDays className="h-4 w-4" aria-hidden />{GOLDEN.serviceDate}</span>
+          <span className="rounded-lg bg-primary px-3 py-1.5 text-sm font-bold text-white">{trainDisplayName(request.service_run_id)}</span>
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted"><CalendarDays className="h-4 w-4" aria-hidden />{serviceDateFromRunId(request.service_run_id)}</span>
           <span className="rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success">Đang mở bán</span>
         </div>
         <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 md:max-w-[720px]">
@@ -51,6 +51,10 @@ export function JourneyBanner({ request }: { request: OfferRequest }) {
       </div>
     </div>
   );
+}
+
+function serviceDateFromRunId(serviceRunId: string): string {
+  return serviceRunId.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? serviceRunId;
 }
 
 function JourneyStation({ name, code, align }: { name: string; code: string; align: "left" | "right" }) {

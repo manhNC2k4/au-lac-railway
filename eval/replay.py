@@ -10,6 +10,7 @@ Khách quyết định mua bằng WTP THẬT từ _ground_truth/wtp.parquet — 
 Tất định: cờ ưu tiên & CSXH gán bằng hash yeu_cau_id (cùng seed generator ⇒ ổn định).
 """
 import hashlib
+import os
 import sys
 import time
 from pathlib import Path
@@ -41,6 +42,11 @@ def load_forecast(date: str) -> pd.DataFrame | None:
                 return fc
     return None
 REFRESH_EVERY = 200            # re-solve DLP sau mỗi N vé bán (event-driven)
+# Ngưỡng LF đoạn để quota chặng ngắn bắt đầu bind. Bid-price đã tính chi phí
+# cơ hội vào GIÁ; quota cứng chỉ nên đỡ phần đuôi thật sự nghẽn — với cầu co
+# giãn mạnh (V2, beta~-5.5) chặn sớm ở 0.75 là double-count, lỗ kép (xem A/B
+# trong docs/BAO_CAO_DANH_GIA_MODEL_V2.md). Override: AULAC_QUOTA_LF.
+QUOTA_LF_GATE = float(os.environ.get("AULAC_QUOTA_LF", "0.75"))
 CSXH_PROBS = [("KHONG", 0.780, 0.0), ("NGUOI_CAO_TUOI", 0.860, 0.15),
               ("TRE_6_10", 0.900, 0.25), ("HSSV", 0.980, 0.10),
               ("THUONG_BINH_CDHH", 0.995, 0.30), ("ME_VNAH_TIEN_KN", 1.0, 0.90)]
@@ -114,7 +120,7 @@ def run_policy(date: str, policy: str, mac_tau_filter: list[str] | None = None,
         alloc = alloc_cache.get(cid)
         if not alloc:
             return None
-        if alloc["lf_theo_doan"][e]["lf"] < 0.75:
+        if alloc["lf_theo_doan"][e]["lf"] < QUOTA_LF_GATE:
             return None
         lo, _ = ssm._span[cid]
         kg = lo + e + 1                        # khu_gian_id toàn cục

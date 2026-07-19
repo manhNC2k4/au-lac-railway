@@ -13,6 +13,8 @@ from fastapi import APIRouter
 from ..allocation import cache as allocation_cache
 from ..audit import log as audit_log
 from ..forecast import forecast, network
+from ..forecast.runtime import ensure_model_forecast
+from ..forecast.topology import get_run_topology
 from ..state.db import get_connection
 from .deps import SEED_DIR, get_clock, get_state_manager
 from .schemas import ResetRequest
@@ -56,7 +58,9 @@ def _leg_km(cur, service_run_id: str) -> dict[int, float]:
 
 def _latest_forecast_rows(cur, service_run_id: str) -> tuple[list[tuple], int]:
     cur.execute(
-        """SELECT forecast_demand, confidence_score, forecast_version FROM demand_forecast
+        """SELECT origin_station_id, dest_station_id, seat_class,
+                  forecast_demand, confidence_score, forecast_version
+             FROM demand_forecast
            WHERE service_run_id=%s
              AND forecast_version=(SELECT COALESCE(MAX(forecast_version),1)
                                    FROM demand_forecast WHERE service_run_id=%s)
@@ -64,7 +68,7 @@ def _latest_forecast_rows(cur, service_run_id: str) -> tuple[list[tuple], int]:
         (service_run_id, service_run_id),
     )
     rows = cur.fetchall()
-    return rows, (rows[0][2] if rows else 1)
+    return rows, (rows[0][5] if rows else 1)
 
 
 @router.post("/demo/scenarios/{scenario_id}/reset")
@@ -124,10 +128,11 @@ def list_runs(limit: int = 500, q: str | None = None):
     conn = get_connection()
     with conn.cursor() as cur:
         sql = ("SELECT service_run_id, train_id, service_date, direction, status "
-               "FROM service_run")
+               "FROM service_run WHERE service_date >= "
+               "(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::DATE")
         params: list = []
         if q:
-            sql += " WHERE service_run_id ILIKE %s OR train_id ILIKE %s"
+            sql += " AND (service_run_id ILIKE %s OR train_id ILIKE %s)"
             params += [f"%{q}%", f"%{q}%"]
         sql += " ORDER BY service_date, service_run_id LIMIT %s"
         params.append(limit)
@@ -155,18 +160,9 @@ def list_stations():
 def get_run_stops(service_run_id: str):
     """Ga dừng thực tế theo thứ tự của MỘT chuyến — cho FE dựng nhãn chặng/ga động
     thay vì STATIONS/SEGMENTS cứng theo golden network (8 ga/7 chặng)."""
-    conn = get_connection()
-    with conn.cursor() as cur:
-        cur.execute(
-            """SELECT ts.stop_sequence, ts.station_id, s.station_name
-                 FROM train_stop ts
-                 JOIN service_run sr ON ts.train_id = sr.train_id
-                 JOIN station s ON ts.station_id = s.station_id
-                WHERE sr.service_run_id = %s ORDER BY ts.stop_sequence""",
-            (service_run_id,),
-        )
-        stops = [{"stop_sequence": r[0], "station_id": r[1], "station_name": r[2]} for r in cur.fetchall()]
-    conn.commit()
+    topology = get_run_topology(service_run_id)
+    stops = [{"stop_sequence": station["sequence"], "station_id": station["id"],
+              "station_name": station["name"]} for station in topology["stations"]]
     return {"data": {"stops": stops}}
 
 
@@ -227,17 +223,19 @@ def get_overview(service_run_id: str):
 
 
 @router.get("/demo/seatmap")
-def get_seatmap(service_run_id: str):
+def get_seatmap(service_run_id: str, seat_class: str = SEAT_CLASS):
     ssm = get_state_manager()
-    result = ssm.get_seatmap(service_run_id)
+    result = ssm.get_seatmap(service_run_id, seat_class)
     seats_out = []
     for seat_id, states in sorted(result["seats"].items()):
-        seats_out.append({"seat_id": seat_id, "seat_class": SEAT_CLASS, "states": states})
+        seats_out.append({"seat_id": seat_id, "seat_class": seat_class, "states": states})
     return {"data": {"matrix_version": result["matrix_version"], "seats": seats_out}}
 
 
 @router.get("/demo/analytics")
 def get_analytics(service_run_id: str):
+    ensure_model_forecast(service_run_id)
+    topology = get_run_topology(service_run_id)
     ssm = get_state_manager()
     sold, free, n_seats = _seg_counts(ssm.get_seatmap(service_run_id))
 
@@ -245,9 +243,29 @@ def get_analytics(service_run_id: str):
     with conn.cursor() as cur:
         rows, forecast_version = _latest_forecast_rows(cur, service_run_id)
     conn.commit()
-    forecast_by_seg = {i + 1: float(r[0]) for i, r in enumerate(rows)}
-    confidence_by_seg = {i + 1: float(r[1]) if r[1] is not None else None
-                         for i, r in enumerate(rows)}
+    forecast_by_seg = {segment: 0.0 for segment in sold}
+    confidence_values = {segment: [] for segment in sold}
+    station_index = {station["id"]: index for index, station in enumerate(topology["stations"])}
+    if rows and rows[0][0] is not None:
+        for origin, dest, _seat_class, demand, confidence, _version in rows:
+            start, end = station_index.get(origin), station_index.get(dest)
+            if start is None or end is None or start >= end:
+                continue
+            for segment in range(start + 1, end + 1):
+                forecast_by_seg[segment] += float(demand)
+                if confidence is not None:
+                    confidence_values[segment].append(float(confidence))
+    else:
+        for index, row in enumerate(rows):
+            segment = index + 1
+            if segment in forecast_by_seg:
+                forecast_by_seg[segment] = float(row[3])
+                if row[4] is not None:
+                    confidence_values[segment].append(float(row[4]))
+    confidence_by_seg = {
+        segment: (sum(values) / len(values) if values else None)
+        for segment, values in confidence_values.items()
+    }
 
     forecasts = [
         {"segment_id": s, "forecast_remaining": forecast_by_seg.get(s),

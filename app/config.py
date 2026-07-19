@@ -108,7 +108,10 @@ DEFAULT_POLICY = {
     "lf_low": 0.50,           # dưới mức này mới cho giảm động (điều kiện AI)
     # elasticity: chỉ tối ưu trong dải giá quanh F0 nơi DỮ LIỆU DÀY (tránh ngoại suy
     # ra vùng r cao — nơi ước lượng bị thiên lệch nội sinh và sẽ overprice).
-    "elastic_markup_max": 0.15,     # trần động: F0 -> tối đa +15% khi đoạn đầy
-    "elastic_markdown_max": 0.05,   # sàn động: F0 -> tối đa -5% khi đoạn trống (cầu kém
+    # trần động: F0 -> tối đa +15% khi đoạn đầy (override AULAC_ELASTIC_MARKUP
+    # để A/B — xem docs/BAO_CAO_DANH_GIA_MODEL_V2.md)
+    "elastic_markup_max": float(__import__("os").environ.get("AULAC_ELASTIC_MARKUP", "0.15")),
+    "elastic_markdown_max": float(__import__("os").environ.get("AULAC_ELASTIC_MARKDOWN", "0.05")),
+                                    # sàn động: F0 -> tối đa -5% khi đoạn trống (cầu kém
                                     # co giãn nên giảm sâu là lỗ; chỉ giảm nhẹ hút khách)
 }

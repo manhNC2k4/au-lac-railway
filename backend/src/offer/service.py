@@ -19,7 +19,7 @@ from ..merging.resolver import MergedSeatPlan, SeatPlan
 from ..pricing.context import PricingContext, SafetyContext
 from ..pricing.engine import PricingBreakdown, PricingEngine, fare_product_od
 
-OFFER_TTL_SECONDS = 300  # nguồn: spec (docs/API_Contract.md — offer TTL 5 phút, ví dụ expires_at 09:00->09:05)
+OFFER_TTL_SECONDS = 900  # Giá đã đề xuất có hiệu lực 15 phút trước khi khách giữ chỗ.
 
 
 @dataclass(frozen=True)

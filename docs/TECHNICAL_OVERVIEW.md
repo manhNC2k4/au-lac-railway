@@ -116,7 +116,7 @@ Mọi yêu cầu đặt vé đi qua đúng trình tự cố định này (không
 5. Áp luật giá động (mùa cao điểm, đặt sớm/muộn, độ đầy tàu...) theo YAML
 6. Áp rào chắn cứng (guardrail): sàn giá, trần giá, mức thay đổi tối đa, làm tròn nghìn, hoặc đóng băng giá
 7. So giá cuối với "giá sàn cơ hội" (bid-price) của từng đoạn — nếu giá không đủ bù, TỪ CHỐI
-8. Tạo Offer (đề nghị giá) — CHƯA giữ ghế, chỉ là một đề xuất có hạn dùng 5 phút
+8. Tạo Offer (đề nghị giá) — CHƯA giữ ghế, chỉ là một đề xuất có hạn dùng 15 phút
 9. Khách đồng ý → POST /holds giữ TẤT CẢ các ô ghế cần trong MỘT giao dịch DB (được hết cùng được, hỏng hết cùng hỏng)
 10. Khách xác nhận thanh toán → POST /bookings/{hold_id}/confirm — chuyển HELD → SOLD, KHÔNG tính lại giá
 11. Ghi lại toàn bộ quyết định vào "sổ nhật ký không thể sửa" (DecisionRecord) để giải trình sau này
@@ -220,7 +220,7 @@ lại nhiều lần).
 8. **So sánh**: nếu giá cuối ≥ tổng bid-price các đoạn → `decision = ACCEPT`;
    ngược lại `REJECT`.
 9. **OfferService** (`offer/service.py`) đóng gói tất cả thành một `Offer` bất
-   biến (immutable) kèm hạn dùng 5 phút, và một `DecisionRecord` ghi lại: giá
+   biến (immutable) kèm hạn dùng 15 phút, và một `DecisionRecord` ghi lại: giá
    gốc, luật nào bắn, rào chắn nào chạm, lý do chấp nhận/từ chối bằng câu văn dễ
    hiểu (`explanation`).
 10. Route ghi `offer` và `decision_record` vào DB, trả JSON đầy đủ: giá 3 tầng
@@ -268,7 +268,7 @@ chứng kiểm toán) rồi mới trả lỗi 422 `ALLOCATION_REJECTED` cho khá
    - Nếu mọi ô đều FREE: cập nhật tất cả thành `HELD`, tăng `matrix_version`
      — **tất cả trong cùng một giao dịch Postgres**, Postgres tự đảm bảo tính
      nguyên tử (atomicity), code không tự viết cơ chế khóa/riêng Redis.
-4. Trả `hold_id`, hạn giữ chỗ (10 phút), `matrix_version` mới.
+4. Trả `hold_id`, hạn giữ chỗ và `matrix_version` mới. API trực tiếp dùng 10 phút; luồng admin duyệt tiếp tục dùng đúng mốc hết hạn 15 phút của phương án.
 
 ### 4.6 Xác nhận thanh toán — `POST /bookings/{hold_id}/confirm`
 
@@ -445,7 +445,7 @@ khả dụng đã xếp hạng.
 nhận `seat_plan` đã tính sẵn từ route), `pricing` (trực tiếp), và tạo ra 2 vật
 thể bất biến:
 
-- **`Offer`**: đề xuất giá đầy đủ, có hạn dùng 5 phút, CHƯA giữ ghế thật.
+- **`Offer`**: đề xuất giá đầy đủ, có hạn dùng 15 phút, CHƯA giữ ghế thật.
 - **`DecisionRecord`**: "biên bản" không thể sửa của quyết định — bao gồm một
   `input_hash` (mã băm của mọi input đầu vào, dùng để phát hiện nếu có ai cố
   tình sửa lại input sau này mà giả vờ là quyết định cũ), danh sách luật đã bắn,

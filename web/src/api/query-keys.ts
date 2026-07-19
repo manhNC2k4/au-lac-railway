@@ -9,6 +9,10 @@ export const qk = {
   runs: () => ["runs"] as const,
   stations: () => ["stations"] as const,
   runStops: (serviceRunId: string) => ["runStops", serviceRunId] as const,
+  bookingRequest: (requestId: string) => ["bookingRequest", requestId] as const,
+  adminBookingRequest: (requestId: string) => ["adminBookingRequest", requestId] as const,
+  bookingSeatLayout: (requestId: string) => ["bookingSeatLayout", requestId] as const,
+  bookingQueue: (status: string) => ["bookingQueue", status] as const,
 } as const;
 
 /** Nhóm key bị ảnh hưởng khi ma trận ghế đổi (hold/confirm/reset). */
