@@ -31,6 +31,22 @@ def _as_json(value):
     return json.loads(value) if isinstance(value, str) else value
 
 
+def _seat_change_metadata(seat_plan: list[dict], topology: dict) -> tuple[list[str], int]:
+    """Derive change stations from contiguous legs persisted on a candidate."""
+    stations = topology["stations"]
+    change_station_ids = []
+    for current, following in zip(seat_plan, seat_plan[1:]):
+        if (
+            current.get("requires_seat_change", False)
+            and current.get("seat_id") != following.get("seat_id")
+            and current.get("segment_to", 0) + 1 == following.get("segment_from")
+        ):
+            station_index = int(current["segment_to"])
+            if 0 <= station_index < len(stations):
+                change_station_ids.append(stations[station_index]["id"])
+    return change_station_ids, len(change_station_ids)
+
+
 def _request_payload(request_id: str, *, admin: bool = False) -> dict:
     conn = get_connection()
     with conn.cursor() as cur:
@@ -87,9 +103,11 @@ def _request_payload(request_id: str, *, admin: bool = False) -> dict:
         candidate_rows = cur.fetchall()
     conn.commit()
 
+    topology = get_run_topology(row[1])
     candidates = []
     for candidate in candidate_rows:
         seat_plan = _as_json(candidate[6]) or []
+        change_station_ids, change_count = _seat_change_metadata(seat_plan, topology)
         candidates.append({
             "candidate_id": candidate[0],
             "offer_id": candidate[1],
@@ -110,6 +128,8 @@ def _request_payload(request_id: str, *, admin: bool = False) -> dict:
             "decision": candidate[16],
             "expires_at": candidate[17].isoformat(),
             "requires_customer_consent": any(item.get("requires_seat_change", False) for item in seat_plan),
+            "change_station_ids": change_station_ids,
+            "so_lan_doi_cho": change_count,
         })
 
     return {

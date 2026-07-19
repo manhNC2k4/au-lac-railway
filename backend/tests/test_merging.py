@@ -105,6 +105,14 @@ class TestMultiseat(unittest.TestCase):
                                           dwell_minutes={"VIN": 2.0})
         self.assertEqual(plans, [])
 
+    def test_configured_three_minute_dwell_allows_demo_change(self):
+        m = self._split_matrix()
+        plans = resolve_multiseat_options(
+            m, SEATS, STATION_IDS, SEG_FROM, SEG_TO,
+            dwell_minutes={"VIN": 3.0}, min_dwell_min=3.0,
+        )
+        self.assertEqual(len(plans), 1)
+
     def test_deterministic(self):
         m = self._split_matrix()
         a = best_multiseat(m, SEATS, STATION_IDS, SEG_FROM, SEG_TO)

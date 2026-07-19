@@ -150,6 +150,8 @@ export interface BookingCandidateData {
   decision: OfferDecision;
   expires_at: string;
   requires_customer_consent: boolean;
+  change_station_ids: string[];
+  so_lan_doi_cho: number;
 }
 
 export interface BookingRequestData extends BookingRequestCreate {
