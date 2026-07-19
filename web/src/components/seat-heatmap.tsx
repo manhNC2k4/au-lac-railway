@@ -1,37 +1,75 @@
 "use client";
 
-import { forwardRef, useMemo } from "react";
-import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Armchair, CheckCircle2, ChevronDown, Clock } from "lucide-react";
 import type { SeatmapSeat, SeatState } from "@/api/types";
 import type { RunSegment } from "@/lib/current-run";
 import { cn } from "@/lib/utils";
 
+/** Số ghế hiện mặc định mỗi nhóm hạng ghế trước khi phải bấm "Hiện thêm". */
+const PAGE_SIZE = 50;
+
+/** Gom ghế theo seat_class, giữ nguyên thứ tự xuất hiện đầu tiên (đã sort theo seat_id từ API). */
+function groupByClass(seats: SeatmapSeat[]): Map<string, SeatmapSeat[]> {
+  const groups = new Map<string, SeatmapSeat[]>();
+  for (const seat of seats) {
+    const key = seat.seat_class || "—";
+    const list = groups.get(key);
+    if (list) list.push(seat);
+    else groups.set(key, [seat]);
+  }
+  return groups;
+}
+
 /**
- * Ma trận 40 ghế × 7 chặng — ô kiểu pill có icon (theo mockup):
- * Còn trống = viền + vòng tròn rỗng · Đang giữ = vàng + đồng hồ ·
- * Đã bán = navy + check · Khoảng tái sử dụng = viền nét đứt xanh + mũi tên vòng.
- * Màu không bao giờ là tín hiệu duy nhất; mỗi ô focus được bằng bàn phím.
+ * Ma trận 40 ghế × 7 chặng — mỗi ô là hình cái ghế trần, không khung/box (theo mockup):
+ * Còn trống = ghế rỗng xám nhạt · Đang giữ = ghế vàng + badge đồng hồ ·
+ * Đã bán = ghế navy đặc + badge check.
+ * Màu không bao giờ là tín hiệu duy nhất — badge góc giữ vai trò phân biệt phi-màu-sắc.
  */
 
 export type CellVisualState = SeatState;
 
-const CELL: Record<CellVisualState, { label: string; className: string; icon: React.ReactNode }> = {
+const CELL: Record<
+  CellVisualState,
+  { label: string; iconClassName: string; badge: React.ReactNode }
+> = {
   FREE: {
     label: "Còn trống",
-    className: "bg-white border-line text-primary/70 hover:border-primary/50",
-    icon: <Circle className="h-4 w-4" aria-hidden />,
+    iconClassName: "text-muted fill-transparent",
+    badge: null,
   },
   HELD: {
     label: "Đang giữ",
-    className: "bg-warning-soft border-warning/50 text-warning",
-    icon: <Clock className="h-4 w-4" aria-hidden />,
+    iconClassName: "text-warning fill-warning/20",
+    badge: <Clock className="h-3 w-3" aria-hidden />,
   },
   SOLD: {
     label: "Đã bán",
-    className: "bg-navy border-navy text-white",
-    icon: <CheckCircle2 className="h-4 w-4" aria-hidden />,
+    iconClassName: "text-navy fill-navy",
+    badge: <CheckCircle2 className="h-3 w-3" aria-hidden />,
   },
 };
+
+function SeatGlyph({ state }: { state: CellVisualState }) {
+  const c = CELL[state];
+  return (
+    <span className="relative inline-flex">
+      <Armchair className={cn("h-6 w-6", c.iconClassName)} aria-hidden />
+      {c.badge && (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full",
+            state === "SOLD" ? "bg-navy text-white" : "bg-warning-soft text-warning",
+          )}
+        >
+          {c.badge}
+        </span>
+      )}
+    </span>
+  );
+}
 
 export function HeatmapLegend() {
   return (
@@ -43,12 +81,7 @@ export function HeatmapLegend() {
         const c = CELL[key];
         return (
           <li key={key} className="flex items-center gap-2 text-[13px] text-ink">
-            <span
-              aria-hidden
-              className={cn("inline-flex h-7 w-9 items-center justify-center rounded-lg border", c.className)}
-            >
-              {c.icon}
-            </span>
+            <SeatGlyph state={key} />
             {c.label}
           </li>
         );
@@ -57,18 +90,58 @@ export function HeatmapLegend() {
   );
 }
 
-/** Thanh tuyến ga "Hà Nội → Ninh Bình → …" theo mockup — dựng động theo ga dừng của chuyến. */
+/**
+ * Thanh tuyến ga "Hà Nội → Ninh Bình → …" — sơ đồ tuyến kiểu bản đồ metro: chấm ga
+ * nối bằng đường line ngang, xếp lưới đều (grid, không phải flex) để line thẳng
+ * hàng khi tuyến dài (vd 22 ga) tự xuống dòng — thấy hết cả tuyến, không cần kéo.
+ * Ga đầu/cuối chấm to + tô đậm để dễ định vị điểm xuất phát/kết thúc.
+ */
 export function RouteBar({ segments }: { segments: RunSegment[] }) {
+  const stations = useMemo(() => {
+    if (segments.length === 0) return [];
+    return [segments[0].from, ...segments.map((s) => s.to)];
+  }, [segments]);
+
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-line bg-white px-4 py-2.5 text-[13.5px] font-medium text-ink">
-      {segments.map((seg, i) => (
-        <span key={seg.segment_id} className="flex items-center gap-2">
-          {i === 0 && <span>{seg.from.station_name}</span>}
-          <span aria-hidden className="text-muted">→</span>
-          <span>{seg.to.station_name}</span>
-        </span>
-      ))}
-    </div>
+    <ol
+      className="grid gap-x-0 gap-y-4 rounded-xl border border-line bg-white px-4 py-4"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(84px, 1fr))" }}
+      aria-label="Tuyến ga của chuyến"
+    >
+      {stations.map((station, i) => {
+        const isFirst = i === 0;
+        const isLast = i === stations.length - 1;
+        const isEndpoint = isFirst || isLast;
+        return (
+          <li key={station.station_id} className="flex flex-col items-center gap-1.5 px-1.5">
+            <div className="relative flex h-2.5 w-full items-center justify-center">
+              {!isFirst && (
+                <span aria-hidden className="absolute left-0 right-1/2 top-1/2 h-px -translate-y-1/2 bg-line" />
+              )}
+              {!isLast && (
+                <span aria-hidden className="absolute left-1/2 right-0 top-1/2 h-px -translate-y-1/2 bg-line" />
+              )}
+              <span
+                aria-hidden
+                className={cn(
+                  "relative z-10 shrink-0 rounded-full ring-2 ring-white",
+                  isEndpoint ? "h-2.5 w-2.5 bg-primary" : "h-2 w-2 bg-muted",
+                )}
+              />
+            </div>
+            <span
+              className={cn(
+                "truncate text-center text-[12px] leading-tight",
+                isEndpoint ? "font-semibold text-primary" : "text-ink",
+              )}
+              title={station.station_name}
+            >
+              {station.station_name}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -84,18 +157,61 @@ export function cellLabel(state: CellVisualState): string {
 interface SeatHeatmapProps {
   seats: SeatmapSeat[];
   segments: RunSegment[];
-  /** seat_id cần làm nổi bật (vd golden gap C01-S017). */
-  highlightSeatId?: string;
   onCellSelect?: (seat: SeatmapSeat, segmentId: number, state: CellVisualState) => void;
   selected?: { seatId: string; segmentId: number } | null;
 }
 
-export const SeatHeatmap = forwardRef<HTMLTableRowElement, SeatHeatmapProps>(function SeatHeatmap(
-  { seats, segments, highlightSeatId, onCellSelect, selected },
-  highlightRowRef,
-) {
+export function SeatHeatmap({ seats, segments, onCellSelect, selected }: SeatHeatmapProps) {
   const segmentIds = useMemo(() => segments.map((s) => s.segment_id), [segments]);
   const segmentById = useMemo(() => new Map(segments.map((s) => [s.segment_id, s])), [segments]);
+  const groups = useMemo(() => groupByClass(seats), [seats]);
+  const classNames = useMemo(() => Array.from(groups.keys()), [groups]);
+  const firstClassName = classNames[0];
+
+  // Nhóm đầu tiên mở mặc định.
+  const [openOverrides, setOpenOverrides] = useState<Record<string, boolean>>({});
+  const isOpen = (name: string) => openOverrides[name] ?? name === firstClassName;
+
+  // Mỗi nhóm chỉ hiện PAGE_SIZE ghế đầu, trừ phi user bấm "Hiện thêm".
+  const [visibleOverrides, setVisibleOverrides] = useState<Record<string, number>>({});
+  const visibleCount = (name: string, total: number) => Math.min(visibleOverrides[name] ?? Math.min(PAGE_SIZE, total), total);
+
+  const columnCount = segmentIds.length + 1;
+
+  function renderSeatRow(seat: SeatmapSeat) {
+    return (
+      <tr key={seat.seat_id}>
+        <th
+          scope="row"
+          className="sticky left-0 z-10 border-b border-r border-line bg-white px-4 py-1.5 text-left font-medium tabular-nums text-ink"
+        >
+          {seat.seat_id}
+        </th>
+        {segmentIds.map((segId) => {
+          const st = cellState(seat, segId);
+          const c = CELL[st];
+          const isSelected = selected?.seatId === seat.seat_id && selected?.segmentId === segId;
+          return (
+            <td key={segId} className="border-b border-line p-1.5 text-center">
+              <button
+                type="button"
+                onClick={() => onCellSelect?.(seat, segId, st)}
+                aria-label={`${seat.seat_id} · L${segId} ${segmentById.get(segId)?.from.station_name ?? ""} → ${segmentById.get(segId)?.to.station_name ?? ""} · ${c.label}`}
+                aria-pressed={isSelected}
+                className={cn(
+                  "inline-flex h-9 w-full min-w-[52px] items-center justify-center rounded-lg",
+                  "hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
+                  isSelected && "bg-primary-soft/60 ring-2 ring-primary ring-offset-1",
+                )}
+              >
+                <SeatGlyph state={st} />
+              </button>
+            </td>
+          );
+        })}
+      </tr>
+    );
+  }
 
   return (
     <div
@@ -104,72 +220,82 @@ export const SeatHeatmap = forwardRef<HTMLTableRowElement, SeatHeatmapProps>(fun
       aria-label="Ma trận ghế theo chặng"
       tabIndex={0}
     >
-      <table className="w-full min-w-[680px] border-collapse text-sm">
+      <table className="border-collapse text-sm">
         <thead>
           <tr>
             <th
               scope="col"
-              className="sticky left-0 z-10 border-b border-r border-line bg-white px-4 py-2.5 text-left font-semibold text-ink"
+              className="sticky left-0 top-0 z-20 min-w-[110px] border-b border-r border-line bg-white px-4 py-2.5 text-left font-semibold text-ink"
             >
               Mã ghế
             </th>
             {segmentIds.map((id) => {
               const seg = segmentById.get(id);
+              const title = `${seg?.from.station_name ?? `L${id}`} → ${seg?.to.station_name ?? ""}`;
               return (
-                <th key={id} scope="col" className="border-b border-line px-1 py-2 text-center font-semibold text-ink">
-                  <div className="text-[12.5px]">{seg?.from.station_name ?? `L${id}`}–</div>
-                  <div className="text-[12.5px]">{seg?.to.station_name ?? ""}</div>
+                <th
+                  key={id}
+                  scope="col"
+                  title={title}
+                  className="sticky top-0 z-20 min-w-[96px] border-b border-line bg-white px-2 py-2 text-center align-bottom font-semibold text-ink"
+                >
+                  <div className="truncate text-[11.5px] leading-tight text-muted">{seg?.from.station_name ?? `L${id}`}</div>
+                  <div className="truncate text-[12.5px] leading-tight">{seg?.to.station_name ?? ""}</div>
                 </th>
               );
             })}
           </tr>
         </thead>
-        <tbody>
-          {seats.map((seat) => {
-            const isHighlight = seat.seat_id === highlightSeatId;
-            return (
-              <tr
-                key={seat.seat_id}
-                ref={isHighlight ? highlightRowRef : undefined}
-                className={cn(isHighlight && "bg-primary-soft/50")}
-              >
-                <th
-                  scope="row"
-                  className={cn(
-                    "sticky left-0 z-10 border-b border-r border-line bg-white px-4 py-1.5 text-left font-medium tabular-nums text-ink",
-                    isHighlight && "bg-primary-soft font-semibold text-primary",
-                  )}
-                >
-                  {seat.seat_id}
+        {classNames.map((name) => {
+          const list = groups.get(name) ?? [];
+          const open = isOpen(name);
+          const visible = visibleCount(name, list.length);
+          const remaining = list.length - visible;
+          return (
+            <tbody key={name}>
+              <tr>
+                <th scope="colgroup" colSpan={columnCount} className="border-b border-line bg-surface p-0 text-left">
+                  {/* sticky left-0 (thay vì w-full) — nút toggle luôn hiện ở mép trái, không cần cuộn ngang mới thấy được */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenOverrides((prev) => ({ ...prev, [name]: !open }))}
+                    aria-expanded={open}
+                    className="sticky left-0 z-0 flex items-center gap-6 px-4 py-2 font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  >
+                    <span>
+                      {name} · {list.length} ghế
+                    </span>
+                    <ChevronDown
+                      className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")}
+                      aria-hidden
+                    />
+                  </button>
                 </th>
-                {segmentIds.map((segId) => {
-                  const st = cellState(seat, segId);
-                  const c = CELL[st];
-                  const isSelected = selected?.seatId === seat.seat_id && selected?.segmentId === segId;
-                  return (
-                    <td key={segId} className="border-b border-line p-1.5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => onCellSelect?.(seat, segId, st)}
-                        aria-label={`${seat.seat_id} · L${segId} ${segmentById.get(segId)?.from.station_name ?? ""} → ${segmentById.get(segId)?.to.station_name ?? ""} · ${c.label}`}
-                        aria-pressed={isSelected}
-                        className={cn(
-                          "inline-flex h-9 w-full min-w-[52px] items-center justify-center rounded-lg border",
-                          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
-                          c.className,
-                          isSelected && "ring-2 ring-primary ring-offset-1",
-                        )}
-                      >
-                        {c.icon}
-                      </button>
-                    </td>
-                  );
-                })}
               </tr>
-            );
-          })}
-        </tbody>
+              {open && list.slice(0, visible).map(renderSeatRow)}
+              {open && remaining > 0 && (
+                <tr>
+                  {/* sticky left-0 (thay vì text-center trên cả colSpan) — nút luôn hiện ở mép trái, không cần cuộn ngang mới thấy được */}
+                  <td colSpan={columnCount} className="border-b border-line p-0 text-left">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleOverrides((prev) => ({
+                          ...prev,
+                          [name]: Math.min(list.length, visible + PAGE_SIZE),
+                        }))
+                      }
+                      className="sticky left-0 z-0 px-4 py-2 text-sm font-medium text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                    >
+                      Hiện thêm {Math.min(PAGE_SIZE, remaining)} ghế
+                    </button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          );
+        })}
       </table>
     </div>
   );
-});
+}

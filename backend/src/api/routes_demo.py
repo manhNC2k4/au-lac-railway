@@ -6,6 +6,7 @@ version, giữ run_id/che_do_gia); analytics trả forecast per-segment + bid th
 overview tính doanh thu/pax-km/decision thật từ DB thay vì placeholder 0.
 """
 import json
+import re
 from datetime import date
 
 from fastapi import APIRouter, HTTPException
@@ -21,6 +22,16 @@ router = APIRouter(tags=["demo"])
 
 _SCENARIO = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
 SEAT_CLASS = _SCENARIO.get("seat_class", "NGOI_MEM_DH")
+
+# Mock-loaded seat_ids (backend/scripts/load_mock_from_dataset.py::seat_id_of) are
+# "<agg_class>-<4-digit-num>" and carry the real class in the prefix; golden-scenario
+# seat_ids ("C01-S017") don't match this shape, so they fall back to SEAT_CLASS.
+_SEAT_CLASS_RE = re.compile(r"^(.+)-(\d{4})$")
+
+
+def _seat_class_of(seat_id: str) -> str:
+    m = _SEAT_CLASS_RE.match(seat_id)
+    return m.group(1) if m else SEAT_CLASS
 
 
 def _seg_counts(seatmap: dict) -> tuple[dict[int, int], dict[int, int], int]:
@@ -306,7 +317,7 @@ def get_seatmap(service_run_id: str):
     result = ssm.get_seatmap(service_run_id)
     seats_out = []
     for seat_id, states in sorted(result["seats"].items()):
-        seats_out.append({"seat_id": seat_id, "seat_class": SEAT_CLASS, "states": states})
+        seats_out.append({"seat_id": seat_id, "seat_class": _seat_class_of(seat_id), "states": states})
     return {"data": {"matrix_version": result["matrix_version"], "seats": seats_out}}
 
 
