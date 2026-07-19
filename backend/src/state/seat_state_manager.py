@@ -178,6 +178,7 @@ class SeatStateManager:
                 cur.execute("DELETE FROM waiting_list WHERE service_run_id=%s", (service_run_id,))
                 cur.execute("DELETE FROM quota_version WHERE service_run_id=%s", (service_run_id,))
                 cur.execute("DELETE FROM proposal_log WHERE service_run_id=%s", (service_run_id,))
+                cur.execute("DELETE FROM price_suggestion WHERE service_run_id=%s", (service_run_id,))
                 rows = [(service_run_id, seat_id, seg) for seat_id in seats for seg in range(1, n_segments + 1)]
                 cur.executemany(
                     """INSERT INTO seat_segment_state (service_run_id, seat_id, segment_id, status, version)

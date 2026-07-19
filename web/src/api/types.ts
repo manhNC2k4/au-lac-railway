@@ -296,3 +296,31 @@ export interface StopRecord {
 export interface StopsData {
   stops: StopRecord[];
 }
+
+export type SuggestionStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface PriceSuggestion {
+  segment_id: number;
+  label: string;
+  seat_class: string;
+  occupancy: number;
+  remaining_capacity: number;
+  forecast_remaining: number;
+  confidence: number | null;
+  base_vnd: number;
+  suggested_vnd: number;
+  delta_pct: number;
+  expected_gain_vnd: number;
+  multiplier: number;
+  explanation: string;
+  status: SuggestionStatus;
+  decided_by: string | null;
+  decided_at: string | null;
+}
+
+export interface PriceSuggestionsData {
+  service_run_id: string;
+  seat_class: string;
+  days_to_departure?: number;
+  suggestions: PriceSuggestion[];
+}

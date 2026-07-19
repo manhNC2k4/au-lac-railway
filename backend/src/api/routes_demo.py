@@ -8,7 +8,7 @@ overview tính doanh thu/pax-km/decision thật từ DB thay vì placeholder 0.
 import json
 from datetime import date
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from ..allocation import cache as allocation_cache
 from ..audit import log as audit_log
@@ -129,7 +129,9 @@ def list_runs(limit: int = 500, q: str | None = None):
         if q:
             sql += " WHERE service_run_id ILIKE %s OR train_id ILIKE %s"
             params += [f"%{q}%", f"%{q}%"]
-        sql += " ORDER BY service_date, service_run_id LIMIT %s"
+        # DESC: chuyến mới/ngày xa nhất lên đầu — nếu ASC, chuyến vừa tạo (ngày tương lai)
+        # rơi xuống cuối và bị LIMIT cắt mất khỏi run-picker.
+        sql += " ORDER BY service_date DESC, service_run_id DESC LIMIT %s"
         params.append(limit)
         cur.execute(sql, params)
         runs = [{"service_run_id": r[0], "train_id": r[1],
@@ -137,6 +139,78 @@ def list_runs(limit: int = 500, q: str | None = None):
                 for r in cur.fetchall()]
     conn.commit()
     return {"data": {"runs": runs}}
+
+
+@router.post("/demo/runs")
+def create_run(body: dict):
+    """Tạo chuyến mới với toàn bộ ghế FREE — chọn tàu + ngày chạy tương lai.
+    Sơ đồ ghế/số chặng/bảng giá nhân bản từ chuyến mẫu (run cùng tàu nhiều ghế nhất)
+    nên chuyến mới bán được ngay; chưa seed forecast/DLP (analytics hiện 0 cho tới khi
+    bấm 'Làm mới dự báo') — đúng hành vi 'cache miss => 0' của route đọc-only."""
+    train_id = (body.get("train_id") or "").strip()
+    service_date = (body.get("service_date") or "").strip()
+    if not train_id or not service_date:
+        raise HTTPException(422, "train_id và service_date là bắt buộc")
+    try:
+        date.fromisoformat(service_date)
+    except ValueError:
+        raise HTTPException(422, "service_date phải dạng YYYY-MM-DD")
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM train WHERE train_id=%s", (train_id,))
+            if not cur.fetchone():
+                raise HTTPException(404, f"Không có tàu {train_id}")
+            # chuyến mẫu: cùng tàu, nhiều ghế nhất -> lấy tập ghế + số chặng + hướng + bảng giá
+            cur.execute(
+                """SELECT s.service_run_id, sr.direction FROM seat_segment_state s
+                     JOIN service_run sr ON s.service_run_id=sr.service_run_id
+                    WHERE sr.train_id=%s
+                    GROUP BY s.service_run_id, sr.direction
+                    ORDER BY COUNT(DISTINCT s.seat_id) DESC LIMIT 1""",
+                (train_id,),
+            )
+            src = cur.fetchone()
+            if not src:
+                raise HTTPException(422, f"Tàu {train_id} chưa có chuyến mẫu để dựng sơ đồ ghế")
+            src_run, direction = src
+            cur.execute("SELECT DISTINCT seat_id FROM seat_segment_state WHERE service_run_id=%s", (src_run,))
+            seat_ids = [r[0] for r in cur.fetchall()]
+            cur.execute("SELECT COALESCE(MAX(segment_id),0) FROM seat_segment_state WHERE service_run_id=%s", (src_run,))
+            n_segments = cur.fetchone()[0]
+
+            base = f"{train_id}_{service_date}_NEW"
+            new_id, i = base, 2
+            while True:
+                cur.execute("SELECT 1 FROM service_run WHERE service_run_id=%s", (new_id,))
+                if not cur.fetchone():
+                    break
+                new_id, i = f"{base}{i}", i + 1
+
+            cur.execute(
+                """INSERT INTO service_run (service_run_id, train_id, service_date, direction, status, matrix_version)
+                   VALUES (%s,%s,%s,%s,'ACTIVE',1)""",
+                (new_id, train_id, service_date, direction),
+            )
+            cur.executemany(
+                """INSERT INTO seat_segment_state (service_run_id, seat_id, segment_id, status, version)
+                   VALUES (%s,%s,%s,'FREE',1)""",
+                [(new_id, sid, seg) for sid in seat_ids for seg in range(1, n_segments + 1)],
+            )
+            cur.execute(
+                """INSERT INTO fare_product (service_run_id, origin_station_id, dest_station_id, seat_class, base_fare_vnd, version)
+                   SELECT %s, origin_station_id, dest_station_id, seat_class, base_fare_vnd, version
+                     FROM fare_product WHERE service_run_id=%s""",
+                (new_id, src_run),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return {"data": {"service_run_id": new_id, "train_id": train_id, "service_date": service_date,
+                     "direction": direction, "seats": len(seat_ids), "segments": n_segments},
+            "message": "Trip created"}
 
 
 @router.get("/demo/stations")

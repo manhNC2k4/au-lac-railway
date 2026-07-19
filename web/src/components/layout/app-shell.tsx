@@ -16,7 +16,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   LineChart,
-  BrainCircuit,
   SlidersHorizontal,
   Layers,
 } from "lucide-react";
@@ -48,7 +47,6 @@ const NAV: NavItem[] = [
       { href: "/admin/analytics?tab=allocation", label: "Phân bổ chỗ" },
     ],
   },
-  { href: "/admin/decisions", label: "Quyết định AI", icon: BrainCircuit },
   { href: "/admin/backtest", label: "So sánh Backtest", icon: BarChart3 },
   { href: "/admin/booking-lab", label: "Booking Lab", icon: TicketCheck },
 ];
@@ -59,7 +57,6 @@ const BREADCRUMB: [string, string][] = [
   ["/admin/analytics", "Dự báo & Phân bổ"],
   ["/admin/booking-lab", "Booking Lab"],
   ["/admin/backtest", "So sánh chiến lược"],
-  ["/admin/decisions", "Chi tiết quyết định AI"],
 ];
 
 export function Logo({ compact = false }: { compact?: boolean }) {

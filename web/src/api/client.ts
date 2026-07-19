@@ -2,7 +2,8 @@ import { ApiError, type ApiErrorCode } from "@/lib/errors";
 import type {
   AnalyticsData, BacktestReportData, BacktestRequest, ConfirmData, DecisionDetailData,
   GroupQuoteData, GroupQuoteRequest, HoldData, HoldRequest, OfferData, OfferRequest,
-  OverrideData, OverrideRequest, OverviewData, QuotaVersionData, ResetData, RunsData, SeatmapData,
+  OverrideData, OverrideRequest, OverviewData, PriceSuggestion, PriceSuggestionsData,
+  QuotaVersionData, ResetData, RunsData, RunSummary, SeatmapData,
   StationsData, StopsData, WaitlistAddData, WaitlistAddRequest, WaitlistEntry, WaitlistMatchData,
 } from "./types";
 
@@ -14,6 +15,9 @@ export interface AuLacApi {
   getSeatmap(serviceRunId: string): Promise<SeatmapData>;
   getAnalytics(serviceRunId: string): Promise<AnalyticsData>;
   listRuns(q?: string): Promise<RunsData>;
+  createRun(trainId: string, serviceDate: string): Promise<RunSummary & { seats: number; segments: number }>;
+  getPriceSuggestions(serviceRunId: string): Promise<PriceSuggestionsData>;
+  decidePriceSuggestion(serviceRunId: string, segmentId: number, decision: "ACCEPT" | "REJECT", actorRole: string, decidedBy: string): Promise<PriceSuggestion & { applied: boolean }>;
   listStations(): Promise<StationsData>;
   getRunStops(serviceRunId: string): Promise<StopsData>;
   getDecision(decisionId: string): Promise<DecisionDetailData>;
@@ -81,6 +85,10 @@ export function createHttpClient(baseUrl = ""): AuLacApi {
     getSeatmap: (service_run_id) => get("/demo/seatmap", { service_run_id }),
     getAnalytics: (service_run_id) => get("/demo/analytics", { service_run_id }),
     listRuns: (q) => get("/demo/runs", q ? { q } : undefined),
+    createRun: (train_id, service_date) => post("/demo/runs", { train_id, service_date }),
+    getPriceSuggestions: (service_run_id) => get("/pricing/suggestions", { service_run_id }),
+    decidePriceSuggestion: (service_run_id, segment_id, decision, actorRole, decided_by) =>
+      post("/pricing/suggestions/decide", { service_run_id, segment_id, decision, decided_by }, undefined, actorRole),
     listStations: () => get("/demo/stations"),
     getRunStops: (service_run_id) => get(`/demo/runs/${encodeURIComponent(service_run_id)}/stops`),
     getDecision: (id) => get(`/decisions/${encodeURIComponent(id)}`),

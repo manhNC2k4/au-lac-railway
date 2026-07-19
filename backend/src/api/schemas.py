@@ -38,6 +38,15 @@ class AllocationDecisionRequest(BaseModel):
     decided_by: str = "revenue_manager"
 
 
+class PriceDecisionRequest(BaseModel):
+    """Duyệt/từ chối đề xuất chỉnh giá MỘT đoạn của một chuyến. Vai trò kiểm qua
+    `X-Actor-Role`; `decided_by` là tên hiển thị trong audit log."""
+    service_run_id: str
+    segment_id: int
+    decision: str  # ACCEPT | REJECT
+    decided_by: str = "revenue_manager"
+
+
 class WaitlistAddRequest(BaseModel):
     """P7.3 (C5 hàng chờ) — khách chủ động vào hàng chờ sau khi /offers trả
     NO_SAME_SEAT_OPTION (không tự động thêm — cần khách đồng ý chờ)."""
