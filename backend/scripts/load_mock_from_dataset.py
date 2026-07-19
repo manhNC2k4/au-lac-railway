@@ -68,6 +68,39 @@ def seat_id_of(agg_class: str, num: str) -> str:
     return f"{agg_class}-{int(num):04d}"
 
 
+def round_to_1k(vnd: float) -> int:
+    return int(round(vnd / 1000.0)) * 1000
+
+
+# FABRICATED: no historical DLP solve survives the export, so bid_price_breakdown/
+# audit_timeline can't be inverted exactly (unlike gia_goc/gia_niem_yet/gia_cuoi, which
+# ARE the real recorded prices). Reconstruct a plausible, internally-consistent stand-in
+# from those real prices so FE pages have something non-null to render, tagged "MOCK:"
+# (never a real rule_id like R_HE2026_XA_NGAY) so it's never mistaken for an
+# authoritative audit string.
+def bid_breakdown(r):
+    if r.dseg_from is None:
+        return None, None
+    segs = range(int(r.dseg_from), int(r.dseg_to) + 1)
+    # ponytail: no per-segment scarcity available retroactively; split a flat 70% of the
+    # price actually paid evenly across legs used (bid <= final_price holds, matches the
+    # accept invariant) instead of solving DLP for 500k historical rows.
+    per_seg = round_to_1k(int(r.gia_cuoi) * 0.7 / len(segs))
+    return json.dumps({str(s): per_seg for s in segs}), per_seg * len(segs)
+
+
+def audit_timeline(r):
+    fired = [{"rule_id": "MOCK:GIA_NIEM_YET",
+              "he_so": round(r.gia_niem_yet / r.gia_goc, 4) if r.gia_goc else 1.0, "thu_tu": 1}]
+    note = (f"[Tái tạo từ dữ liệu lịch sử, không phải audit trail gốc] "
+            f"Chế độ giá {r.che_do_gia}: {int(r.gia_goc):,}đ → {int(r.gia_niem_yet):,}đ")
+    if r.gia_cuoi < r.gia_niem_yet:
+        fired.append({"rule_id": "MOCK:CSXH",
+                      "he_so": round(r.gia_cuoi / r.gia_niem_yet, 4), "thu_tu": 2})
+        note += f" → {int(r.gia_cuoi):,}đ sau ưu đãi CSXH"
+    return json.dumps({"explanation": note + ".", "rules_fired": fired})
+
+
 def od_segments(pos_di: int, pos_den: int):
     """1-based stop seqs -> inclusive DB segment range [seg_from, seg_to].
     Travel stop a..b occupies segments a..b-1 (segment i joins stop i, i+1)."""
@@ -86,6 +119,20 @@ def self_check():
     stops = {"HNO": 1, "VIN": 2, "HUE": 3, "SGO": 4}
     f, t = od_segments(stops["HNO"], stops["HUE"])
     assert (f, t) == (1, 2)
+
+    from types import SimpleNamespace
+    r_no_seat = SimpleNamespace(dseg_from=None, dseg_to=None, gia_cuoi=100_000)
+    assert bid_breakdown(r_no_seat) == (None, None)
+    r_2seg = SimpleNamespace(dseg_from=1, dseg_to=2, gia_cuoi=100_000)
+    breakdown, total = bid_breakdown(r_2seg)
+    assert json.loads(breakdown) == {"1": 35000, "2": 35000} and total == 70000, (breakdown, total)
+    r_plain = SimpleNamespace(gia_goc=100_000, gia_niem_yet=120_000, gia_cuoi=120_000, che_do_gia="AI")
+    at = json.loads(audit_timeline(r_plain))
+    assert len(at["rules_fired"]) == 1 and at["rules_fired"][0]["rule_id"] == "MOCK:GIA_NIEM_YET"
+    r_csxh = SimpleNamespace(gia_goc=100_000, gia_niem_yet=120_000, gia_cuoi=90_000, che_do_gia="AI")
+    at = json.loads(audit_timeline(r_csxh))
+    assert len(at["rules_fired"]) == 2 and at["rules_fired"][1]["rule_id"] == "MOCK:CSXH"
+    assert "CSXH" in at["explanation"]
     print("self-check OK")
 
 
@@ -117,6 +164,22 @@ def main():
     tx = rd(f"transactions/thang={args.month}")
     search = rd(f"search_log/thang={args.month}")
     run_sum = run_sum[run_sum["ngay_chay"].astype(str).str.startswith(args.month)].copy()
+
+    # Golden demo scenario (backend/seed/scenario.json) reuses a REAL train_id+date
+    # (SE1 / 2026-06-15) as its service_run_id. If the dataset also has that exact
+    # chuyen_id this month, loading it here writes train_stop/service_run/etc. with
+    # the real 25-stop topology, while /demo/scenarios/{id}/reset later upserts the
+    # SAME id back to the golden 8-station shape but never rewrites train_stop
+    # (keyed by train_id, treated as static) -> permanent 25-vs-7-segment mismatch.
+    # Excluding it here keeps the two loaders from ever fighting over one row.
+    GOLDEN_RUN_ID = "SE1_2026-06-15_LE"
+    n_excluded = int((run_sum["chuyen_id"] == GOLDEN_RUN_ID).sum())
+    run_sum = run_sum[run_sum["chuyen_id"] != GOLDEN_RUN_ID].copy()
+    tx = tx[tx["chuyen_id"] != GOLDEN_RUN_ID].copy()
+    if "chuyen_id" in search.columns:
+        search = search[search["chuyen_id"] != GOLDEN_RUN_ID].copy()
+    if n_excluded:
+        print(f"excluded : {GOLDEN_RUN_ID} ({n_excluded} run row) — reserved for golden seed, see comment above")
     print(f"loaded   : {len(tx):,} tickets, {len(search):,} searches, {len(run_sum):,} runs")
 
     km = dict(zip(stations["ga_id"], stations["ly_trinh_km"].astype(float)))
@@ -324,13 +387,19 @@ def main():
          ["booking_id", "hold_id", "user_id", "group_id", "booking_channel", "promo_id",
           "status", "created_at", "confirmed_at", "cancelled_at"], booking_rows())
 
+    def decision_rows():
+        for r in tx.itertuples():
+            breakdown, bid_total = bid_breakdown(r)
+            yield (f"D-{r.ve_id}", h16(r.ve_id, r.gia_cuoi),
+                   json.dumps({"matrix": 1, "forecast": 1, "policy": 1}), "ACCEPT",
+                   int(r.gia_goc), int(r.gia_niem_yet), int(r.gia_cuoi),
+                   bid_total, breakdown, audit_timeline(r),
+                   str(r.che_do_gia), "system", r.dbought)
     copy("decision_record",
          ["decision_id", "input_hash", "versions", "result", "base_fare_vnd",
-          "ai_suggested_price_vnd", "final_price_vnd", "explanation_code", "actor", "created_at"],
-         ((f"D-{r.ve_id}", h16(r.ve_id, r.gia_cuoi),
-           json.dumps({"matrix": 1, "forecast": 1, "policy": 1}), "ACCEPT",
-           int(r.gia_goc), int(r.gia_niem_yet), int(r.gia_cuoi),
-           str(r.che_do_gia), "system", r.dbought) for r in tx.itertuples()))
+          "ai_suggested_price_vnd", "final_price_vnd", "bid_price_total_vnd",
+          "bid_price_breakdown", "audit_timeline", "explanation_code", "actor", "created_at"],
+         decision_rows())
 
     # 12. forecast_observation <- search_log funnel (grounded)
     def fo_rows():
