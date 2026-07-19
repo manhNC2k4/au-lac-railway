@@ -66,7 +66,7 @@ export default function BookingOfferPage() {
                   <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-soft text-primary"><Armchair className="h-5 w-5" /></span>
                   <div>
                     <strong className="text-lg text-ink">{seatDisplayName(leg.seat_id, request.seat_class)}</strong>
-                    <p className="text-sm text-muted">{offer.requires_customer_consent ? `Phần ${index + 1} của hành trình` : `Hành khách ${leg.passenger_no ?? index + 1}`}</p>
+                    <p className="text-sm text-muted">{offer.requires_customer_consent ? `Phần ${index + 1}: chặng ${leg.segment_from}${leg.segment_to > leg.segment_from ? ` đến ${leg.segment_to}` : ""}` : `Hành khách ${leg.passenger_no ?? index + 1}`}</p>
                   </div>
                   <span className="text-sm font-medium text-success">{journey}</span>
                 </div>

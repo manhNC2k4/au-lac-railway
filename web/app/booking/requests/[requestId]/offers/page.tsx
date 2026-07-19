@@ -31,10 +31,15 @@ export default function ApprovedSeatMapPage() {
     queryFn: () => api.getBookingRequest(requestId),
     refetchInterval: 5_000,
   });
+  const request = requestQuery.data;
+  const candidates = useMemo(() => request?.candidates.filter((candidate) =>
+    ["APPROVED", "PRICE_OVERRIDDEN", "SELECTED"].includes(candidate.status)) ?? [], [request]);
+  const candidate = candidates.find((item) => item.ai_recommended) ?? candidates[0];
+  const isSeatChangePlan = Boolean(candidate?.requires_customer_consent);
   const layoutQuery = useQuery({
     queryKey: qk.bookingSeatLayout(requestId),
     queryFn: () => api.getBookingSeatLayout(requestId),
-    enabled: requestQuery.data?.status === "APPROVED",
+    enabled: request?.status === "APPROVED" && !isSeatChangePlan,
     refetchInterval: 5_000,
   });
 
@@ -44,10 +49,11 @@ export default function ApprovedSeatMapPage() {
     }
   }, [requestQuery.data, requestId, router]);
 
-  const request = requestQuery.data;
-  const candidates = useMemo(() => request?.candidates.filter((candidate) =>
-    ["APPROVED", "PRICE_OVERRIDDEN", "SELECTED"].includes(candidate.status)) ?? [], [request]);
-  const candidate = candidates.find((item) => item.ai_recommended) ?? candidates[0];
+  useEffect(() => {
+    if (request?.status === "APPROVED" && candidate?.requires_customer_consent) {
+      continueWithCandidate(request, candidate, router);
+    }
+  }, [candidate, request, router]);
 
   useEffect(() => {
     if (initialized.current || !candidate || !layoutQuery.data) return;
@@ -71,7 +77,7 @@ export default function ApprovedSeatMapPage() {
     },
   });
 
-  if (requestQuery.isPending || (request?.status === "APPROVED" && layoutQuery.isPending)) {
+  if (requestQuery.isPending || isSeatChangePlan || (request?.status === "APPROVED" && layoutQuery.isPending)) {
     return <PassengerPage><div className="flex min-h-[70vh] items-center justify-center"><Loader2 className="h-9 w-9 animate-spin text-primary" aria-label="Đang tải sơ đồ tàu" /></div></PassengerPage>;
   }
   if (requestQuery.isError || !request || layoutQuery.isError) {
@@ -183,7 +189,7 @@ function Legend() {
 function continueWithCandidate(request: BookingRequestData, candidate: BookingCandidateData, router: ReturnType<typeof useRouter>) {
   const approvalSession = loadApprovalSession();
   const offerRequest: OfferRequest = { service_run_id: request.service_run_id, origin_station_id: request.origin_station_id, dest_station_id: request.dest_station_id, seat_class: request.seat_class, quantity: request.quantity, priority_passenger: request.priority_passenger };
-  const offer: OfferData = { offer_id: candidate.offer_id, service_run_id: request.service_run_id, matrix_version: candidate.matrix_version, forecast_version: candidate.forecast_version, policy_version: candidate.policy_version, decision: candidate.decision, seat_plan: candidate.seat_plan, requires_customer_consent: candidate.requires_customer_consent, change_station_ids: [], so_lan_doi_cho: 0, pricing: candidate.pricing, bid: { total_vnd: 0, by_segment: {} }, decision_record_id: candidate.decision_record_id, explanation: candidate.explanation, expires_at: candidate.expires_at };
+  const offer: OfferData = { offer_id: candidate.offer_id, service_run_id: request.service_run_id, matrix_version: candidate.matrix_version, forecast_version: candidate.forecast_version, policy_version: candidate.policy_version, decision: candidate.decision, seat_plan: candidate.seat_plan, requires_customer_consent: candidate.requires_customer_consent, change_station_ids: candidate.change_station_ids, so_lan_doi_cho: candidate.so_lan_doi_cho, pricing: candidate.pricing, bid: { total_vnd: 0, by_segment: {} }, decision_record_id: candidate.decision_record_id, explanation: candidate.explanation, expires_at: candidate.expires_at };
   saveBookingSession({ request: offerRequest, passengerName: request.passenger_name ?? "", offer, offerDeadline: apiDeadline(candidate.expires_at, 900), returnJourney: approvalSession?.returnJourney });
   clearApprovalSession();
   router.push("/booking/offer");

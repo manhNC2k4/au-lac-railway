@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Grid3X3,
@@ -18,6 +18,7 @@ import {
   BrainCircuit,
   SlidersHorizontal,
   ClipboardCheck,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrentRunProvider, useCurrentRun } from "@/lib/current-run";
@@ -95,6 +96,7 @@ function RunPicker() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [forecastOpen, setForecastOpen] = useState(true);
@@ -110,6 +112,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isPublicPage) return <TooltipProvider>{children}</TooltipProvider>;
 
   const crumb = BREADCRUMB.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "Tổng quan vận hành";
+
+  const logout = () => {
+    setMobileOpen(false);
+    router.replace("/login");
+    router.refresh();
+  };
 
   const navContent = (compact: boolean) => (
     <nav aria-label="Điều hướng chính" className="flex flex-col gap-1">
@@ -236,6 +244,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <SlidersHorizontal className="h-4 w-4" aria-hidden />
               Điều khiển kịch bản
             </button>
+            <Tooltip label="Đăng xuất">
+              <button
+                type="button"
+                onClick={logout}
+                aria-label="Đăng xuất"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-xl border border-line bg-white px-3 text-[14px] font-semibold text-ink transition hover:border-danger/40 hover:bg-danger-soft hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <LogOut className="h-4 w-4" aria-hidden />
+                <span className="hidden xl:inline">Đăng xuất</span>
+              </button>
+            </Tooltip>
           </div>
         </header>
 

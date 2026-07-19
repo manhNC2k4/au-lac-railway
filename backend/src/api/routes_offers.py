@@ -9,6 +9,7 @@ Tích hợp H10-H14: thay logic rút gọn của phiên solo BE1 bằng 3 module
 GIỮ NGUYÊN theo openapi.yaml.
 """
 import json
+import os
 from datetime import date
 
 import numpy as np
@@ -30,6 +31,9 @@ from .deps import SEED_DIR, get_clock, get_pricer, get_state_manager, require_ap
 from .schemas import OfferRequest, OverrideRequest
 
 router = APIRouter(tags=["booking"])
+MIN_SEAT_CHANGE_DWELL_MIN = float(os.environ.get(
+    "MIN_SEAT_CHANGE_DWELL_MIN", str(resolver.DEFAULT_MIN_DWELL_MIN),
+))
 
 # Scenario metadata provides pricing mode only. service_date is read from the
 # selected run so rolling/future demo data gets the correct lead time.
@@ -96,6 +100,7 @@ def create_offer(req: OfferRequest):
             matrix, seat_ids, [station["id"] for station in topology["stations"]], seg_from, seg_to,
             priority_passenger=req.priority_passenger,
             dwell_minutes={station["id"]: station["dwell_minutes"] for station in topology["stations"]},
+            min_dwell_min=MIN_SEAT_CHANGE_DWELL_MIN,
         )
     if plan is None:
         raise NoSameSeatOption(
