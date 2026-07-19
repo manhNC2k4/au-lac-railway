@@ -14,7 +14,7 @@ export function BrandLogo({ className, compact = false }: { className?: string; 
       aria-label="Âu Lạc Railway"
     >
       <Image
-        src="/images/aulac-logo.png"
+        src="/images/aulac-logo-transparent.png"
         alt=""
         fill
         sizes={compact ? "52px" : "190px"}
