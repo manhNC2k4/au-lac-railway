@@ -23,13 +23,14 @@ from sklearn.metrics import mean_poisson_deviance
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.config import (ARTIFACTS, BAND_EDGES, BAND_LABELS, DATA, REGIME_BREAK,
-                        U_FORECAST)
+                        U_FORECAST, load_calendar)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 MACRO = {"NGOI_MEM_DH": "NGOI", "NAM_K6_T1": "K6", "NAM_K6_T2": "K6", "NAM_K6_T3": "K6",
-         "NAM_K4_T1": "K4", "NAM_K4_T2": "K4"}
+         "NAM_K4_T1": "K4", "NAM_K4_T2": "K4",
+         "NAM_K6": "K6", "NAM_K4": "K4"}   # data V2: loai_cho đã ở mức macro
 KEY = ["mac_tau", "ga_di", "ga_den", "seat_class", "ngay_chay"]
 CAT_COLS = ["mac_tau", "ga_di", "ga_den", "seat_class", "band", "dot_ban_ve", "che_do_gia", "dow"]
 NUM_COLS = ["da_ban_truoc_u14", "toc_do_ban_7d", "cu_ly_km", "tau_tet", "la_le",
@@ -43,7 +44,7 @@ def load():
     tx = tx[tx.trang_thai == "HIEU_LUC"].copy()
     tx["ngay_chay"] = pd.to_datetime(tx["ngay_chay"])
     tx["seat_class"] = tx.loai_cho.map(MACRO)
-    cal = pd.read_csv(DATA / "calendar_events.csv")
+    cal = load_calendar()
     cal = cal[pd.to_numeric(cal.tau_tet, errors="coerce").notna()].copy()
     cal["ngay"] = pd.to_datetime(cal["ngay"])
     for c in ("tau_tet", "dow", "H_horizon"):

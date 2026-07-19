@@ -75,3 +75,8 @@ class Forbidden(DomainError):
     hơn, ngoài phạm vi P7."""
     error_code = "FORBIDDEN"
     http_status = 403
+
+
+class ResourceNotFound(DomainError):
+    error_code = "RESOURCE_NOT_FOUND"
+    http_status = 404

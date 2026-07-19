@@ -17,6 +17,8 @@ from fastapi import APIRouter, Header
 from ..adapters import model_adapter
 from ..allocation import cache as allocation_cache
 from ..forecast import network
+from ..forecast.runtime import ensure_model_forecast
+from ..forecast.topology import distance_km, get_run_topology, segment_span
 from ..merging import resolver
 from ..offer import override as override_service
 from ..offer.service import OfferService
@@ -29,9 +31,8 @@ from .schemas import OfferRequest, OverrideRequest
 
 router = APIRouter(tags=["booking"])
 
-STATION_ORDER = [s["id"] for s in network.STATIONS]
-
-# Scenario metadata (che_do_gia, service_date) — tĩnh trong một demo run.
+# Scenario metadata provides pricing mode only. service_date is read from the
+# selected run so rolling/future demo data gets the correct lead time.
 _SCENARIO = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
 # csxh table sống ở seed (bảng pricing_policy V1 không có cột csxh — không sửa migration P0).
 _SEED_POLICY = json.loads((SEED_DIR / "pricing_policy.json").read_text(encoding="utf-8"))
@@ -39,18 +40,21 @@ _SEED_POLICY = json.loads((SEED_DIR / "pricing_policy.json").read_text(encoding=
 PEAK_SUMMER = (date(2026, 5, 15), date(2026, 8, 16))  # nguồn: spec (Master §1.1 — cao điểm hè 2026)
 
 
-def seg_range(origin: str, dest: str) -> tuple[int, int]:
-    if origin not in STATION_ORDER or dest not in STATION_ORDER:
+def seg_range(origin: str, dest: str, service_run_id: str | None = None) -> tuple[int, int]:
+    if service_run_id:
+        return segment_span(get_run_topology(service_run_id), origin, dest)
+    ids = [station["id"] for station in network.STATIONS]
+    if origin not in ids or dest not in ids:
         raise NoSameSeatOption("Ga ngoài tuyến tàu", {"origin": origin, "dest": dest})
-    i, j = STATION_ORDER.index(origin), STATION_ORDER.index(dest)
+    i, j = ids.index(origin), ids.index(dest)
     if i >= j:
         raise NoSameSeatOption("origin phải trước dest theo lý trình", {"origin": origin, "dest": dest})
-    return i + 1, j  # 1-based, inclusive
+    return i + 1, j
 
 
-def _matrix_from_seatmap(seatmap: dict) -> tuple[np.ndarray, list[str]]:
+def _matrix_from_seatmap(seatmap: dict, n_segments: int) -> tuple[np.ndarray, list[str]]:
     # Chuyển hoá đi qua adapter duy nhất (§3.4) — không convert tay trong route.
-    return model_adapter.seatmap_to_matrix(seatmap, network.N_SEGMENTS)
+    return model_adapter.seatmap_to_matrix(seatmap, n_segments)
 
 
 def _latest_forecast(cur, service_run_id: str, seat_class: str) -> tuple[dict[int, float], int]:
@@ -72,13 +76,14 @@ def _latest_forecast(cur, service_run_id: str, seat_class: str) -> tuple[dict[in
 
 @router.post("/offers", status_code=201)
 def create_offer(req: OfferRequest):
-    seg_from, seg_to = seg_range(req.origin_station_id, req.dest_station_id)
+    topology = get_run_topology(req.service_run_id)
+    seg_from, seg_to = segment_span(topology, req.origin_station_id, req.dest_station_id)
     ssm = get_state_manager()
     clock = get_clock()
 
     # 1. Snapshot nhất quán — một lần đọc, dùng cho resolver + LF + remaining
-    seatmap = ssm.get_seatmap(req.service_run_id)
-    matrix, seat_ids = _matrix_from_seatmap(seatmap)
+    seatmap = ssm.get_seatmap(req.service_run_id, req.seat_class)
+    matrix, seat_ids = _matrix_from_seatmap(seatmap, topology["n_segments"])
     matrix_version = seatmap["matrix_version"]
 
     # 2-3. Resolver BE3 — same-seat liên tục, reused_gap label thật, rank reused-first
@@ -88,8 +93,9 @@ def create_offer(req: OfferRequest):
         # P5 · same-seat rỗng -> thử ghép nhiều ghế (đổi chỗ tại ga dwell >=5').
         # Hành khách ưu tiên KHÔNG BAO GIỜ nhận phương án này (resolver tự lọc rỗng).
         plan = resolver.best_multiseat(
-            matrix, seat_ids, STATION_ORDER, seg_from, seg_to,
-            priority_passenger=req.priority_passenger, dwell_minutes=network.DWELL_MINUTES,
+            matrix, seat_ids, [station["id"] for station in topology["stations"]], seg_from, seg_to,
+            priority_passenger=req.priority_passenger,
+            dwell_minutes={station["id"]: station["dwell_minutes"] for station in topology["stations"]},
         )
     if plan is None:
         raise NoSameSeatOption(
@@ -98,12 +104,16 @@ def create_offer(req: OfferRequest):
         )
 
     # 4. Base fare + policy + forecast từ DB (đã nạp từ seed lúc reset)
+    ensure_model_forecast(req.service_run_id)
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
-            """SELECT base_fare_vnd FROM fare_product
-               WHERE service_run_id=%s AND origin_station_id=%s AND dest_station_id=%s AND seat_class=%s
-               ORDER BY version DESC LIMIT 1""",
+            """SELECT fp.base_fare_vnd, sr.service_date
+               FROM fare_product fp
+               JOIN service_run sr ON sr.service_run_id = fp.service_run_id
+               WHERE fp.service_run_id=%s AND fp.origin_station_id=%s
+                 AND fp.dest_station_id=%s AND fp.seat_class=%s
+               ORDER BY fp.version DESC LIMIT 1""",
             (req.service_run_id, req.origin_station_id, req.dest_station_id, req.seat_class),
         )
         row = cur.fetchone()
@@ -111,6 +121,7 @@ def create_offer(req: OfferRequest):
             conn.rollback()
             raise PolicyUnavailable("Chưa có fare_product cho O-D này", {})
         base_fare = int(row[0])
+        service_date = row[1]
 
         cur.execute(
             """SELECT floor_ratio, ceiling_ratio, max_delta_percent, policy_version FROM pricing_policy
@@ -139,20 +150,19 @@ def create_offer(req: OfferRequest):
     if cached_alloc is None:
         raise PolicyUnavailable(
             "Bid price DLP chưa sẵn sàng cho version hiện tại — cần reset/refresh forecast trước", {})
-    bp_by_seg = cached_alloc["bid_price_theo_lop"].get(req.seat_class, [0] * network.N_SEGMENTS)
+    bp_by_seg = cached_alloc["bid_price_theo_lop"].get(req.seat_class, [0] * topology["n_segments"])
     bid_by_segment = {s: int(bp_by_seg[s - 1]) for s in segs}
 
     # 6. PricingContext — chỉ tín hiệu hợp pháp; KHÔNG user_id/search-count/device (§2.7)
     now = clock.now()
-    service_date = date.fromisoformat(_SCENARIO["service_date"])
     lead_time_days = max((service_date - now.date()).days, 0)
     lf = {s: 1.0 - (matrix[:, s - 1] == resolver.FREE).sum() / matrix.shape[0]
-          for s in range(1, network.N_SEGMENTS + 1)}
+          for s in range(1, topology["n_segments"] + 1)}
     journey_lf = [lf[s] for s in segs]
     ctx = PricingContext(
         che_do_gia=_SCENARIO.get("che_do_gia", "AI"),
         lead_time_days=lead_time_days,
-        distance_km=network.od_distance_km(req.origin_station_id, req.dest_station_id),
+        distance_km=distance_km(topology, req.origin_station_id, req.dest_station_id),
         peak_summer=PEAK_SUMMER[0] <= service_date <= PEAK_SUMMER[1],
         tet_window=False,
         load_factor_route=min(journey_lf),

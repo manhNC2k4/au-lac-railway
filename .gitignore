@@ -1,7 +1,7 @@
-generated_data/data/
+generated_data/data
 demo/features
-generated_data/_ground_truth/
-
+generated_data/_ground_truth
+*.dump
 # Python
 __pycache__/
 *.pyc

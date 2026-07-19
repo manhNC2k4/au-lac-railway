@@ -131,6 +131,56 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AnalyticsResponse" }
 
+  /demo/runs:
+    get:
+      summary: List real service runs in the DB (run-picker, replaces hardcoded golden run)
+      operationId: listRuns
+      tags: [demo]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 500 }
+        - name: q
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunsResponse" }
+
+  /demo/stations:
+    get:
+      summary: Full station catalog (id -> name), for display labels
+      operationId: listStations
+      tags: [demo]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StationsResponse" }
+
+  /demo/runs/{service_run_id}/stops:
+    get:
+      summary: Ordered stops for one run (real topology, may differ from the golden 8-station network)
+      operationId: getRunStops
+      tags: [demo]
+      parameters:
+        - name: service_run_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StopsResponse" }
+
   /decisions/{decision_id}:
     get:
       summary: Decision detail / audit trail
@@ -770,6 +820,53 @@ components:
                   segment_id: { type: integer }
                   bid_price_vnd: { type: integer }
                   protection_level: { type: string }
+
+    RunsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            runs:
+              type: array
+              items:
+                type: object
+                properties:
+                  service_run_id: { type: string }
+                  train_id: { type: string }
+                  service_date: { type: string, format: date }
+                  direction: { type: string }
+                  status: { type: string }
+
+    StationsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            stations:
+              type: array
+              items:
+                type: object
+                properties:
+                  station_id: { type: string }
+                  station_name: { type: string }
+                  ly_trinh_km: { type: number }
+
+    StopsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            stops:
+              type: array
+              items:
+                type: object
+                properties:
+                  stop_sequence: { type: integer }
+                  station_id: { type: string }
+                  station_name: { type: string }
 
     DecisionDetailResponse:
       type: object

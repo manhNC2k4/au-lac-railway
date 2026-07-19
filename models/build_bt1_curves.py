@@ -28,7 +28,8 @@ def main():
     tx = pd.read_parquet(str(DATA / "transactions"),
                          columns=["ngay_chay", "cu_ly_km", "lead_time_ngay", "trang_thai"])
     tx = tx[(tx.trang_thai == "HIEU_LUC") & (tx.ngay_chay < REGIME_BREAK)]
-    cal = pd.read_csv(DATA / "calendar_events.csv")
+    from app.config import load_calendar
+    cal = load_calendar()
     cal = cal[pd.to_numeric(cal.tau_tet, errors="coerce").notna()]
     tet_days = set(cal[cal.tau_tet.astype(int).abs() <= 21].ngay)
     tx["is_tet"] = tx.ngay_chay.isin(tet_days)

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Grid3X3,
@@ -18,11 +17,10 @@ import {
   LineChart,
   BrainCircuit,
   SlidersHorizontal,
-  Layers,
+  ClipboardCheck,
 } from "lucide-react";
-import { getApi, qk } from "@/api";
-import { GOLDEN } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { CurrentRunProvider, useCurrentRun } from "@/lib/current-run";
 import { Tooltip, TooltipProvider } from "@/components/ui/tooltip";
 import { ScenarioControlDrawer } from "@/components/layout/scenario-control";
 import { BrandLogo } from "@/components/brand-logo";
@@ -49,6 +47,7 @@ const NAV: NavItem[] = [
     ],
   },
   { href: "/admin/decisions", label: "Quyết định AI", icon: BrainCircuit },
+  { href: "/admin/booking-requests", label: "Duyệt yêu cầu vé", icon: ClipboardCheck },
   { href: "/admin/backtest", label: "So sánh Backtest", icon: BarChart3 },
   { href: "/admin/booking-lab", label: "Booking Lab", icon: TicketCheck },
 ];
@@ -58,26 +57,39 @@ const BREADCRUMB: [string, string][] = [
   ["/admin/overview", "Tổng quan vận hành"],
   ["/admin/analytics", "Dự báo & Phân bổ"],
   ["/admin/booking-lab", "Booking Lab"],
+  ["/admin/booking-requests", "Duyệt yêu cầu đặt vé"],
   ["/admin/backtest", "So sánh chiến lược"],
-  ["/admin/decisions", "Chi tiết quyết định AI"],
 ];
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return compact ? <BrandLogo compact className="w-12" /> : <BrandLogo className="w-[190px]" />;
 }
 
-function MatrixVersionChip() {
-  const api = getApi();
-  const seatmap = useQuery({
-    queryKey: qk.seatmap(GOLDEN.serviceRunId),
-    queryFn: () => api.getSeatmap(GOLDEN.serviceRunId),
-    staleTime: 5_000,
-  });
+/** Chọn chuyến thật đang xem — thay badge "Chuyến đang vận hành" cứng theo golden run. */
+function RunPicker() {
+  const { serviceRunId, setServiceRunId, runs, runsLoading } = useCurrentRun();
+  const current = runs.find((r) => r.service_run_id === serviceRunId);
   return (
-    <span className="hidden items-center gap-1.5 rounded-xl border border-primary/25 bg-primary-soft px-3 py-2 text-[13px] font-medium text-primary md:inline-flex">
-      <Layers className="h-4 w-4" aria-hidden />
-      Ma trận {seatmap.isPending ? "đang tải" : seatmap.data ? `v${seatmap.data.matrix_version}` : "không khả dụng"}
-    </span>
+    <div className="rounded-xl border border-line bg-white px-3.5 py-1.5 shadow-card">
+      <label htmlFor="run-picker" className="block text-[11px] text-muted">
+        Chuyến đang xem
+      </label>
+      <select
+        id="run-picker"
+        value={serviceRunId}
+        onChange={(e) => setServiceRunId(e.target.value)}
+        disabled={runsLoading || !runs.length}
+        className="min-w-0 max-w-[220px] truncate bg-transparent text-[13.5px] font-semibold tabular-nums text-ink focus-visible:outline-none disabled:opacity-60"
+      >
+        {!runs.length && <option value={serviceRunId}>{serviceRunId}</option>}
+        {runs.map((r) => (
+          <option key={r.service_run_id} value={r.service_run_id}>
+            {r.train_id} · {r.service_date}
+          </option>
+        ))}
+      </select>
+      {current && <p className="text-[11px] text-muted">Ngày chạy {current.service_date}</p>}
+    </div>
   );
 }
 
@@ -156,6 +168,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <TooltipProvider>
+      <CurrentRunProvider>
       <div className="min-h-screen bg-surface">
         {/* Sidebar desktop — card trắng bo góc nổi trên nền xanh nhạt */}
         <aside
@@ -214,14 +227,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="ml-auto flex flex-wrap items-center gap-2.5">
-            <div className="rounded-xl border border-line bg-white px-3.5 py-1.5 shadow-card">
-              <p className="text-[11px] text-muted">Chuyến đang vận hành</p>
-              <p className="flex items-center gap-1.5 text-[13.5px] font-semibold tabular-nums text-ink">
-                {GOLDEN.serviceRunId}
-              </p>
-              <p className="text-[11px] text-muted">Ngày chạy {GOLDEN.serviceDate}</p>
-            </div>
-            <MatrixVersionChip />
+            <RunPicker />
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
@@ -252,6 +258,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <ScenarioControlDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       </div>
+      </CurrentRunProvider>
     </TooltipProvider>
   );
 }

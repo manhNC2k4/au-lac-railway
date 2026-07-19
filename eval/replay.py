@@ -10,6 +10,7 @@ Khách quyết định mua bằng WTP THẬT từ _ground_truth/wtp.parquet — 
 Tất định: cờ ưu tiên & CSXH gán bằng hash yeu_cau_id (cùng seed generator ⇒ ổn định).
 """
 import hashlib
+import os
 import sys
 import time
 from pathlib import Path
@@ -22,7 +23,8 @@ from app.bt2_ssm import SeatStateMatrix
 from app.bt3_allocation import analyze_run, load_factor_route
 from app.bt4_merge import find_options
 from app.bt5_pricing import Pricer
-from app.config import ARTIFACTS, DATA, MACRO_CLASS, SEAT_CLASSES, TIERS
+from app.config import (ARTIFACTS, DATA, MACRO_CLASS, REP_TIER, SEAT_CLASSES,
+                        TIERS, load_calendar, mac_tau_of)
 from app.contracts import PassengerProfile
 
 GT = DATA.parent / "_ground_truth"
@@ -40,6 +42,11 @@ def load_forecast(date: str) -> pd.DataFrame | None:
                 return fc
     return None
 REFRESH_EVERY = 200            # re-solve DLP sau mỗi N vé bán (event-driven)
+# Ngưỡng LF đoạn để quota chặng ngắn bắt đầu bind. Bid-price đã tính chi phí
+# cơ hội vào GIÁ; quota cứng chỉ nên đỡ phần đuôi thật sự nghẽn — với cầu co
+# giãn mạnh (V2, beta~-5.5) chặn sớm ở 0.75 là double-count, lỗ kép (xem A/B
+# trong docs/BAO_CAO_DANH_GIA_MODEL_V2.md). Override: AULAC_QUOTA_LF.
+QUOTA_LF_GATE = float(os.environ.get("AULAC_QUOTA_LF", "0.75"))
 CSXH_PROBS = [("KHONG", 0.780, 0.0), ("NGUOI_CAO_TUOI", 0.860, 0.15),
               ("TRE_6_10", 0.900, 0.25), ("HSSV", 0.980, 0.10),
               ("THUONG_BINH_CDHH", 0.995, 0.30), ("ME_VNAH_TIEN_KN", 1.0, 0.90)]
@@ -63,7 +70,7 @@ def load_day(date: str, mac_tau_filter: list[str] | None):
     sl = pd.read_parquet(str(DATA / "search_log" / f"thang={month}"))
     sl = sl[sl.ngay_di == date].copy()
     if mac_tau_filter:
-        sl["mac"] = sl.chuyen_id.str.rsplit("_", n=1).str[0]
+        sl["mac"] = sl.chuyen_id.map(mac_tau_of)
         sl = sl[sl.mac.isin(mac_tau_filter)]
     tx = pd.read_parquet(str(DATA / "transactions" / f"thang={month}"),
                          columns=["ve_id", "yeu_cau_id", "loai_cho", "cu_ly_km"])
@@ -83,7 +90,7 @@ def load_day(date: str, mac_tau_filter: list[str] | None):
 
 
 def _ctx_for(date: str):
-    cal = pd.read_csv(DATA / "calendar_events.csv")
+    cal = load_calendar()
     cal = cal[pd.to_numeric(cal.tau_tet, errors="coerce").notna()]
     row = cal[cal.ngay == date].iloc[0]
     return {"tau_tet": int(row.tau_tet), "dow": int(row.dow),
@@ -113,7 +120,7 @@ def run_policy(date: str, policy: str, mac_tau_filter: list[str] | None = None,
         alloc = alloc_cache.get(cid)
         if not alloc:
             return None
-        if alloc["lf_theo_doan"][e]["lf"] < 0.75:
+        if alloc["lf_theo_doan"][e]["lf"] < QUOTA_LF_GATE:
             return None
         lo, _ = ssm._span[cid]
         kg = lo + e + 1                        # khu_gian_id toàn cục
@@ -127,6 +134,8 @@ def run_policy(date: str, policy: str, mac_tau_filter: list[str] | None = None,
         t0 = time.perf_counter()
         rq, cid, tier = r.yeu_cau_id, r.chuyen_id, r.tier
         cls = MACRO_CLASS[tier]
+        if tier not in pricer.varsigma:        # data V2: loai_cho đã ở mức macro
+            tier = REP_TIER[cls]
         try:
             a, b = ssm.seg_range(cid, r.ga_di, r.ga_den)
         except (KeyError, ValueError):
@@ -135,7 +144,7 @@ def run_policy(date: str, policy: str, mac_tau_filter: list[str] | None = None,
         profile = PassengerProfile(cao_tuoi=uu_tien)
         _, muc_csxh = _csxh(rq)
         d_km = abs(km[r.ga_den] - km[r.ga_di])
-        mac_tau = cid.rsplit("_", 1)[0]
+        mac_tau = mac_tau_of(cid)
         f0 = pricer.f0(mac_tau, r.ga_di, r.ga_den, tier)
 
         # ---- giá ----

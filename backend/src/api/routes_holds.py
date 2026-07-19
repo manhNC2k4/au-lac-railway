@@ -18,20 +18,26 @@ def create_hold(req: HoldRequest, idempotency_key: str = Header(..., alias="Idem
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT service_run_id, seat_plan, expires_at FROM offer WHERE offer_id=%s",
+            """SELECT o.service_run_id, o.seat_plan, o.expires_at,
+                      EXISTS (
+                          SELECT 1 FROM booking_candidate bc WHERE bc.offer_id=o.offer_id
+                      ) AS approved_booking
+                 FROM offer o WHERE o.offer_id=%s""",
             (req.offer_id,),
         )
         row = cur.fetchone()
     conn.commit()
     if not row:
         raise OfferExpired("Offer không tồn tại", {"offer_id": req.offer_id})
-    service_run_id, seat_plan_raw, expires_at = row
+    service_run_id, seat_plan_raw, expires_at, approved_booking = row
     if expires_at <= clock.now():
         raise OfferExpired("Offer đã hết thời gian tồn tại", {"offer_id": req.offer_id})
 
     seat_plan = json.loads(seat_plan_raw) if isinstance(seat_plan_raw, str) else seat_plan_raw
-    # >=2 leg == ghép nhiều ghế (P5) -> bắt buộc khách xác nhận đồng ý đổi chỗ trước khi giữ ghế.
-    if len(seat_plan) > 1 and not req.consent:
+    # Group candidates can contain several passengers without a seat change.
+    # Consent is required only when a leg explicitly marks a seat change.
+    requires_seat_change = any(entry.get("requires_seat_change", False) for entry in seat_plan)
+    if requires_seat_change and not req.consent:
         raise ConsentRequired(
             "Phương án ghép nhiều ghế cần khách xác nhận đồng ý đổi chỗ trước khi giữ ghế",
             {"offer_id": req.offer_id, "so_lan_doi_cho": len(seat_plan) - 1},
@@ -40,7 +46,29 @@ def create_hold(req: HoldRequest, idempotency_key: str = Header(..., alias="Idem
             for entry in seat_plan]
 
     ssm = get_state_manager()
-    result = ssm.hold_multi(service_run_id, legs, req.expected_matrix_version, idempotency_key, req.offer_id)
+    result = ssm.hold_multi(
+        service_run_id, legs, req.expected_matrix_version, idempotency_key,
+        req.offer_id, expires_at if approved_booking else None,
+    )
+    conn = get_connection()
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE booking_candidate
+                  SET status='SELECTED', updated_at=CURRENT_TIMESTAMP
+                WHERE offer_id=%s RETURNING request_id, candidate_id""",
+            (req.offer_id,),
+        )
+        candidate = cur.fetchone()
+        if candidate:
+            cur.execute(
+                """UPDATE booking_request
+                      SET status='SELECTED', selected_candidate_id=%s, hold_id=%s,
+                          passenger_name=COALESCE(%s, passenger_name),
+                          selected_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP
+                    WHERE request_id=%s""",
+                (candidate[1], result.hold_id, req.passenger_name, candidate[0]),
+            )
+    conn.commit()
     return {"data": {
         "hold_id": result.hold_id,
         "status": result.status,
@@ -53,6 +81,16 @@ def create_hold(req: HoldRequest, idempotency_key: str = Header(..., alias="Idem
 def confirm_booking(hold_id: str, idempotency_key: str = Header(..., alias="Idempotency-Key")):
     ssm = get_state_manager()
     result = ssm.confirm(hold_id, idempotency_key)
+    conn = get_connection()
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE booking_request
+                  SET status='CONFIRMED', booking_id=%s, confirmed_at=CURRENT_TIMESTAMP,
+                      updated_at=CURRENT_TIMESTAMP
+                WHERE hold_id=%s""",
+            (result.booking_id, hold_id),
+        )
+    conn.commit()
     return {"data": {
         "booking_id": result.booking_id,
         "status": result.status,

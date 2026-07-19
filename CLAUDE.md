@@ -10,11 +10,20 @@ The repo has **three tiers** that must not blur together:
 
 1. **`generated_data/`** — a synthetic 12-month dataset generator (`generate_data.py`, ~4 GB output, gitignored). Offline calibration source only.
 2. **`app/` + `models/` + `eval/`** (repo root) — a separate, frozen-contract offline implementation of the full 5-subproblem decomposition (BT1–BT5: forecast, seat-state matrix, allocation/DLP, merging, pricing). Reads `generated_data/data/` directly (needs pandas/sklearn). Produces artifacts in `models/artifacts/`, including a real trained model (`bt1_forecast_hgb.joblib`, HistGradientBoostingRegressor). This is **not** the runtime API — see `BACKEND_GUIDE.md` and `NOTE_DEV.md` for how it maps to (3).
-3. **The MVP backend + `web/`** (`backend/src/`) — the actual runtime API, running one golden train scenario end-to-end off the tiny committed `backend/seed/` package. This is what `docker compose up` serves.
+3. **The MVP backend + `web/`** (`backend/src/`) — the actual runtime API, running one golden train scenario end-to-end off the tiny committed `backend/seed/` package. This is what `docker compose up` serves. `web/` (Next.js 14, App Router) is the real frontend — server-side proxies `/api/v1/*` to `API_SERVER_URL` so the browser needs no CORS config; talks only to the real API per `docs/API_Contract.md`, no fixtures/mocked business data (`web/README.md`).
 
 Tier 2 and tier 3 were built independently by different owners and later reconciled — read `NOTE_DEV.md` before assuming a number or algorithm in one matches the other (index convention, bid-price method, and pricing-rule calibration differ; see its comparison table).
 
 ## THE load-bearing invariant: dataset ≠ runtime
+
+> **STATUS (2026-07-18): this invariant is intentionally SUSPENDED.** The golden-gap
+> demo was retired for a different demo, and the runtime Postgres DB is now
+> mock-loaded from one month (2026-06) of the V1-shaped export via
+> `backend/scripts/load_mock_from_dataset.py` (clears + rebuilds all ~23 tables;
+> deterministic; `--self-check`/`--month`/`--sold-only`). The section below
+> documents the *original* design and the loader can restore it, but do NOT
+> assume the DB currently holds the golden seed. See that script's header for
+> what is exactly inverted vs. deterministically fabricated.
 
 > The 12-month dataset **never connects to the app runtime (tier 3). Ever.**
 
@@ -29,9 +38,14 @@ generated_data/data/*.parquet  (~4 GB, gitignored)
 
 - No request path in `backend/src/` ever does `import pandas`. Tier 2 (`app/`, `models/`, `eval/`) is where pandas/sklearn/scipy live; it is an offline calibration + evidence pipeline, not a database.
 - `backend/seed/` is **built from spec, not extracted verbatim** (40 seats ≠ 448, 8 stations ≠ 22 → any raw extract is a lossy downsample; the golden gap must be constructed deliberately). Dataset and tier-2 model outputs only *calibrate the numbers* in `backend/seed/`.
-- CI gate: `grep -r "_ground_truth" backend/src/` must be empty. `_ground_truth/` (demand_true, wtp, offline_optimum.bid_price) is scoring-only, usable only by `eval/`/tier-2 backtest, never by runtime.
+- CI gate: `grep -r "_ground_truth" backend/src/` must be empty (also enforced, plus a `no import pandas` + un-sourced-literal sweep, by `python backend/scripts/audit_constants.py`). `_ground_truth/` (demand_true, wtp, offline_optimum.bid_price) is scoring-only, usable only by `eval/`/tier-2 backtest, never by runtime.
 
 ## Golden scenario (shared constants — every module uses these)
+
+> **NOTE (2026-07-18):** the live DB no longer contains this golden run — it was
+> overwritten by the 1-month dataset load (see the suspended invariant above).
+> These constants still define the *reference* scenario the code and tests were
+> built around; re-seed from `backend/seed/` to get them back in the DB.
 
 - `service_run_id = SE1_2026-06-15_LE`, run date **2026-06-15** (AI pricing regime, post the 2026-05-01 break — not LUAT).
 - **8 stations / 7 legs**, `segment_id ∈ {1..7}`, **1-based everywhere in `backend/`** (never 0-based). `seat_plan` uses `[segment_from, segment_to]` **inclusive**. (Tier-2 `app/bt2_ssm.py` uses 0-based half-open `[a,b)` internally — a deliberate convention difference, reconciled at the `integration/` boundary before anything reaches seed.)
@@ -68,6 +82,7 @@ curl localhost:8000/api/v1/demo/overview?service_run_id=SE1_2026-06-15_LE
 cd backend && pytest tests/ -v                  # full suite
 cd backend && pytest tests/test_pricing.py -v   # single file
 cd backend && pytest tests/test_offer.py::test_reject_when_price_below_bid -v   # single test
+python backend/scripts/audit_constants.py       # CI gate: no _ground_truth/import pandas in backend/src, no un-sourced literals
 ```
 
 **Tier-2 model + 5-subproblem pipeline** (repo root, needs `pip install -r requirements.txt`; pandas/sklearn/scipy — never run inside `backend/`):
@@ -79,7 +94,7 @@ python models/estimate_elasticity.py        # -> elasticity_params.json (real ML
 python run_all.py                           # run all 5 subproblems -> models/artifacts/run_all_outputs.json
 python models/make_backtest_forecast.py --cutoff 2026-02-01 --dates 2026-02-14
 python eval/backtest.py --dates 2026-02-14,2026-05-20 --trains SE1,SE3,SE5,SE7
-uvicorn app.api:app --port 8000              # standalone demo API for tier 2, docs at /docs
+uvicorn app.api:app --port 8001              # standalone demo API for tier 2, docs at /docs (8001, not 8000 — 8000 is tier-3 backend/docker-compose)
 python tests/test_invariants.py             # 9 invariants for tier-2 (guardrail, CSXH, atomicity, determinism...)
 ```
 
@@ -90,7 +105,17 @@ python generate_data.py                                      # full 12 months (~
 python generate_data.py --start ... --end ... --skip-lp      # subset / skip LP
 ```
 
-There is no `web/` frontend scaffolded yet, and no repo-root build/lint runner — Python only, no package.json.
+**Frontend** (`web/`, Next.js 14 + TS, needs backend running first):
+```bash
+cd web && npm install && cp .env.example .env.local
+npm run dev                                  # :3000, proxies /api/v1/* to API_SERVER_URL
+npm run typecheck && npm test && npm run build
+npm run test:e2e                             # Playwright, needs backend running
+npm run gen:api                              # regen src/api/schema.d.ts from ../backend/openapi.yaml
+```
+Routes: `/booking` (offer→hold→confirm), `/admin/overview|seat-matrix|analytics|decisions|backtest|booking-lab`.
+
+No repo-root build/lint runner outside `backend/` and `web/` — tier 2/dataset generator are Python only, no package.json.
 
 ## Reuse before rewriting (already built — do not reimplement)
 
@@ -102,6 +127,7 @@ There is no `web/` frontend scaffolded yet, and no repo-root build/lint runner �
 | `backend/src/allocation/cache.py` + `integration/ssm_from_postgres.py` | Live DLP bid price (`app.bt3_allocation.analyze_run`), cached per version | bid/allocation changes |
 | `backend/src/forecast/bid_price.py` + `forecast.py` | Scarcity-formula approximation (backtest replay only, not live `/offers`), deterministic pickup-curve forecast | backtest/forecast changes |
 | `backend/src/offer/service.py` | `OfferService.build_offer` — assembles Offer + append-only DecisionRecord with input_hash/explanation | offer pipeline changes |
+| `backend/src/adapters/model_adapter.py` | The one conversion boundary between tier-3 (1-based inclusive, `seat_id`, JSON seatmap) and tier-2 (0-based half-open, index, int8 matrix) — used by `routes_offers.py` and `merging/resolver.py` | any code crossing the tier-2/tier-3 index or id convention |
 | `backend/src/backtest/engine.py` | Runs committed `backend/seed/backtest/events-seed-*.jsonl`, AI vs baseline revenue | backtest/evidence work |
 | `app/contracts.py` (tier 2) | Frozen dataclass contracts between the 5 subproblems (offline reference) | understanding intended shapes before they hit `backend/seed` |
 | `models/artifacts/*` | Pre-trained forecast model + elasticity + backtest report (offline evidence, not loaded by `backend/`) | citing accuracy/revenue numbers in the pitch |

@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.config import ARTIFACTS, DATA
+from app.config import ARTIFACTS, DATA, make_chuyen_id
 from eval.metrics import compare, summarize
 from eval.replay import load_day, run_policy
 
@@ -25,7 +25,7 @@ GT = DATA.parent / "_ground_truth"
 
 def z_opt_for(date: str, trains: list[str]) -> int:
     opt = pd.read_parquet(GT / "offline_optimum.parquet")
-    runs = [f"{t}_{date}" for t in trains]
+    runs = [make_chuyen_id(t, date) for t in trains]
     sel = opt[opt.chuyen_id.isin(runs)]
     return int(sel.z_opt.sum())
 

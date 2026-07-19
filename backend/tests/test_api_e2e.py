@@ -132,6 +132,18 @@ def test_seatmap_golden_gap(scenario):
     assert gap["1"] == "SOLD" and gap["2"] == "SOLD"     # HNO→THO đã bán
     assert gap["3"] == "FREE" and gap["4"] == "FREE"     # THO→DHO TRỐNG ← chính là golden gap
     assert gap["5"] == "SOLD" and gap["7"] == "SOLD"     # DHO→SGO đã bán
+    classes = {s["seat_id"]: s["seat_class"] for s in data["seats"]}
+    assert classes["C01-S017"] == SEAT_CLASS             # id golden ko khớp <lớp>-<4 số> ⇒ fallback
+
+
+def test_seat_class_of_derives_mock_loader_prefix():
+    """seat_id kiểu <agg_class>-<4 số> (backend/scripts/load_mock_from_dataset.py::seat_id_of)
+    phải trả đúng agg_class; id golden (C01-S017) phải fallback về SEAT_CLASS scenario."""
+    from src.api.routes_demo import SEAT_CLASS as _SC, _seat_class_of
+
+    assert _seat_class_of("NAM_K6-0012") == "NAM_K6"
+    assert _seat_class_of("NGOI_MEM_DH-0004") == "NGOI_MEM_DH"
+    assert _seat_class_of("C01-S017") == _SC
 
 
 def test_overview_shape(scenario):
@@ -313,10 +325,10 @@ def test_hold_multiseat_requires_consent(scenario, conn):
 
 
 def test_hold_offer_expired(scenario):
-    """Offer sống 5 phút. Tua đồng hồ qua mốc đó rồi mới giữ ⇒ 410 OFFER_EXPIRED."""
+    """Offer sống 15 phút. Tua đồng hồ qua mốc đó rồi mới giữ ⇒ 410 OFFER_EXPIRED."""
     clock, _ = scenario
     offer = _create_offer("THO", "DHO").json()["data"]
-    clock.advance(301)   # +5 phút 1 giây — quá hạn offer (OFFER_TTL_SECONDS=300)
+    clock.advance(901)   # +15 phút 1 giây — quá hạn offer (OFFER_TTL_SECONDS=900)
     resp = client.post(f"{BASE}/holds", headers={"Idempotency-Key": _key()},
                        json={"offer_id": offer["offer_id"], "expected_matrix_version": 1})
     assert resp.status_code == 410

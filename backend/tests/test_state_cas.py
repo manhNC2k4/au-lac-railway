@@ -70,6 +70,32 @@ def test_same_idempotency_key_same_result(reset_state, ssm, clock, conn):
     assert r1.hold_id == r2.hold_id
 
 
+def test_hold_can_keep_approved_offer_deadline(reset_state, ssm, clock, conn):
+    offer_id = "offer_approved_deadline"
+    deadline = clock.now() + timedelta(minutes=15)
+    insert_test_offer(conn, offer_id, SERVICE_RUN_ID, deadline)
+
+    result = ssm.hold(
+        SERVICE_RUN_ID, "C01-S001", [4],
+        reset_state["matrix_version"], "idem-approved-deadline", offer_id,
+        hold_expires_at=deadline,
+    )
+
+    assert result.expires_at == deadline
+
+
+def test_hold_keeps_default_ttl_without_explicit_deadline(reset_state, ssm, clock, conn):
+    offer_id = "offer_default_deadline"
+    insert_test_offer(conn, offer_id, SERVICE_RUN_ID, clock.now() + timedelta(minutes=15))
+
+    result = ssm.hold(
+        SERVICE_RUN_ID, "C01-S001", [4],
+        reset_state["matrix_version"], "idem-default-deadline", offer_id,
+    )
+
+    assert result.expires_at == clock.now() + timedelta(seconds=600)
+
+
 def test_confirm_after_expiry_returns_410(reset_state, ssm, clock, conn):
     offer_id = "offer_expire_confirm"
     expires_at = clock.now() + timedelta(minutes=5)

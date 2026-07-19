@@ -89,6 +89,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/demo/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List real service runs in the DB (run-picker, replaces hardcoded golden run) */
+        get: operations["listRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/demo/stations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Full station catalog (id -> name), for display labels */
+        get: operations["listStations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/demo/runs/{service_run_id}/stops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ordered stops for one run (real topology, may differ from the golden 8-station network) */
+        get: operations["getRunStops"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/decisions/{decision_id}": {
         parameters: {
             query?: never;
@@ -191,6 +242,181 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/allocation/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-solve DLP and propose a new quota/booking-limit version (PENDING)
+         * @description Re-solves the DLP (reuses the P2 bid-price cache, does not solve the LP twice), diffs booking_limit per (segment, journey-length band, seat class) against the current ACTIVE version, and stores the result as a new PENDING quota_version. Proposal-only — does not enforce booking_limit in /offers.
+         */
+        post: operations["refreshAllocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/allocation/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one quota version (PENDING / ACTIVE / REJECTED / ROLLED_BACK) */
+        get: operations["getAllocationVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/allocation/{version}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a PENDING quota version (becomes ACTIVE)
+         * @description Requires X-Actor-Role revenue_manager|admin. Demotes the previously ACTIVE version to ROLLED_BACK.
+         */
+        post: operations["approveAllocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/allocation/{version}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a PENDING quota version
+         * @description Requires X-Actor-Role revenue_manager|admin.
+         */
+        post: operations["rejectAllocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/allocation/{version}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-activate an old quota version (emergency revert)
+         * @description Requires X-Actor-Role revenue_manager|admin. Unlike approve, the source version may be in any status (PENDING/REJECTED/ROLLED_BACK) — rollback is meant for an operator returning to any known-good version quickly.
+         */
+        post: operations["rollbackAllocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/waitlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List PENDING waitlist entries (priority score descending) */
+        get: operations["listWaitlist"];
+        put?: never;
+        /**
+         * Join the waitlist (customer opts in after NO_SAME_SEAT_OPTION)
+         * @description Not auto-added on offer failure — the customer must actively choose to wait.
+         */
+        post: operations["addWaitlist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/waitlist/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Try to match PENDING waitlist entries against currently free seats
+         * @description ponytail: no background worker in this demo — an operator (or a future scheduler) triggers this explicitly after cancellations/hold-expiries. A match reuses the real /offers -> /holds pipeline (no separate pricing/CAS logic) so a matched entry gets a real Hold the customer can pay within the normal hold TTL.
+         */
+        post: operations["matchWaitlist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/group/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose a same-car/compartment seat plan for a group (proposal only, no hold) */
+        post: operations["quoteGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/offers/{offer_id}/override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Manually override an offer's price, within the approved guardrail
+         * @description Requires X-Actor-Role revenue_manager|admin. Only allowed before a Hold exists for the offer (a held price is honored/immutable). New price must stay within [floor_ratio, ceiling_ratio] * base_fare — never outside the approved band.
+         */
+        post: operations["overrideOfferPrice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -202,7 +428,7 @@ export interface components {
         /** @enum {string} */
         HoldStatus: "ACTIVE" | "CONFIRMED" | "EXPIRED" | "CANCELLED";
         /** @enum {string} */
-        ErrorCode: "NO_SAME_SEAT_OPTION" | "SOLD_OUT_TRUE" | "ALLOCATION_REJECTED" | "STALE_SNAPSHOT" | "SEAT_CONFLICT" | "OFFER_EXPIRED" | "HOLD_EXPIRED" | "POLICY_UNAVAILABLE";
+        ErrorCode: "NO_SAME_SEAT_OPTION" | "SOLD_OUT_TRUE" | "ALLOCATION_REJECTED" | "STALE_SNAPSHOT" | "SEAT_CONFLICT" | "OFFER_EXPIRED" | "HOLD_EXPIRED" | "POLICY_UNAVAILABLE" | "CONSENT_REQUIRED" | "RESOURCE_NOT_FOUND" | "FORBIDDEN" | "GUARDRAIL_VIOLATION";
         ErrorEnvelope: {
             error_code: components["schemas"]["ErrorCode"];
             message: string;
@@ -280,6 +506,36 @@ export interface components {
                 }[];
             };
         };
+        RunsResponse: {
+            data?: {
+                runs?: {
+                    service_run_id?: string;
+                    train_id?: string;
+                    /** Format: date */
+                    service_date?: string;
+                    direction?: string;
+                    status?: string;
+                }[];
+            };
+        };
+        StationsResponse: {
+            data?: {
+                stations?: {
+                    station_id?: string;
+                    station_name?: string;
+                    ly_trinh_km?: number;
+                }[];
+            };
+        };
+        StopsResponse: {
+            data?: {
+                stops?: {
+                    stop_sequence?: number;
+                    station_id?: string;
+                    station_name?: string;
+                }[];
+            };
+        };
         DecisionDetailResponse: {
             data?: {
                 decision_id?: string;
@@ -306,6 +562,11 @@ export interface components {
             dest_station_id: string;
             seat_class: string;
             quantity: number;
+            /**
+             * @description Cao tuổi/khuyết tật/trẻ đi một mình — không bao giờ nhận phương án ghép nhiều ghế (P5).
+             * @default false
+             */
+            priority_passenger: boolean;
         };
         OfferResponse: {
             data?: {
@@ -322,6 +583,12 @@ export interface components {
                     reused_gap?: boolean;
                     requires_seat_change?: boolean;
                 }[];
+                /** @description true khi seat_plan có >=2 leg (ghép nhiều ghế, P5) — /holds từ chối nếu HoldRequest.consent != true. */
+                requires_customer_consent?: boolean;
+                /** @description Ga đổi chỗ giữa các leg (rỗng nếu same-seat). */
+                change_station_ids?: string[];
+                /** @description = len(seat_plan) - 1 */
+                so_lan_doi_cho?: number;
                 pricing?: {
                     gia_goc_vnd?: number;
                     gia_niem_yet_vnd?: number;
@@ -349,6 +616,11 @@ export interface components {
             offer_id: string;
             expected_matrix_version: number;
             passenger_name?: string;
+            /**
+             * @description Bắt buộc true khi offer.requires_customer_consent — thiếu -> 422 CONSENT_REQUIRED (P5).
+             * @default false
+             */
+            consent: boolean;
         };
         HoldResponse: {
             data?: {
@@ -378,6 +650,147 @@ export interface components {
                     revenue_median?: number;
                     acceptance_rate?: number;
                 };
+            };
+        };
+        QuotaRow: {
+            /** @description 1-based segment_id (L1..L7) */
+            khu_gian_id?: number;
+            /** @enum {string} */
+            loai_hanh_trinh?: "ngan" | "trung" | "dai";
+            seat_class?: string;
+            /** @description Demand accepted by the DLP for this key */
+            quota?: number;
+            /** @description Nested booking limit — ngan = remaining − protected trung/dai */
+            booking_limit?: number;
+            bid_price?: number;
+        };
+        AllocationDecisionRequest: {
+            /**
+             * @description Display name recorded in the audit log — role itself is checked via X-Actor-Role.
+             * @default revenue_manager
+             */
+            decided_by: string;
+        };
+        QuotaVersionResponse: {
+            data?: {
+                version?: number;
+                /** @enum {string} */
+                status?: "PENDING" | "ACTIVE" | "REJECTED" | "ROLLED_BACK";
+                quota?: components["schemas"]["QuotaRow"][];
+                /** @description Diff vs the previous ACTIVE version — empty on the very first version. */
+                proposal?: {
+                    khu_gian_id?: number;
+                    loai_hanh_trinh?: string;
+                    seat_class?: string;
+                    /** @enum {string} */
+                    action?: "MO_THEM" | "SIET_LAI";
+                    limit_cu?: number;
+                    limit_moi?: number;
+                }[];
+                decided_by?: string | null;
+                /** Format: date-time */
+                created_at?: string;
+                /** Format: date-time */
+                decided_at?: string | null;
+            };
+        };
+        WaitlistAddRequest: {
+            service_run_id: string;
+            origin_station_id: string;
+            dest_station_id: string;
+            seat_class: string;
+            /** @default 1 */
+            quantity: number;
+            /**
+             * @description Lead time (days before departure)
+             * @default 14
+             */
+            u: number;
+            /** @default false */
+            priority_passenger: boolean;
+            /** @default KHONG */
+            csxh_doi_tuong: string;
+        };
+        WaitlistAddResponse: {
+            data?: {
+                /** Format: uuid */
+                waitlist_id?: string;
+                /** @description Deterministic score (fare value 0.4 + urgency 0.3 + segment scarcity 0.2 + CSXH flag 0.1) — same formula as app.waitlist.WaitlistManager, no personal data used to differentiate. */
+                priority_score?: number;
+                /** @enum {string} */
+                status?: "PENDING";
+            };
+        };
+        WaitlistEntry: {
+            /** Format: uuid */
+            waitlist_id?: string;
+            origin_station_id?: string;
+            dest_station_id?: string;
+            seat_class?: string;
+            priority_score?: number;
+            priority_passenger?: boolean;
+            quantity?: number;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        WaitlistListResponse: {
+            data?: {
+                pending?: components["schemas"]["WaitlistEntry"][];
+            };
+        };
+        WaitlistMatchResponse: {
+            data?: {
+                matched?: {
+                    /** Format: uuid */
+                    waitlist_id?: string;
+                    hold_id?: string;
+                    /** Format: date-time */
+                    expires_at?: string;
+                }[];
+                still_pending?: number;
+            };
+        };
+        GroupQuoteRequest: {
+            service_run_id: string;
+            origin_station_id: string;
+            dest_station_id: string;
+            seat_class: string;
+            n_khach: number;
+        };
+        GroupQuoteResponse: {
+            data?: {
+                kha_thi?: boolean;
+                seat_class?: string;
+                assignments?: {
+                    seat_idx?: number;
+                    seg_from?: number;
+                    seg_to?: number;
+                    ga_di?: string;
+                    ga_den?: string;
+                    seat_id?: string;
+                }[];
+                /** @description Car indices used (fewest cars is the top-priority objective). */
+                toa?: number[];
+                /** @description 0..1 — fraction of seats that are adjacent */
+                diem_lien_ke?: number;
+                /** @description Number of distinct compartments used, minus 1 */
+                so_lan_tach?: number;
+                ghi_chu?: string;
+            };
+        };
+        OverrideRequest: {
+            new_price_vnd: number;
+            reason: string;
+            /** @default revenue_manager */
+            decided_by: string;
+        };
+        OverrideResponse: {
+            data?: {
+                offer_id?: string;
+                old_price_vnd?: number;
+                new_price_vnd?: number;
+                /** Format: date-time */
+                expires_at?: string;
             };
         };
     };
@@ -427,9 +840,23 @@ export interface components {
                 "application/json": components["schemas"]["ErrorEnvelope"];
             };
         };
+        /** @description 403 FORBIDDEN — role không đủ quyền (X-Actor-Role không phải revenue_manager/admin) */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorEnvelope"];
+            };
+        };
     };
     parameters: {
         IdempotencyKey: string;
+        /**
+         * @description P7.2/P7.6 — role check thô qua header (KHÔNG phải RBAC/JWT thật, chỉ đủ để demo quy trình cần role duyệt). Chỉ revenue_manager|admin được phép.
+         * @example revenue_manager
+         */
+        ActorRole: "user" | "revenue_manager" | "admin";
     };
     requestBodies: never;
     headers: never;
@@ -596,6 +1023,71 @@ export interface operations {
             };
         };
     };
+    listRuns: {
+        parameters: {
+            query?: {
+                limit?: number;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunsResponse"];
+                };
+            };
+        };
+    };
+    listStations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StationsResponse"];
+                };
+            };
+        };
+    };
+    getRunStops: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StopsResponse"];
+                };
+            };
+        };
+    };
     getDecision: {
         parameters: {
             query?: never;
@@ -706,6 +1198,25 @@ export interface operations {
             };
             409: components["responses"]["Conflict"];
             410: components["responses"]["Gone"];
+            /** @description CONSENT_REQUIRED — seat_plan có >=2 leg (ghép nhiều ghế) nhưng consent != true */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error_code": "CONSENT_REQUIRED",
+                     *       "message": "Phương án ghép nhiều ghế cần khách xác nhận đồng ý đổi chỗ trước khi giữ ghế",
+                     *       "details": {
+                     *         "offer_id": "offer_9981",
+                     *         "so_lan_doi_cho": 1
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     confirmBooking: {
@@ -809,6 +1320,357 @@ export interface operations {
                     "application/json": components["schemas"]["BacktestReportResponse"];
                 };
             };
+        };
+    };
+    refreshAllocation: {
+        parameters: {
+            query: {
+                service_run_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description New PENDING quota version created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotaVersionResponse"];
+                };
+            };
+            503: components["responses"]["PolicyUnavailable"];
+        };
+    };
+    getAllocationVersion: {
+        parameters: {
+            query: {
+                service_run_id: string;
+            };
+            header?: never;
+            path: {
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotaVersionResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    approveAllocation: {
+        parameters: {
+            query: {
+                service_run_id: string;
+            };
+            header: {
+                /**
+                 * @description P7.2/P7.6 — role check thô qua header (KHÔNG phải RBAC/JWT thật, chỉ đủ để demo quy trình cần role duyệt). Chỉ revenue_manager|admin được phép.
+                 * @example revenue_manager
+                 */
+                "X-Actor-Role": components["parameters"]["ActorRole"];
+            };
+            path: {
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "decided_by": "nguyen_van_dieu_do"
+                 *     }
+                 */
+                "application/json": components["schemas"]["AllocationDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Version is now ACTIVE */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotaVersionResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    rejectAllocation: {
+        parameters: {
+            query: {
+                service_run_id: string;
+            };
+            header: {
+                /**
+                 * @description P7.2/P7.6 — role check thô qua header (KHÔNG phải RBAC/JWT thật, chỉ đủ để demo quy trình cần role duyệt). Chỉ revenue_manager|admin được phép.
+                 * @example revenue_manager
+                 */
+                "X-Actor-Role": components["parameters"]["ActorRole"];
+            };
+            path: {
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AllocationDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Version is now REJECTED */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotaVersionResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    rollbackAllocation: {
+        parameters: {
+            query: {
+                service_run_id: string;
+            };
+            header: {
+                /**
+                 * @description P7.2/P7.6 — role check thô qua header (KHÔNG phải RBAC/JWT thật, chỉ đủ để demo quy trình cần role duyệt). Chỉ revenue_manager|admin được phép.
+                 * @example revenue_manager
+                 */
+                "X-Actor-Role": components["parameters"]["ActorRole"];
+            };
+            path: {
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AllocationDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Version is now ACTIVE again */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotaVersionResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listWaitlist: {
+        parameters: {
+            query: {
+                service_run_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistListResponse"];
+                };
+            };
+        };
+    };
+    addWaitlist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "service_run_id": "SE1_2026-06-15_LE",
+                 *       "origin_station_id": "HNO",
+                 *       "dest_station_id": "NBI",
+                 *       "seat_class": "NGOI_MEM_DH",
+                 *       "u": 10
+                 *     }
+                 */
+                "application/json": components["schemas"]["WaitlistAddRequest"];
+            };
+        };
+        responses: {
+            /** @description Entry queued as PENDING */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistAddResponse"];
+                };
+            };
+        };
+    };
+    matchWaitlist: {
+        parameters: {
+            query: {
+                service_run_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistMatchResponse"];
+                };
+            };
+        };
+    };
+    quoteGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "service_run_id": "SE1_2026-06-15_LE",
+                 *       "origin_station_id": "HNO",
+                 *       "dest_station_id": "NBI",
+                 *       "seat_class": "NGOI_MEM_DH",
+                 *       "n_khach": 8
+                 *     }
+                 */
+                "application/json": components["schemas"]["GroupQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Feasible plan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupQuoteResponse"];
+                };
+            };
+            /** @description NO_SAME_SEAT_OPTION — not enough seats free the whole journey for the group */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    overrideOfferPrice: {
+        parameters: {
+            query?: never;
+            header: {
+                /**
+                 * @description P7.2/P7.6 — role check thô qua header (KHÔNG phải RBAC/JWT thật, chỉ đủ để demo quy trình cần role duyệt). Chỉ revenue_manager|admin được phép.
+                 * @example revenue_manager
+                 */
+                "X-Actor-Role": components["parameters"]["ActorRole"];
+            };
+            path: {
+                offer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "new_price_vnd": 109000,
+                 *       "reason": "Khách VIP - đại lý yêu cầu giữ giá gốc",
+                 *       "decided_by": "nguyen_van_dieu_do"
+                 *     }
+                 */
+                "application/json": components["schemas"]["OverrideRequest"];
+            };
+        };
+        responses: {
+            /** @description Price overridden */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverrideResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            /** @description SEAT_CONFLICT — offer already has an ACTIVE/CONFIRMED hold (locked price is immutable) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description GUARDRAIL_VIOLATION — requested price outside [floor_ratio, ceiling_ratio] * F0 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error_code": "GUARDRAIL_VIOLATION",
+                     *       "message": "Giá override 545.000đ ngoài dải guardrail [59.950;174.400]đ",
+                     *       "details": {
+                     *         "offer_id": "offer_34f261613c42",
+                     *         "floor": 59950,
+                     *         "ceiling": 174400,
+                     *         "requested": 545000
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            503: components["responses"]["PolicyUnavailable"];
         };
     };
 }
