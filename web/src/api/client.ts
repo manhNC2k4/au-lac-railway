@@ -1,6 +1,8 @@
 import { ApiError, type ApiErrorCode } from "@/lib/errors";
 import type {
-  AnalyticsData, BacktestReportData, BacktestRequest, ConfirmData, DecisionDetailData,
+  AnalyticsData, BacktestReportData, BacktestRequest, BookingApprovalRequest,
+  BookingQueueData, BookingRequestCreate, BookingRequestData, BookingSeatLayoutData,
+  ConfirmData, DecisionDetailData,
   GroupQuoteData, GroupQuoteRequest, HoldData, HoldRequest, OfferData, OfferRequest,
   OverrideData, OverrideRequest, OverviewData, PriceSuggestion, PriceSuggestionsData,
   QuotaVersionData, ResetData, RunsData, RunSummary, SeatmapData,
@@ -22,6 +24,15 @@ export interface AuLacApi {
   getRunStops(serviceRunId: string): Promise<StopsData>;
   getDecision(decisionId: string): Promise<DecisionDetailData>;
   createOffer(req: OfferRequest): Promise<OfferData>;
+  createBookingRequest(req: BookingRequestCreate): Promise<BookingRequestData>;
+  getBookingRequest(requestId: string): Promise<BookingRequestData>;
+  cancelBookingRequest(requestId: string): Promise<BookingRequestData>;
+  getBookingSeatLayout(requestId: string): Promise<BookingSeatLayoutData>;
+  selectBookingSeats(requestId: string, candidateId: string, seatIds: string[]): Promise<BookingRequestData>;
+  listAdminBookingRequests(status?: string): Promise<BookingQueueData>;
+  getAdminBookingRequest(requestId: string): Promise<BookingRequestData>;
+  approveBookingRequest(requestId: string, req: BookingApprovalRequest): Promise<BookingRequestData>;
+  rejectBookingRequest(requestId: string, reason: string, decidedBy: string): Promise<BookingRequestData>;
   createHold(req: HoldRequest, idempotencyKey: string): Promise<HoldData>;
   confirmBooking(holdId: string, idempotencyKey: string): Promise<ConfirmData>;
   createBacktest(req: BacktestRequest): Promise<{ report_id: string }>;
@@ -66,10 +77,13 @@ async function unwrap<T>(res: Response): Promise<T> {
 
 export function createHttpClient(baseUrl = ""): AuLacApi {
   const root = `${baseUrl.replace(/\/$/, "")}/api/v1`;
-  const get = async <T>(path: string, params?: Record<string, string>) => {
+  const get = async <T>(path: string, params?: Record<string, string>, actorRole?: string) => {
     const qs = params ? `?${new URLSearchParams(params)}` : "";
-    return unwrap<T>(await fetch(`${root}${path}${qs}`, { cache: "no-store" }));
+    const headers = actorRole ? { "X-Actor-Role": actorRole } : undefined;
+    return unwrap<T>(await fetch(`${root}${path}${qs}`, { cache: "no-store", headers }));
   };
+  const del = async <T>(path: string) =>
+    unwrap<T>(await fetch(`${root}${path}`, { method: "DELETE" }));
   const post = async <T>(path: string, body?: unknown, key?: string, actorRole?: string, params?: Record<string, string>) => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (key) headers["Idempotency-Key"] = key;
@@ -93,6 +107,20 @@ export function createHttpClient(baseUrl = ""): AuLacApi {
     getRunStops: (service_run_id) => get(`/demo/runs/${encodeURIComponent(service_run_id)}/stops`),
     getDecision: (id) => get(`/decisions/${encodeURIComponent(id)}`),
     createOffer: (req) => post("/offers", req),
+    createBookingRequest: (req) => post("/booking-requests", req),
+    getBookingRequest: (id) => get(`/booking-requests/${encodeURIComponent(id)}`),
+    cancelBookingRequest: (id) => del(`/booking-requests/${encodeURIComponent(id)}`),
+    getBookingSeatLayout: (id) => get(`/booking-requests/${encodeURIComponent(id)}/seat-layout`),
+    selectBookingSeats: (id, candidate_id, seat_ids) =>
+      post(`/booking-requests/${encodeURIComponent(id)}/seat-selection`, { candidate_id, seat_ids }),
+    listAdminBookingRequests: (status = "PENDING_ADMIN") =>
+      get("/admin/booking-requests", { status }, "revenue_manager"),
+    getAdminBookingRequest: (id) =>
+      get(`/admin/booking-requests/${encodeURIComponent(id)}`, undefined, "revenue_manager"),
+    approveBookingRequest: (id, req) =>
+      post(`/admin/booking-requests/${encodeURIComponent(id)}/approve`, req, undefined, "revenue_manager"),
+    rejectBookingRequest: (id, reason, decided_by) =>
+      post(`/admin/booking-requests/${encodeURIComponent(id)}/reject`, { reason, decided_by }, undefined, "revenue_manager"),
     createHold: (req, key) => post("/holds", req, key),
     confirmBooking: (id, key) => post(`/bookings/${encodeURIComponent(id)}/confirm`, {}, key),
     createBacktest: (req) => post("/backtests", req),

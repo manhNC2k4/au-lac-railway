@@ -15,7 +15,9 @@ import {
   ChevronsLeft,
   ChevronsRight,
   LineChart,
+  BrainCircuit,
   SlidersHorizontal,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrentRunProvider, useCurrentRun } from "@/lib/current-run";
@@ -44,6 +46,8 @@ const NAV: NavItem[] = [
       { href: "/admin/analytics?tab=allocation", label: "Phân bổ chỗ" },
     ],
   },
+  { href: "/admin/decisions", label: "Quyết định AI", icon: BrainCircuit },
+  { href: "/admin/booking-requests", label: "Duyệt yêu cầu vé", icon: ClipboardCheck },
   { href: "/admin/backtest", label: "So sánh Backtest", icon: BarChart3 },
   { href: "/admin/booking-lab", label: "Booking Lab", icon: TicketCheck },
 ];
@@ -53,6 +57,7 @@ const BREADCRUMB: [string, string][] = [
   ["/admin/overview", "Tổng quan vận hành"],
   ["/admin/analytics", "Dự báo & Phân bổ"],
   ["/admin/booking-lab", "Booking Lab"],
+  ["/admin/booking-requests", "Duyệt yêu cầu đặt vé"],
   ["/admin/backtest", "So sánh chiến lược"],
 ];
 

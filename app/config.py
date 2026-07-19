@@ -15,14 +15,65 @@ ARTIFACTS = BASE / "models" / "artifacts"                  # nơi xuất file mo
 # ---- Lớp chỗ vật lý (khoang = tài nguyên) và ánh xạ từ tầng giá ----
 SEAT_CLASSES = ["NGOI_MEM_DH", "NAM_K6", "NAM_K4"]
 # tier (trong dữ liệu, cột loai_cho) -> macro seat class (tài nguyên ghế)
+# Data V2 (v2-as-v1) đã gộp loai_cho về mức macro => thêm ánh xạ đồng nhất
 MACRO_CLASS = {
     "NGOI_MEM_DH": "NGOI_MEM_DH",
     "NAM_K6_T1": "NAM_K6", "NAM_K6_T2": "NAM_K6", "NAM_K6_T3": "NAM_K6",
     "NAM_K4_T1": "NAM_K4", "NAM_K4_T2": "NAM_K4",
+    "NAM_K6": "NAM_K6", "NAM_K4": "NAM_K4",
 }
+# tier đại diện khi dữ liệu chỉ còn macro (tra varsigma/giá trong YAML)
+REP_TIER = {"NGOI_MEM_DH": "NGOI_MEM_DH", "NAM_K6": "NAM_K6_T2", "NAM_K4": "NAM_K4_T1"}
 TIERS = {"NGOI_MEM_DH": ["NGOI_MEM_DH"],
          "NAM_K6": ["NAM_K6_T1", "NAM_K6_T2", "NAM_K6_T3"],
          "NAM_K4": ["NAM_K4_T1", "NAM_K4_T2"]}
+
+# ---- chuyen_id: data V2 dùng "RUN:{mac_tau}:{ngay}"; V1 cũ "{mac_tau}_{ngay}" ----
+def make_chuyen_id(mac_tau: str, ngay: str) -> str:
+    return f"RUN:{mac_tau}:{ngay}"
+
+
+def mac_tau_of(chuyen_id: str) -> str:
+    if chuyen_id.startswith("RUN:"):
+        return chuyen_id.split(":", 2)[1]
+    return chuyen_id.rsplit("_", 1)[0]
+
+
+def load_calendar():
+    """Đọc calendar_events.csv và chuẩn hoá về ngữ nghĩa V1 cho mọi consumer.
+
+    Data V2 chỉ điền tau_tet trong ±30 ngày quanh Tết (NaN ngoài cửa sổ), la_le
+    là 0/1, dot_ban_ve trống. Chuẩn hoá: tau_tet = khoảng cách (ngày, có dấu)
+    tới mốc Tết gần nhất (suy từ các ngày tau_tet == 0), la_le bool,
+    dot_ban_ve = "TET_{năm}" trong cửa sổ Tết ±21 ngày, còn lại "THUONG".
+    """
+    import numpy as np
+    import pandas as pd
+    cal = pd.read_csv(DATA / "calendar_events.csv")
+    d = pd.to_datetime(cal["ngay"])
+    tt = pd.to_numeric(cal["tau_tet"], errors="coerce")
+    anchors = d[tt == 0]
+    if len(anchors):
+        days = d.values.astype("datetime64[D]").astype(int)
+        anch = anchors.values.astype("datetime64[D]").astype(int)
+        diff = days[:, None] - anch[None, :]
+        idx_near = np.abs(diff).argmin(axis=1)
+        nearest = diff[np.arange(len(days)), idx_near]
+        tt = pd.Series(np.where(tt.notna(), tt, nearest), index=cal.index)
+        nam_tet = anchors.dt.year.to_numpy()[idx_near]
+    else:
+        nam_tet = d.dt.year.to_numpy()
+    cal["tau_tet"] = tt.fillna(999).astype(int)
+    cal["dow"] = pd.to_numeric(cal["dow"], errors="coerce").fillna(d.dt.dayofweek).astype(int)
+    cal["H_horizon"] = pd.to_numeric(cal["H_horizon"], errors="coerce").fillna(127).astype(int)
+    le_num = pd.to_numeric(cal["la_le"], errors="coerce")
+    cal["la_le"] = (le_num.fillna(0) > 0) | cal["la_le"].astype(str).str.lower().eq("true")
+    dbv = cal["dot_ban_ve"] if "dot_ban_ve" in cal else pd.Series(pd.NA, index=cal.index)
+    mac_dinh = np.where(cal["tau_tet"].abs() <= 21,
+                        np.char.add("TET_", nam_tet.astype(str)), "THUONG")
+    cal["dot_ban_ve"] = dbv.fillna(pd.Series(mac_dinh, index=cal.index))
+    return cal
+
 
 # ---- Băng loại hành trình theo cự ly (dùng cho quota bài toán 3) ----
 BAND_EDGES = [0, 300, 900, 1_800]         # km
@@ -57,7 +108,10 @@ DEFAULT_POLICY = {
     "lf_low": 0.50,           # dưới mức này mới cho giảm động (điều kiện AI)
     # elasticity: chỉ tối ưu trong dải giá quanh F0 nơi DỮ LIỆU DÀY (tránh ngoại suy
     # ra vùng r cao — nơi ước lượng bị thiên lệch nội sinh và sẽ overprice).
-    "elastic_markup_max": 0.15,     # trần động: F0 -> tối đa +15% khi đoạn đầy
-    "elastic_markdown_max": 0.05,   # sàn động: F0 -> tối đa -5% khi đoạn trống (cầu kém
+    # trần động: F0 -> tối đa +15% khi đoạn đầy (override AULAC_ELASTIC_MARKUP
+    # để A/B — xem docs/BAO_CAO_DANH_GIA_MODEL_V2.md)
+    "elastic_markup_max": float(__import__("os").environ.get("AULAC_ELASTIC_MARKUP", "0.15")),
+    "elastic_markdown_max": float(__import__("os").environ.get("AULAC_ELASTIC_MARKDOWN", "0.05")),
+                                    # sàn động: F0 -> tối đa -5% khi đoạn trống (cầu kém
                                     # co giãn nên giảm sâu là lỗ; chỉ giảm nhẹ hút khách)
 }

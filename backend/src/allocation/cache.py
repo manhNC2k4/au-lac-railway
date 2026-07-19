@@ -6,7 +6,6 @@ KHÔNG mỗi request /offers — giữ p95 thấp (NFR gốc <1s), LP không gi�
 LP fail (`_solve_dlp` lỗi/exception) => KHÔNG cache => route đọc cache rỗng => 503
 POLICY_UNAVAILABLE, KHÔNG fallback công thức scarcity cũ (đã xoá, xem forecast/bid_price.py).
 """
-import json
 import sys
 from pathlib import Path
 
@@ -26,43 +25,61 @@ def refresh(service_run_id: str) -> dict | None:
     """Giải DLP cho `service_run_id` ở version hiện tại + lưu cache. Trả kết quả hoặc
     None nếu LP fail."""
     from app.bt3_allocation import analyze_run
-    from integration.ssm_from_postgres import build_forecast_df, build_shim
+    from integration.ssm_from_postgres import build_forecast_df, build_runtime_shim, build_shim
 
     from ..adapters import model_adapter
     from ..api.deps import SEED_DIR, get_pricer, get_state_manager
-    from ..forecast import network
+    from ..forecast.runtime import ensure_model_forecast
+    from ..forecast.topology import get_run_topology
     from ..state.db import get_connection
 
-    scenario = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
+    import json
+
+    topology = get_run_topology(service_run_id)
+    ensure_model_forecast(service_run_id)
     ssm = get_state_manager()
-    seatmap = ssm.get_seatmap(service_run_id)
-    matrix_version = seatmap["matrix_version"]
-    matrix, _seat_ids = model_adapter.seatmap_to_matrix(seatmap, network.N_SEGMENTS)
+    matrices = {}
+    if topology["data_source"] == "MODEL_SIMULATION":
+        classes = ["NGOI_MEM_DH", "NAM_K6", "NAM_K4"]
+        for seat_class in classes:
+            seatmap = ssm.get_seatmap(service_run_id, seat_class)
+            matrices[seat_class], _ = model_adapter.seatmap_to_matrix(
+                seatmap, topology["n_segments"])
+        matrix_version = seatmap["matrix_version"]
+        shim = build_runtime_shim(topology, matrices)
+    else:
+        scenario = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
+        seatmap = ssm.get_seatmap(service_run_id, "NGOI_MEM_DH")
+        matrix_version = seatmap["matrix_version"]
+        matrix, _ = model_adapter.seatmap_to_matrix(seatmap, topology["n_segments"])
+        shim = build_shim(scenario, matrix)
 
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
-            """SELECT forecast_demand, forecast_version FROM demand_forecast
-               WHERE service_run_id=%s AND seat_class=%s
+            """SELECT origin_station_id, dest_station_id, seat_class,
+                      forecast_demand, forecast_version
+               FROM demand_forecast
+               WHERE service_run_id=%s
                  AND forecast_version=(SELECT COALESCE(MAX(forecast_version),1)
                                        FROM demand_forecast WHERE service_run_id=%s)
                ORDER BY id""",
-            (service_run_id, "NGOI_MEM_DH", service_run_id),
+            (service_run_id, service_run_id),
         )
         rows = cur.fetchall()
     conn.commit()
-    forecast_version = rows[0][1] if rows else 1
+    forecast_version = rows[0][4] if rows else 1
 
-    # Seed chỉ có forecast MỨC ĐOẠN (7 hàng theo thứ tự segment, không phải O-D pair
-    # thật) — xấp xỉ mỗi đoạn liền kề thành 1 cặp O-D cho DLP; các cặp O-D nhiều đoạn
-    # khác không có tín hiệu riêng, DLP coi cầu=0 cho chúng (bảo thủ, không bịa cầu).
-    segs = scenario["segments"]
-    fc_rows = [{"origin": s["from"], "dest": s["to"], "seat_class": "NGOI_MEM_DH",
-                "remaining_demand": float(rows[i][0])}
-               for i, s in enumerate(segs) if i < len(rows)]
+    if rows and rows[0][0] is not None:
+        fc_rows = [{"origin": row[0], "dest": row[1], "seat_class": row[2],
+                    "remaining_demand": float(row[3])} for row in rows]
+    else:
+        stations = topology["stations"]
+        fc_rows = [{"origin": stations[index]["id"], "dest": stations[index + 1]["id"],
+                    "seat_class": row[2], "remaining_demand": float(row[3])}
+                   for index, row in enumerate(rows) if index + 1 < len(stations)]
     forecast_df = build_forecast_df(fc_rows)
 
-    shim = build_shim(scenario, matrix)
     try:
         result = analyze_run(shim, get_pricer(), shim.chuyen_id, forecast_df)
     except Exception:

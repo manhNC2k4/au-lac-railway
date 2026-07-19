@@ -21,6 +21,9 @@ from app.contracts import ProposalLog, Quote
 
 # cap biến động mỗi lần điều chỉnh (YAML san_tran.bien_do_thay_doi_toi_da_moi_lan)
 VOLATILITY_CAP = 0.05
+# Bật/tắt sàn giá mùa vụ cho MỌI đợt phụ thu (Tết luôn bật) — xem _price_elastic
+import os as _os
+SEASONAL_FLOOR = _os.environ.get("AULAC_SEASONAL_FLOOR", "0") == "1"
 # off-peak: thứ 3/4 (dow 1,2) ngoài lễ/Tết được giảm để hút khách thấp điểm
 OFFPEAK_DOW = {1, 2}
 OFFPEAK_DISC = 0.05
@@ -152,7 +155,10 @@ class Pricer:
         ceil_r = 1.0 + pol["elastic_markup_max"] * lf
         floor_r = 1.0 - pol["elastic_markdown_max"] * (1.0 - lf)
         offpeak = ctx.get("dow") in OFFPEAK_DOW and not ctx.get("la_le") and lf_max < pol["lf_ref"]
-        if is_tet:                                 # Tết: nền giá +mùa vụ
+        if is_tet or (dmua > 0 and SEASONAL_FLOOR):
+            # nền giá + mùa vụ: không bán DƯỚI giá mùa vụ khi mùa vụ đang phụ thu
+            # (Tết luôn bật; các đợt khác bật qua AULAC_SEASONAL_FLOOR — A/B cho
+            # thấy bán quanh F0 khi FCFS thu F0(1+δ) là mất doanh thu cao điểm)
             ceil_r = max(ceil_r, 1.0 + dmua + pol["elastic_markup_max"] * lf)
             floor_r = max(floor_r, 1.0 + dmua)
         floor_r = min(floor_r, ceil_r)

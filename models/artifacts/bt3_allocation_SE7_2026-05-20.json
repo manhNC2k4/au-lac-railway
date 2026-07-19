@@ -1,13 +1,13 @@
 {
-  "chuyen_id": "SE7_2026-05-20",
+  "chuyen_id": "RUN:SE7:2026-05-20",
   "lf_theo_doan": [
     {
       "khu_gian_id": 1,
       "ga_dau": "HNO",
       "ga_cuoi": "PLY",
-      "lf": 0.3208,
+      "lf": 0.0573,
       "suc_chua": 558,
-      "con_trong": 379,
+      "con_trong": 526,
       "phan_loai": "trong",
       "bid_price": 0
     },
@@ -15,9 +15,9 @@
       "khu_gian_id": 2,
       "ga_dau": "PLY",
       "ga_cuoi": "NDI",
-      "lf": 0.3405,
+      "lf": 0.1201,
       "suc_chua": 558,
-      "con_trong": 368,
+      "con_trong": 491,
       "phan_loai": "trong",
       "bid_price": 0
     },
@@ -25,49 +25,49 @@
       "khu_gian_id": 3,
       "ga_dau": "NDI",
       "ga_cuoi": "NBI",
-      "lf": 0.4032,
+      "lf": 0.1703,
       "suc_chua": 558,
-      "con_trong": 333,
-      "phan_loai": "binh_thuong",
+      "con_trong": 463,
+      "phan_loai": "trong",
       "bid_price": 0
     },
     {
       "khu_gian_id": 4,
       "ga_dau": "NBI",
       "ga_cuoi": "BSO",
-      "lf": 0.4534,
+      "lf": 0.2348,
       "suc_chua": 558,
-      "con_trong": 305,
-      "phan_loai": "binh_thuong",
+      "con_trong": 427,
+      "phan_loai": "trong",
       "bid_price": 0
     },
     {
       "khu_gian_id": 5,
       "ga_dau": "BSO",
       "ga_cuoi": "THO",
-      "lf": 0.4677,
+      "lf": 0.2778,
       "suc_chua": 558,
-      "con_trong": 297,
-      "phan_loai": "binh_thuong",
+      "con_trong": 403,
+      "phan_loai": "trong",
       "bid_price": 0
     },
     {
       "khu_gian_id": 6,
       "ga_dau": "THO",
       "ga_cuoi": "VIN",
-      "lf": 0.5036,
+      "lf": 0.328,
       "suc_chua": 558,
-      "con_trong": 277,
-      "phan_loai": "binh_thuong",
+      "con_trong": 375,
+      "phan_loai": "trong",
       "bid_price": 0
     },
     {
       "khu_gian_id": 7,
       "ga_dau": "VIN",
       "ga_cuoi": "YTR",
-      "lf": 0.5502,
+      "lf": 0.4068,
       "suc_chua": 558,
-      "con_trong": 251,
+      "con_trong": 331,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -75,9 +75,9 @@
       "khu_gian_id": 8,
       "ga_dau": "YTR",
       "ga_cuoi": "HPO",
-      "lf": 0.5753,
+      "lf": 0.4839,
       "suc_chua": 558,
-      "con_trong": 237,
+      "con_trong": 288,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -85,9 +85,9 @@
       "khu_gian_id": 9,
       "ga_dau": "HPO",
       "ga_cuoi": "DLE",
-      "lf": 0.5824,
+      "lf": 0.5717,
       "suc_chua": 558,
-      "con_trong": 233,
+      "con_trong": 239,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -95,9 +95,9 @@
       "khu_gian_id": 10,
       "ga_dau": "DLE",
       "ga_cuoi": "DHO",
-      "lf": 0.5878,
+      "lf": 0.6326,
       "suc_chua": 558,
-      "con_trong": 230,
+      "con_trong": 205,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -105,9 +105,9 @@
       "khu_gian_id": 11,
       "ga_dau": "DHO",
       "ga_cuoi": "DHA",
-      "lf": 0.6254,
+      "lf": 0.672,
       "suc_chua": 558,
-      "con_trong": 209,
+      "con_trong": 183,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -115,9 +115,9 @@
       "khu_gian_id": 12,
       "ga_dau": "DHA",
       "ga_cuoi": "HUE",
-      "lf": 0.6523,
+      "lf": 0.7222,
       "suc_chua": 558,
-      "con_trong": 194,
+      "con_trong": 155,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -125,9 +125,9 @@
       "khu_gian_id": 13,
       "ga_dau": "HUE",
       "ga_cuoi": "DNA",
-      "lf": 0.6685,
+      "lf": 0.767,
       "suc_chua": 558,
-      "con_trong": 185,
+      "con_trong": 130,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -135,9 +135,9 @@
       "khu_gian_id": 14,
       "ga_dau": "DNA",
       "ga_cuoi": "TKY",
-      "lf": 0.6882,
+      "lf": 0.7814,
       "suc_chua": 558,
-      "con_trong": 174,
+      "con_trong": 122,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -145,9 +145,9 @@
       "khu_gian_id": 15,
       "ga_dau": "TKY",
       "ga_cuoi": "QNG",
-      "lf": 0.6935,
+      "lf": 0.767,
       "suc_chua": 558,
-      "con_trong": 171,
+      "con_trong": 130,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -155,9 +155,9 @@
       "khu_gian_id": 16,
       "ga_dau": "QNG",
       "ga_cuoi": "DTR",
-      "lf": 0.7043,
+      "lf": 0.7706,
       "suc_chua": 558,
-      "con_trong": 165,
+      "con_trong": 128,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -165,9 +165,9 @@
       "khu_gian_id": 17,
       "ga_dau": "DTR",
       "ga_cuoi": "THA",
-      "lf": 0.638,
+      "lf": 0.7778,
       "suc_chua": 558,
-      "con_trong": 202,
+      "con_trong": 124,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -175,9 +175,9 @@
       "khu_gian_id": 18,
       "ga_dau": "THA",
       "ga_cuoi": "GIA",
-      "lf": 0.6039,
+      "lf": 0.7419,
       "suc_chua": 558,
-      "con_trong": 221,
+      "con_trong": 144,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -185,9 +185,9 @@
       "khu_gian_id": 19,
       "ga_dau": "GIA",
       "ga_cuoi": "NTR",
-      "lf": 0.6022,
+      "lf": 0.724,
       "suc_chua": 558,
-      "con_trong": 222,
+      "con_trong": 154,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -195,9 +195,9 @@
       "khu_gian_id": 20,
       "ga_dau": "NTR",
       "ga_cuoi": "TCH",
-      "lf": 0.5645,
+      "lf": 0.629,
       "suc_chua": 558,
-      "con_trong": 243,
+      "con_trong": 207,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -205,9 +205,9 @@
       "khu_gian_id": 21,
       "ga_dau": "TCH",
       "ga_cuoi": "BTH",
-      "lf": 0.552,
+      "lf": 0.5645,
       "suc_chua": 558,
-      "con_trong": 250,
+      "con_trong": 243,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -215,9 +215,9 @@
       "khu_gian_id": 22,
       "ga_dau": "BTH",
       "ga_cuoi": "BHO",
-      "lf": 0.4391,
+      "lf": 0.4892,
       "suc_chua": 558,
-      "con_trong": 313,
+      "con_trong": 285,
       "phan_loai": "binh_thuong",
       "bid_price": 0
     },
@@ -225,19 +225,19 @@
       "khu_gian_id": 23,
       "ga_dau": "BHO",
       "ga_cuoi": "DAN",
-      "lf": 0.3315,
+      "lf": 0.3513,
       "suc_chua": 558,
-      "con_trong": 373,
-      "phan_loai": "trong",
+      "con_trong": 362,
+      "phan_loai": "binh_thuong",
       "bid_price": 0
     },
     {
       "khu_gian_id": 24,
       "ga_dau": "DAN",
       "ga_cuoi": "SGO",
-      "lf": 0.2993,
+      "lf": 0.1953,
       "suc_chua": 558,
-      "con_trong": 391,
+      "con_trong": 449,
       "phan_loai": "trong",
       "bid_price": 0
     }
@@ -247,8 +247,8 @@
       "khu_gian_id": 1,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 228,
-      "booking_limit": 228,
+      "quota": 307,
+      "booking_limit": 307,
       "bid_price": 0
     },
     {
@@ -256,7 +256,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 228,
+      "booking_limit": 307,
       "bid_price": 0
     },
     {
@@ -264,15 +264,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 228,
+      "booking_limit": 307,
       "bid_price": 0
     },
     {
       "khu_gian_id": 2,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 222,
-      "booking_limit": 222,
+      "quota": 292,
+      "booking_limit": 292,
       "bid_price": 0
     },
     {
@@ -280,7 +280,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 222,
+      "booking_limit": 292,
       "bid_price": 0
     },
     {
@@ -288,15 +288,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 222,
+      "booking_limit": 292,
       "bid_price": 0
     },
     {
       "khu_gian_id": 3,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 200,
-      "booking_limit": 200,
+      "quota": 282,
+      "booking_limit": 282,
       "bid_price": 0
     },
     {
@@ -304,7 +304,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 200,
+      "booking_limit": 282,
       "bid_price": 0
     },
     {
@@ -312,15 +312,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 200,
+      "booking_limit": 282,
       "bid_price": 0
     },
     {
       "khu_gian_id": 4,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 186,
-      "booking_limit": 186,
+      "quota": 273,
+      "booking_limit": 273,
       "bid_price": 0
     },
     {
@@ -328,7 +328,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 186,
+      "booking_limit": 273,
       "bid_price": 0
     },
     {
@@ -336,15 +336,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 186,
+      "booking_limit": 273,
       "bid_price": 0
     },
     {
       "khu_gian_id": 5,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 180,
-      "booking_limit": 180,
+      "quota": 261,
+      "booking_limit": 261,
       "bid_price": 0
     },
     {
@@ -352,7 +352,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 180,
+      "booking_limit": 261,
       "bid_price": 0
     },
     {
@@ -360,15 +360,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 180,
+      "booking_limit": 261,
       "bid_price": 0
     },
     {
       "khu_gian_id": 6,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 169,
-      "booking_limit": 169,
+      "quota": 249,
+      "booking_limit": 249,
       "bid_price": 0
     },
     {
@@ -376,7 +376,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 169,
+      "booking_limit": 249,
       "bid_price": 0
     },
     {
@@ -384,15 +384,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 169,
+      "booking_limit": 249,
       "bid_price": 0
     },
     {
       "khu_gian_id": 7,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 151,
-      "booking_limit": 151,
+      "quota": 230,
+      "booking_limit": 230,
       "bid_price": 0
     },
     {
@@ -400,7 +400,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 151,
+      "booking_limit": 230,
       "bid_price": 0
     },
     {
@@ -408,15 +408,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 151,
+      "booking_limit": 230,
       "bid_price": 0
     },
     {
       "khu_gian_id": 8,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 142,
-      "booking_limit": 142,
+      "quota": 215,
+      "booking_limit": 215,
       "bid_price": 0
     },
     {
@@ -424,7 +424,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 142,
+      "booking_limit": 215,
       "bid_price": 0
     },
     {
@@ -432,11 +432,83 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 142,
+      "booking_limit": 215,
       "bid_price": 0
     },
     {
       "khu_gian_id": 9,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 189,
+      "booking_limit": 189,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 9,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 189,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 9,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 189,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 175,
+      "booking_limit": 175,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 175,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 175,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 160,
+      "booking_limit": 160,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 160,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 160,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 12,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
       "quota": 143,
@@ -444,7 +516,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 9,
+      "khu_gian_id": 12,
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
@@ -452,7 +524,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 9,
+      "khu_gian_id": 12,
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
@@ -460,31 +532,127 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 10,
+      "khu_gian_id": 13,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 142,
-      "booking_limit": 142,
+      "quota": 124,
+      "booking_limit": 124,
       "bid_price": 0
     },
     {
-      "khu_gian_id": 10,
+      "khu_gian_id": 13,
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 142,
+      "booking_limit": 124,
       "bid_price": 0
     },
     {
-      "khu_gian_id": 10,
+      "khu_gian_id": 13,
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 142,
+      "booking_limit": 124,
       "bid_price": 0
     },
     {
-      "khu_gian_id": 11,
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 122,
+      "booking_limit": 122,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 122,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 122,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 128,
+      "booking_limit": 128,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 128,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 128,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 122,
+      "booking_limit": 122,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 122,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 122,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 17,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 121,
+      "booking_limit": 121,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 17,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 121,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 17,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NGOI_MEM_DH",
+      "quota": 0,
+      "booking_limit": 121,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 18,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
       "quota": 134,
@@ -492,7 +660,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 11,
+      "khu_gian_id": 18,
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
@@ -500,7 +668,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 11,
+      "khu_gian_id": 18,
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
@@ -508,179 +676,11 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 123,
-      "booking_limit": 123,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 123,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 123,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 117,
-      "booking_limit": 117,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 117,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 117,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 121,
-      "booking_limit": 121,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 121,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 121,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 121,
-      "booking_limit": 121,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 121,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 121,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 16,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 113,
-      "booking_limit": 113,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 16,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 113,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 16,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 113,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 17,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 126,
-      "booking_limit": 126,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 17,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 126,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 17,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 126,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 18,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 140,
-      "booking_limit": 140,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 18,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 140,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 18,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NGOI_MEM_DH",
-      "quota": 0,
-      "booking_limit": 140,
-      "bid_price": 0
-    },
-    {
       "khu_gian_id": 19,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 140,
-      "booking_limit": 140,
+      "quota": 143,
+      "booking_limit": 143,
       "bid_price": 0
     },
     {
@@ -688,7 +688,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 140,
+      "booking_limit": 143,
       "bid_price": 0
     },
     {
@@ -696,15 +696,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 140,
+      "booking_limit": 143,
       "bid_price": 0
     },
     {
       "khu_gian_id": 20,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 146,
-      "booking_limit": 146,
+      "quota": 172,
+      "booking_limit": 172,
       "bid_price": 0
     },
     {
@@ -712,7 +712,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 146,
+      "booking_limit": 172,
       "bid_price": 0
     },
     {
@@ -720,15 +720,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 146,
+      "booking_limit": 172,
       "bid_price": 0
     },
     {
       "khu_gian_id": 21,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 150,
-      "booking_limit": 150,
+      "quota": 182,
+      "booking_limit": 182,
       "bid_price": 0
     },
     {
@@ -736,7 +736,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 150,
+      "booking_limit": 182,
       "bid_price": 0
     },
     {
@@ -744,15 +744,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 150,
+      "booking_limit": 182,
       "bid_price": 0
     },
     {
       "khu_gian_id": 22,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 183,
-      "booking_limit": 183,
+      "quota": 202,
+      "booking_limit": 202,
       "bid_price": 0
     },
     {
@@ -760,7 +760,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 183,
+      "booking_limit": 202,
       "bid_price": 0
     },
     {
@@ -768,15 +768,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 183,
+      "booking_limit": 202,
       "bid_price": 0
     },
     {
       "khu_gian_id": 23,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 183,
-      "booking_limit": 183,
+      "quota": 202,
+      "booking_limit": 202,
       "bid_price": 0
     },
     {
@@ -784,7 +784,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 222,
+      "booking_limit": 236,
       "bid_price": 0
     },
     {
@@ -792,15 +792,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 222,
+      "booking_limit": 236,
       "bid_price": 0
     },
     {
       "khu_gian_id": 24,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NGOI_MEM_DH",
-      "quota": 183,
-      "booking_limit": 183,
+      "quota": 202,
+      "booking_limit": 202,
       "bid_price": 0
     },
     {
@@ -808,7 +808,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 229,
+      "booking_limit": 273,
       "bid_price": 0
     },
     {
@@ -816,15 +816,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NGOI_MEM_DH",
       "quota": 0,
-      "booking_limit": 229,
+      "booking_limit": 273,
       "bid_price": 0
     },
     {
       "khu_gian_id": 1,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 69,
-      "booking_limit": 69,
+      "quota": 114,
+      "booking_limit": 114,
       "bid_price": 0
     },
     {
@@ -832,7 +832,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 69,
+      "booking_limit": 114,
       "bid_price": 0
     },
     {
@@ -840,15 +840,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 69,
+      "booking_limit": 114,
       "bid_price": 0
     },
     {
       "khu_gian_id": 2,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 68,
-      "booking_limit": 68,
+      "quota": 104,
+      "booking_limit": 104,
       "bid_price": 0
     },
     {
@@ -856,7 +856,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 68,
+      "booking_limit": 104,
       "bid_price": 0
     },
     {
@@ -864,15 +864,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 68,
+      "booking_limit": 104,
       "bid_price": 0
     },
     {
       "khu_gian_id": 3,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 56,
-      "booking_limit": 56,
+      "quota": 93,
+      "booking_limit": 93,
       "bid_price": 0
     },
     {
@@ -880,7 +880,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 56,
+      "booking_limit": 93,
       "bid_price": 0
     },
     {
@@ -888,15 +888,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 56,
+      "booking_limit": 93,
       "bid_price": 0
     },
     {
       "khu_gian_id": 4,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 47,
-      "booking_limit": 47,
+      "quota": 78,
+      "booking_limit": 78,
       "bid_price": 0
     },
     {
@@ -904,7 +904,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 47,
+      "booking_limit": 78,
       "bid_price": 0
     },
     {
@@ -912,15 +912,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 47,
+      "booking_limit": 78,
       "bid_price": 0
     },
     {
       "khu_gian_id": 5,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 47,
-      "booking_limit": 47,
+      "quota": 71,
+      "booking_limit": 71,
       "bid_price": 0
     },
     {
@@ -928,7 +928,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 47,
+      "booking_limit": 71,
       "bid_price": 0
     },
     {
@@ -936,15 +936,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 47,
+      "booking_limit": 71,
       "bid_price": 0
     },
     {
       "khu_gian_id": 6,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 39,
-      "booking_limit": 39,
+      "quota": 64,
+      "booking_limit": 64,
       "bid_price": 0
     },
     {
@@ -952,7 +952,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 39,
+      "booking_limit": 64,
       "bid_price": 0
     },
     {
@@ -960,15 +960,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 39,
+      "booking_limit": 64,
       "bid_price": 0
     },
     {
       "khu_gian_id": 7,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 33,
-      "booking_limit": 33,
+      "quota": 52,
+      "booking_limit": 52,
       "bid_price": 0
     },
     {
@@ -976,7 +976,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 33,
+      "booking_limit": 52,
       "bid_price": 0
     },
     {
@@ -984,15 +984,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 33,
+      "booking_limit": 52,
       "bid_price": 0
     },
     {
       "khu_gian_id": 8,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
-      "quota": 30,
-      "booking_limit": 30,
+      "quota": 36,
+      "booking_limit": 36,
       "bid_price": 0
     },
     {
@@ -1000,7 +1000,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 30,
+      "booking_limit": 36,
       "bid_price": 0
     },
     {
@@ -1008,251 +1008,11 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K6",
       "quota": 0,
-      "booking_limit": 30,
+      "booking_limit": 36,
       "bid_price": 0
     },
     {
       "khu_gian_id": 9,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 28,
-      "booking_limit": 28,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 9,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 28,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 9,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 28,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 10,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 27,
-      "booking_limit": 27,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 10,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 27,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 10,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 27,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 11,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 19,
-      "booking_limit": 19,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 11,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 19,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 11,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 19,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 19,
-      "booking_limit": 19,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 19,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 19,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 13,
-      "booking_limit": 13,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 13,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 13,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 3,
-      "booking_limit": 3,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 3,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 3,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 0,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 0,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 0,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 16,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 3,
-      "booking_limit": 3,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 16,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 3,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 16,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 3,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 17,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 22,
-      "booking_limit": 22,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 17,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 22,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 17,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 22,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 18,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 25,
-      "booking_limit": 25,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 18,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 25,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 18,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 25,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 19,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K6",
       "quota": 26,
@@ -1260,335 +1020,503 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 19,
+      "khu_gian_id": 9,
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K6",
       "quota": 0,
       "booking_limit": 26,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 19,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 26,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 20,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 38,
-      "booking_limit": 38,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 20,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 38,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 20,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 38,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 21,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 42,
-      "booking_limit": 42,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 21,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 42,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 21,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 42,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 22,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 55,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 22,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 22,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 23,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 55,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 23,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 68,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 23,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 68,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 24,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K6",
-      "quota": 55,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 24,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 76,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 24,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K6",
-      "quota": 0,
-      "booking_limit": 76,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 1,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 82,
-      "booking_limit": 82,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 1,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 82,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 1,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 82,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 2,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 78,
-      "booking_limit": 78,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 2,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 78,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 2,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 78,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 3,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 77,
-      "booking_limit": 77,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 3,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 77,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 3,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 77,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 4,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 72,
-      "booking_limit": 72,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 4,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 72,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 4,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 72,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 5,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 70,
-      "booking_limit": 70,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 5,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 70,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 5,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 70,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 6,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 69,
-      "booking_limit": 69,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 6,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 69,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 6,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 69,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 7,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 67,
-      "booking_limit": 67,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 7,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 67,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 7,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 67,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 8,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 65,
-      "booking_limit": 65,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 8,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 65,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 8,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 65,
       "bid_price": 0
     },
     {
       "khu_gian_id": 9,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 26,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 12,
+      "booking_limit": 12,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 12,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 12,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 8,
+      "booking_limit": 8,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 8,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 8,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 12,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 1,
+      "booking_limit": 1,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 12,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 1,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 12,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 1,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 13,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 4,
+      "booking_limit": 4,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 13,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 4,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 13,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 4,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 2,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 4,
+      "booking_limit": 4,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 4,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 4,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 17,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 2,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 17,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 17,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 18,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 7,
+      "booking_limit": 7,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 18,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 7,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 18,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 7,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 19,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 2,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 19,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 19,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 20,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 10,
+      "booking_limit": 10,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 20,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 10,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 20,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 10,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 21,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 32,
+      "booking_limit": 32,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 21,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 32,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 21,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 32,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 22,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 40,
+      "booking_limit": 40,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 22,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 40,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 22,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 40,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 23,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 40,
+      "booking_limit": 40,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 23,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 62,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 23,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 62,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 24,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K6",
+      "quota": 40,
+      "booking_limit": 40,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 24,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 88,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 24,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K6",
+      "quota": 0,
+      "booking_limit": 88,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 1,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 105,
+      "booking_limit": 105,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 1,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 105,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 1,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 105,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 2,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 95,
+      "booking_limit": 95,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 2,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 95,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 2,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 95,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 3,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 88,
+      "booking_limit": 88,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 3,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 88,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 3,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 88,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 4,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 76,
+      "booking_limit": 76,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 4,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 76,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 4,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 76,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 5,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 71,
+      "booking_limit": 71,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 5,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 71,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 5,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 71,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 6,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
       "quota": 62,
@@ -1596,7 +1524,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 9,
+      "khu_gian_id": 6,
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
@@ -1604,7 +1532,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 9,
+      "khu_gian_id": 6,
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
@@ -1612,151 +1540,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 10,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 61,
-      "booking_limit": 61,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 10,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 61,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 10,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 61,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 11,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 56,
-      "booking_limit": 56,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 11,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 56,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 11,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 56,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 52,
-      "booking_limit": 52,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 52,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 12,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 52,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 55,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 13,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 55,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 50,
-      "booking_limit": 50,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 50,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 14,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 50,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "ngan",
-      "seat_class": "NAM_K4",
-      "quota": 50,
-      "booking_limit": 50,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "trung",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 50,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 15,
-      "loai_hanh_trinh": "dai",
-      "seat_class": "NAM_K4",
-      "quota": 0,
-      "booking_limit": 50,
-      "bid_price": 0
-    },
-    {
-      "khu_gian_id": 16,
+      "khu_gian_id": 7,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
       "quota": 49,
@@ -1764,7 +1548,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 16,
+      "khu_gian_id": 7,
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
@@ -1772,7 +1556,7 @@
       "bid_price": 0
     },
     {
-      "khu_gian_id": 16,
+      "khu_gian_id": 7,
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
@@ -1780,11 +1564,227 @@
       "bid_price": 0
     },
     {
+      "khu_gian_id": 8,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 37,
+      "booking_limit": 37,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 8,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 37,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 8,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 37,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 9,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 24,
+      "booking_limit": 24,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 9,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 24,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 9,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 24,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 18,
+      "booking_limit": 18,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 18,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 10,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 18,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 15,
+      "booking_limit": 15,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 15,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 11,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 15,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 12,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 11,
+      "booking_limit": 11,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 12,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 11,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 12,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 11,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 13,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 2,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 13,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 13,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 14,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 15,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 0,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "ngan",
+      "seat_class": "NAM_K4",
+      "quota": 2,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "trung",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 16,
+      "loai_hanh_trinh": "dai",
+      "seat_class": "NAM_K4",
+      "quota": 0,
+      "booking_limit": 2,
+      "bid_price": 0
+    },
+    {
       "khu_gian_id": 17,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 54,
-      "booking_limit": 54,
+      "quota": 1,
+      "booking_limit": 1,
       "bid_price": 0
     },
     {
@@ -1792,7 +1792,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 54,
+      "booking_limit": 1,
       "bid_price": 0
     },
     {
@@ -1800,15 +1800,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 54,
+      "booking_limit": 1,
       "bid_price": 0
     },
     {
       "khu_gian_id": 18,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 56,
-      "booking_limit": 56,
+      "quota": 3,
+      "booking_limit": 3,
       "bid_price": 0
     },
     {
@@ -1816,7 +1816,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 56,
+      "booking_limit": 3,
       "bid_price": 0
     },
     {
@@ -1824,15 +1824,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 56,
+      "booking_limit": 3,
       "bid_price": 0
     },
     {
       "khu_gian_id": 19,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 56,
-      "booking_limit": 56,
+      "quota": 9,
+      "booking_limit": 9,
       "bid_price": 0
     },
     {
@@ -1840,7 +1840,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 56,
+      "booking_limit": 9,
       "bid_price": 0
     },
     {
@@ -1848,15 +1848,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 56,
+      "booking_limit": 9,
       "bid_price": 0
     },
     {
       "khu_gian_id": 20,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 59,
-      "booking_limit": 59,
+      "quota": 25,
+      "booking_limit": 25,
       "bid_price": 0
     },
     {
@@ -1864,7 +1864,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 59,
+      "booking_limit": 25,
       "bid_price": 0
     },
     {
@@ -1872,15 +1872,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 59,
+      "booking_limit": 25,
       "bid_price": 0
     },
     {
       "khu_gian_id": 21,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 58,
-      "booking_limit": 58,
+      "quota": 29,
+      "booking_limit": 29,
       "bid_price": 0
     },
     {
@@ -1888,7 +1888,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 58,
+      "booking_limit": 29,
       "bid_price": 0
     },
     {
@@ -1896,15 +1896,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 58,
+      "booking_limit": 29,
       "bid_price": 0
     },
     {
       "khu_gian_id": 22,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 75,
-      "booking_limit": 75,
+      "quota": 43,
+      "booking_limit": 43,
       "bid_price": 0
     },
     {
@@ -1912,7 +1912,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 75,
+      "booking_limit": 43,
       "bid_price": 0
     },
     {
@@ -1920,15 +1920,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 75,
+      "booking_limit": 43,
       "bid_price": 0
     },
     {
       "khu_gian_id": 23,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 75,
-      "booking_limit": 75,
+      "quota": 43,
+      "booking_limit": 43,
       "bid_price": 0
     },
     {
@@ -1936,7 +1936,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 83,
+      "booking_limit": 64,
       "bid_price": 0
     },
     {
@@ -1944,15 +1944,15 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 83,
+      "booking_limit": 64,
       "bid_price": 0
     },
     {
       "khu_gian_id": 24,
       "loai_hanh_trinh": "ngan",
       "seat_class": "NAM_K4",
-      "quota": 75,
-      "booking_limit": 75,
+      "quota": 43,
+      "booking_limit": 43,
       "bid_price": 0
     },
     {
@@ -1960,7 +1960,7 @@
       "loai_hanh_trinh": "trung",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 86,
+      "booking_limit": 88,
       "bid_price": 0
     },
     {
@@ -1968,7 +1968,7 @@
       "loai_hanh_trinh": "dai",
       "seat_class": "NAM_K4",
       "quota": 0,
-      "booking_limit": 86,
+      "booking_limit": 88,
       "bid_price": 0
     }
   ],
@@ -2058,9 +2058,9 @@
       "khu_gian_id": 1,
       "ga_dau": "HNO",
       "ga_cuoi": "PLY",
-      "lf": 0.3208,
+      "lf": 0.0573,
       "suc_chua": 558,
-      "con_trong": 379,
+      "con_trong": 526,
       "phan_loai": "trong",
       "bid_price": 0
     },
@@ -2068,19 +2068,49 @@
       "khu_gian_id": 2,
       "ga_dau": "PLY",
       "ga_cuoi": "NDI",
-      "lf": 0.3405,
+      "lf": 0.1201,
       "suc_chua": 558,
-      "con_trong": 368,
+      "con_trong": 491,
       "phan_loai": "trong",
       "bid_price": 0
     },
     {
-      "khu_gian_id": 23,
-      "ga_dau": "BHO",
-      "ga_cuoi": "DAN",
-      "lf": 0.3315,
+      "khu_gian_id": 3,
+      "ga_dau": "NDI",
+      "ga_cuoi": "NBI",
+      "lf": 0.1703,
       "suc_chua": 558,
-      "con_trong": 373,
+      "con_trong": 463,
+      "phan_loai": "trong",
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 4,
+      "ga_dau": "NBI",
+      "ga_cuoi": "BSO",
+      "lf": 0.2348,
+      "suc_chua": 558,
+      "con_trong": 427,
+      "phan_loai": "trong",
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 5,
+      "ga_dau": "BSO",
+      "ga_cuoi": "THO",
+      "lf": 0.2778,
+      "suc_chua": 558,
+      "con_trong": 403,
+      "phan_loai": "trong",
+      "bid_price": 0
+    },
+    {
+      "khu_gian_id": 6,
+      "ga_dau": "THO",
+      "ga_cuoi": "VIN",
+      "lf": 0.328,
+      "suc_chua": 558,
+      "con_trong": 375,
       "phan_loai": "trong",
       "bid_price": 0
     },
@@ -2088,27 +2118,27 @@
       "khu_gian_id": 24,
       "ga_dau": "DAN",
       "ga_cuoi": "SGO",
-      "lf": 0.2993,
+      "lf": 0.1953,
       "suc_chua": 558,
-      "con_trong": 391,
+      "con_trong": 449,
       "phan_loai": "trong",
       "bid_price": 0
     }
   ],
-  "z_opt_dlp": 408967377,
-  "lf_bq": 0.5353,
-  "lf_max": 0.7043,
+  "z_opt_dlp": 379444823,
+  "lf_bq": 0.5099,
+  "lf_max": 0.7814,
   "_log": {
     "loai": "ALLOCATION",
     "input": {
-      "chuyen_id": "SE7_2026-05-20"
+      "chuyen_id": "RUN:SE7:2026-05-20"
     },
     "output": {
-      "z_opt": 408967377,
+      "z_opt": 379444823,
       "n_nghen": 0
     },
-    "explain": "DLP 3 lớp chỗ, z_opt=408,967,377đ, 0 đoạn nghẽn",
+    "explain": "DLP 3 lớp chỗ, z_opt=379,444,823đ, 0 đoạn nghẽn",
     "model_version": "1.0",
-    "timestamp": "2026-07-17T22:20:32.640914"
+    "timestamp": "2026-07-19T04:38:20.010935"
   }
 }

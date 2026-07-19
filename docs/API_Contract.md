@@ -244,7 +244,7 @@ Quét ma trận, tìm ghế trống xuyên suốt (same-seat gap); nếu không 
       "bid": { "total_vnd": 0, "by_segment": { "3": 0, "4": 0 } },
       "decision_record_id": "dr_edfab201f59b",
       "explanation": "F0=285000đ → MUA_VU:HE(×1.075), ELASTIC:r=1.08(×1.0788) → niêm yết 307000đ → cuối 307000đ vs Σbid 0đ ⇒ ACCEPT",
-      "expires_at": "2026-06-15T09:05:00+00:00"
+      "expires_at": "2026-06-15T09:15:00+00:00"
     }
   }
   ```
@@ -304,7 +304,7 @@ Khóa **toàn bộ leg** trong `seat_plan` của offer (1 leg = same-seat, ≥2 
 - **Lỗi phổ biến:**
   - `422 CONSENT_REQUIRED` **(P5, mới)**: `seat_plan` ≥2 leg mà thiếu `consent: true`.
   - `409 Conflict`: `expected_matrix_version` không khớp (`STALE_SNAPSHOT`) hoặc ghế vừa bị người khác mua (`SEAT_CONFLICT`) — với ghép nhiều ghế, **1 leg conflict ⇒ rollback toàn bộ**, không leg nào bị giữ một phần.
-  - `410 Gone`: Offer đã hết thời gian tồn tại (`expires_at`, TTL 5 phút).
+  - `410 Gone`: Offer đã hết thời gian tồn tại (`expires_at`, TTL 15 phút).
 
 ### 3.3. Xác nhận Thanh toán (Confirm)
 **`POST /bookings/{hold_id}/confirm`**
@@ -316,7 +316,7 @@ Khóa **toàn bộ leg** trong `seat_plan` của offer (1 leg = same-seat, ≥2 
   { "data": { "booking_id": "bk_8da7f3ebc816", "status": "CONFIRMED", "final_price_vnd": 307000, "decision_record_id": null } }
   ```
   ⚠️ `decision_record_id` luôn `null` trong response confirm (schema V1 `offer` không có cột này, khóa từ đầu, không sửa migration) — FE tra decision qua `POST /offers`' `decision_record_id` đã nhận trước đó, hoặc `GET /demo/overview`'s `recent_decisions`.
-- **Lỗi phổ biến:** `410 Gone` — Hold đã quá hạn thanh toán (10 phút), ghế đã tự release.
+- **Lỗi phổ biến:** `410 Gone` — Hold đã quá hạn thanh toán, ghế đã tự release. API trực tiếp dùng 10 phút; luồng admin duyệt giữ nguyên mốc hết hạn 15 phút của phương án để countdown không bị đổi khi chuyển bước.
 
 ### 3.4. Ghi đè giá thủ công (P7.6, mới)
 **`POST /offers/{offer_id}/override`**
@@ -335,7 +335,7 @@ Khóa **toàn bộ leg** trong `seat_plan` của offer (1 leg = same-seat, ≥2 
       "offer_id": "offer_34f261613c42",
       "old_price_vnd": 113000,
       "new_price_vnd": 109000,
-      "expires_at": "2026-06-15T09:05:00+00:00"
+      "expires_at": "2026-06-15T09:15:00+00:00"
     }
   }
   ```

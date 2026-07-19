@@ -325,10 +325,10 @@ def test_hold_multiseat_requires_consent(scenario, conn):
 
 
 def test_hold_offer_expired(scenario):
-    """Offer sống 5 phút. Tua đồng hồ qua mốc đó rồi mới giữ ⇒ 410 OFFER_EXPIRED."""
+    """Offer sống 15 phút. Tua đồng hồ qua mốc đó rồi mới giữ ⇒ 410 OFFER_EXPIRED."""
     clock, _ = scenario
     offer = _create_offer("THO", "DHO").json()["data"]
-    clock.advance(301)   # +5 phút 1 giây — quá hạn offer (OFFER_TTL_SECONDS=300)
+    clock.advance(901)   # +15 phút 1 giây — quá hạn offer (OFFER_TTL_SECONDS=900)
     resp = client.post(f"{BASE}/holds", headers={"Idempotency-Key": _key()},
                        json={"offer_id": offer["offer_id"], "expected_matrix_version": 1})
     assert resp.status_code == 410

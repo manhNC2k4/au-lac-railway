@@ -1,7 +1,13 @@
 {
   "dates": [
-    "2026-02-14",
-    "2026-05-20"
+    "2026-05-19",
+    "2026-05-20",
+    "2026-05-31",
+    "2026-06-08",
+    "2026-06-14",
+    "2026-06-15",
+    "2026-06-21",
+    "2026-06-27"
   ],
   "trains": [
     "SE1",
@@ -10,118 +16,461 @@
     "SE7"
   ],
   "per_date": {
-    "2026-02-14": {
+    "2026-05-19": {
       "FCFS": {
-        "so_ve_ban": 3928,
-        "doanh_thu": 2321231749,
-        "pax_km": 2910815,
-        "he_so_su_dung_pax_km": 0.8382,
-        "lf_binh_quan_doan": 0.7928,
-        "so_doan_lf_cao": 50,
-        "so_ghe_trong_cuc_bo": 2208,
+        "so_ve_ban": 2662,
+        "doanh_thu": 1450505610,
+        "pax_km": 1967243,
+        "he_so_su_dung_pax_km": 0.5665,
+        "lf_binh_quan_doan": 0.5185,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 2881,
         "so_gap_ghep_thanh_cong": 0,
         "so_ve_ghep_nhieu_ghe": 0,
         "ty_le_khach_doi_cho": 0.0,
-        "so_yeu_cau_tu_choi": 1980,
+        "so_yeu_cau_tu_choi": 5226,
         "ly_do_tu_choi": {
-          "BO_VI_GIA": 1525,
-          "HET_CHO": 455
+          "BO_VI_GIA": 4365,
+          "HET_CHO": 861
         },
-        "cong_bang_gia_std_ratio": 0.1043,
-        "gia_tren_F0_bq": 1.0001,
-        "toc_do_tinh_lai_p95_ms": 0.1,
-        "toc_do_tinh_lai_bq_ms": 0.07
+        "cong_bang_gia_std_ratio": 0.1109,
+        "gia_tren_F0_bq": 0.9463,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
       },
       "AI": {
-        "so_ve_ban": 3767,
-        "doanh_thu": 2375522647,
-        "pax_km": 2802463,
-        "he_so_su_dung_pax_km": 0.807,
-        "lf_binh_quan_doan": 0.7624,
-        "so_doan_lf_cao": 48,
-        "so_ghe_trong_cuc_bo": 2268,
-        "so_gap_ghep_thanh_cong": 1674,
-        "so_ve_ghep_nhieu_ghe": 81,
-        "ty_le_khach_doi_cho": 0.0215,
-        "so_yeu_cau_tu_choi": 2141,
+        "so_ve_ban": 2632,
+        "doanh_thu": 1456222101,
+        "pax_km": 1978585,
+        "he_so_su_dung_pax_km": 0.5698,
+        "lf_binh_quan_doan": 0.5228,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 3205,
+        "so_gap_ghep_thanh_cong": 746,
+        "so_ve_ghep_nhieu_ghe": 57,
+        "ty_le_khach_doi_cho": 0.0217,
+        "so_yeu_cau_tu_choi": 5256,
         "ly_do_tu_choi": {
-          "BO_VI_GIA": 1888,
-          "HET_CHO": 157,
-          "TU_CHOI_DOI_CHO": 32,
-          "QUOTA_NGAN": 64
+          "BO_VI_GIA": 4495,
+          "TU_CHOI_DOI_CHO": 29,
+          "HET_CHO": 419,
+          "QUOTA_NGAN": 313
         },
-        "cong_bang_gia_std_ratio": 0.1201,
-        "gia_tren_F0_bq": 1.0689,
-        "toc_do_tinh_lai_p95_ms": 22.76,
-        "toc_do_tinh_lai_bq_ms": 15.64
+        "cong_bang_gia_std_ratio": 0.1257,
+        "gia_tren_F0_bq": 0.9483,
+        "toc_do_tinh_lai_p95_ms": 4.39,
+        "toc_do_tinh_lai_bq_ms": 3.48
       },
       "so_sanh": {
-        "tang_doanh_thu": 0.0234,
-        "tang_pax_km": -0.0372,
-        "tang_ve_ban": -0.041,
-        "giam_ghe_trong_cuc_bo": -0.0272,
-        "giam_tu_choi_unmet": -0.0813,
-        "ty_le_doi_cho_ai": 0.0215,
-        "hieu_suat_vs_toi_uu_offline": 0.8902,
-        "fcfs_vs_toi_uu_offline": 0.8699
+        "tang_doanh_thu": 0.0039,
+        "tang_pax_km": 0.0058,
+        "tang_ve_ban": -0.0113,
+        "giam_ghe_trong_cuc_bo": -0.1125,
+        "giam_tu_choi_unmet": -0.0057,
+        "ty_le_doi_cho_ai": 0.0217,
+        "hieu_suat_vs_toi_uu_offline": 0.6239,
+        "fcfs_vs_toi_uu_offline": 0.6214
       },
-      "z_opt_offline": 2668523451
+      "z_opt_offline": 2334183000
     },
     "2026-05-20": {
       "FCFS": {
-        "so_ve_ban": 2895,
-        "doanh_thu": 1633064145,
-        "pax_km": 1999159,
-        "he_so_su_dung_pax_km": 0.5757,
-        "lf_binh_quan_doan": 0.5431,
-        "so_doan_lf_cao": 0,
-        "so_ghe_trong_cuc_bo": 1749,
+        "so_ve_ban": 2687,
+        "doanh_thu": 1465342435,
+        "pax_km": 1995020,
+        "he_so_su_dung_pax_km": 0.5745,
+        "lf_binh_quan_doan": 0.5252,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 2909,
         "so_gap_ghep_thanh_cong": 0,
         "so_ve_ghep_nhieu_ghe": 0,
         "ty_le_khach_doi_cho": 0.0,
-        "so_yeu_cau_tu_choi": 1725,
+        "so_yeu_cau_tu_choi": 5318,
         "ly_do_tu_choi": {
-          "BO_VI_GIA": 1651,
-          "HET_CHO": 74
+          "BO_VI_GIA": 4315,
+          "HET_CHO": 1003
         },
-        "cong_bang_gia_std_ratio": 0.102,
-        "gia_tren_F0_bq": 1.0296,
-        "toc_do_tinh_lai_p95_ms": 0.13,
-        "toc_do_tinh_lai_bq_ms": 0.07
+        "cong_bang_gia_std_ratio": 0.1163,
+        "gia_tren_F0_bq": 0.9425,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
       },
       "AI": {
-        "so_ve_ban": 2925,
-        "doanh_thu": 1620219335,
-        "pax_km": 2022031,
-        "he_so_su_dung_pax_km": 0.5823,
-        "lf_binh_quan_doan": 0.5494,
-        "so_doan_lf_cao": 0,
-        "so_ghe_trong_cuc_bo": 2656,
-        "so_gap_ghep_thanh_cong": 924,
-        "so_ve_ghep_nhieu_ghe": 32,
-        "ty_le_khach_doi_cho": 0.0109,
-        "so_yeu_cau_tu_choi": 1695,
+        "so_ve_ban": 2682,
+        "doanh_thu": 1479891890,
+        "pax_km": 2015816,
+        "he_so_su_dung_pax_km": 0.5805,
+        "lf_binh_quan_doan": 0.5316,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 3286,
+        "so_gap_ghep_thanh_cong": 777,
+        "so_ve_ghep_nhieu_ghe": 48,
+        "ty_le_khach_doi_cho": 0.0179,
+        "so_yeu_cau_tu_choi": 5323,
         "ly_do_tu_choi": {
-          "BO_VI_GIA": 1612,
-          "TU_CHOI_DOI_CHO": 15,
-          "HET_CHO": 68
+          "BO_VI_GIA": 4388,
+          "TU_CHOI_DOI_CHO": 26,
+          "HET_CHO": 496,
+          "QUOTA_NGAN": 413
         },
-        "cong_bang_gia_std_ratio": 0.1031,
-        "gia_tren_F0_bq": 1.011,
-        "toc_do_tinh_lai_p95_ms": 19.03,
-        "toc_do_tinh_lai_bq_ms": 11.8
+        "cong_bang_gia_std_ratio": 0.1272,
+        "gia_tren_F0_bq": 0.9438,
+        "toc_do_tinh_lai_p95_ms": 4.33,
+        "toc_do_tinh_lai_bq_ms": 3.4
       },
       "so_sanh": {
-        "tang_doanh_thu": -0.0079,
-        "tang_pax_km": 0.0114,
-        "tang_ve_ban": 0.0104,
-        "giam_ghe_trong_cuc_bo": -0.5186,
-        "giam_tu_choi_unmet": 0.0174,
-        "ty_le_doi_cho_ai": 0.0109,
-        "hieu_suat_vs_toi_uu_offline": 0.6355,
-        "fcfs_vs_toi_uu_offline": 0.6406
+        "tang_doanh_thu": 0.0099,
+        "tang_pax_km": 0.0104,
+        "tang_ve_ban": -0.0019,
+        "giam_ghe_trong_cuc_bo": -0.1296,
+        "giam_tu_choi_unmet": -0.0009,
+        "ty_le_doi_cho_ai": 0.0179,
+        "hieu_suat_vs_toi_uu_offline": 0.6311,
+        "fcfs_vs_toi_uu_offline": 0.6249
       },
-      "z_opt_offline": 2549321826
+      "z_opt_offline": 2344999000
+    },
+    "2026-05-31": {
+      "FCFS": {
+        "so_ve_ban": 2813,
+        "doanh_thu": 1512231539,
+        "pax_km": 2040067,
+        "he_so_su_dung_pax_km": 0.5875,
+        "lf_binh_quan_doan": 0.538,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 2942,
+        "so_gap_ghep_thanh_cong": 0,
+        "so_ve_ghep_nhieu_ghe": 0,
+        "ty_le_khach_doi_cho": 0.0,
+        "so_yeu_cau_tu_choi": 5626,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4532,
+          "HET_CHO": 1094
+        },
+        "cong_bang_gia_std_ratio": 0.1155,
+        "gia_tren_F0_bq": 0.9458,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
+      },
+      "AI": {
+        "so_ve_ban": 2783,
+        "doanh_thu": 1522849870,
+        "pax_km": 2047833,
+        "he_so_su_dung_pax_km": 0.5897,
+        "lf_binh_quan_doan": 0.5414,
+        "so_doan_lf_cao": 10,
+        "so_ghe_trong_cuc_bo": 3266,
+        "so_gap_ghep_thanh_cong": 860,
+        "so_ve_ghep_nhieu_ghe": 52,
+        "ty_le_khach_doi_cho": 0.0187,
+        "so_yeu_cau_tu_choi": 5656,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4675,
+          "HET_CHO": 573,
+          "TU_CHOI_DOI_CHO": 11,
+          "QUOTA_NGAN": 397
+        },
+        "cong_bang_gia_std_ratio": 0.1338,
+        "gia_tren_F0_bq": 0.951,
+        "toc_do_tinh_lai_p95_ms": 4.31,
+        "toc_do_tinh_lai_bq_ms": 3.41
+      },
+      "so_sanh": {
+        "tang_doanh_thu": 0.007,
+        "tang_pax_km": 0.0038,
+        "tang_ve_ban": -0.0107,
+        "giam_ghe_trong_cuc_bo": -0.1101,
+        "giam_tu_choi_unmet": -0.0053,
+        "ty_le_doi_cho_ai": 0.0187,
+        "hieu_suat_vs_toi_uu_offline": 0.6648,
+        "fcfs_vs_toi_uu_offline": 0.6602
+      },
+      "z_opt_offline": 2290665000
+    },
+    "2026-06-08": {
+      "FCFS": {
+        "so_ve_ban": 2738,
+        "doanh_thu": 1464862409,
+        "pax_km": 1993032,
+        "he_so_su_dung_pax_km": 0.5739,
+        "lf_binh_quan_doan": 0.5241,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 2940,
+        "so_gap_ghep_thanh_cong": 0,
+        "so_ve_ghep_nhieu_ghe": 0,
+        "ty_le_khach_doi_cho": 0.0,
+        "so_yeu_cau_tu_choi": 5015,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4155,
+          "HET_CHO": 860
+        },
+        "cong_bang_gia_std_ratio": 0.106,
+        "gia_tren_F0_bq": 0.9435,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
+      },
+      "AI": {
+        "so_ve_ban": 2730,
+        "doanh_thu": 1483622364,
+        "pax_km": 2005762,
+        "he_so_su_dung_pax_km": 0.5776,
+        "lf_binh_quan_doan": 0.5287,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 3241,
+        "so_gap_ghep_thanh_cong": 855,
+        "so_ve_ghep_nhieu_ghe": 42,
+        "ty_le_khach_doi_cho": 0.0154,
+        "so_yeu_cau_tu_choi": 5023,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4259,
+          "TU_CHOI_DOI_CHO": 19,
+          "HET_CHO": 372,
+          "QUOTA_NGAN": 373
+        },
+        "cong_bang_gia_std_ratio": 0.1206,
+        "gia_tren_F0_bq": 0.9524,
+        "toc_do_tinh_lai_p95_ms": 4.33,
+        "toc_do_tinh_lai_bq_ms": 3.42
+      },
+      "so_sanh": {
+        "tang_doanh_thu": 0.0128,
+        "tang_pax_km": 0.0064,
+        "tang_ve_ban": -0.0029,
+        "giam_ghe_trong_cuc_bo": -0.1024,
+        "giam_tu_choi_unmet": -0.0016,
+        "ty_le_doi_cho_ai": 0.0154,
+        "hieu_suat_vs_toi_uu_offline": 0.6768,
+        "fcfs_vs_toi_uu_offline": 0.6682
+      },
+      "z_opt_offline": 2192193000
+    },
+    "2026-06-14": {
+      "FCFS": {
+        "so_ve_ban": 2792,
+        "doanh_thu": 1487518389,
+        "pax_km": 1999441,
+        "he_so_su_dung_pax_km": 0.5758,
+        "lf_binh_quan_doan": 0.5281,
+        "so_doan_lf_cao": 10,
+        "so_ghe_trong_cuc_bo": 2945,
+        "so_gap_ghep_thanh_cong": 0,
+        "so_ve_ghep_nhieu_ghe": 0,
+        "ty_le_khach_doi_cho": 0.0,
+        "so_yeu_cau_tu_choi": 5621,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4457,
+          "HET_CHO": 1164
+        },
+        "cong_bang_gia_std_ratio": 0.1123,
+        "gia_tren_F0_bq": 0.9461,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
+      },
+      "AI": {
+        "so_ve_ban": 2782,
+        "doanh_thu": 1509897970,
+        "pax_km": 2019924,
+        "he_so_su_dung_pax_km": 0.5817,
+        "lf_binh_quan_doan": 0.5349,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 3316,
+        "so_gap_ghep_thanh_cong": 841,
+        "so_ve_ghep_nhieu_ghe": 65,
+        "ty_le_khach_doi_cho": 0.0234,
+        "so_yeu_cau_tu_choi": 5631,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4485,
+          "TU_CHOI_DOI_CHO": 17,
+          "HET_CHO": 608,
+          "QUOTA_NGAN": 521
+        },
+        "cong_bang_gia_std_ratio": 0.1276,
+        "gia_tren_F0_bq": 0.955,
+        "toc_do_tinh_lai_p95_ms": 4.24,
+        "toc_do_tinh_lai_bq_ms": 3.31
+      },
+      "so_sanh": {
+        "tang_doanh_thu": 0.015,
+        "tang_pax_km": 0.0102,
+        "tang_ve_ban": -0.0036,
+        "giam_ghe_trong_cuc_bo": -0.126,
+        "giam_tu_choi_unmet": -0.0018,
+        "ty_le_doi_cho_ai": 0.0234,
+        "hieu_suat_vs_toi_uu_offline": 0.6913,
+        "fcfs_vs_toi_uu_offline": 0.681
+      },
+      "z_opt_offline": 2184233000
+    },
+    "2026-06-15": {
+      "FCFS": {
+        "so_ve_ban": 2716,
+        "doanh_thu": 1443987899,
+        "pax_km": 1955441,
+        "he_so_su_dung_pax_km": 0.5631,
+        "lf_binh_quan_doan": 0.5148,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 2891,
+        "so_gap_ghep_thanh_cong": 0,
+        "so_ve_ghep_nhieu_ghe": 0,
+        "ty_le_khach_doi_cho": 0.0,
+        "so_yeu_cau_tu_choi": 4968,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4044,
+          "HET_CHO": 924
+        },
+        "cong_bang_gia_std_ratio": 0.1225,
+        "gia_tren_F0_bq": 0.94,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
+      },
+      "AI": {
+        "so_ve_ban": 2686,
+        "doanh_thu": 1457382251,
+        "pax_km": 1962152,
+        "he_so_su_dung_pax_km": 0.565,
+        "lf_binh_quan_doan": 0.5168,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 3316,
+        "so_gap_ghep_thanh_cong": 766,
+        "so_ve_ghep_nhieu_ghe": 53,
+        "ty_le_khach_doi_cho": 0.0197,
+        "so_yeu_cau_tu_choi": 4998,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4120,
+          "HET_CHO": 433,
+          "TU_CHOI_DOI_CHO": 14,
+          "QUOTA_NGAN": 431
+        },
+        "cong_bang_gia_std_ratio": 0.1347,
+        "gia_tren_F0_bq": 0.9481,
+        "toc_do_tinh_lai_p95_ms": 4.23,
+        "toc_do_tinh_lai_bq_ms": 3.34
+      },
+      "so_sanh": {
+        "tang_doanh_thu": 0.0093,
+        "tang_pax_km": 0.0034,
+        "tang_ve_ban": -0.011,
+        "giam_ghe_trong_cuc_bo": -0.147,
+        "giam_tu_choi_unmet": -0.006,
+        "ty_le_doi_cho_ai": 0.0197,
+        "hieu_suat_vs_toi_uu_offline": 0.6756,
+        "fcfs_vs_toi_uu_offline": 0.6694
+      },
+      "z_opt_offline": 2157298000
+    },
+    "2026-06-21": {
+      "FCFS": {
+        "so_ve_ban": 2838,
+        "doanh_thu": 1495235802,
+        "pax_km": 2027138,
+        "he_so_su_dung_pax_km": 0.5837,
+        "lf_binh_quan_doan": 0.5365,
+        "so_doan_lf_cao": 10,
+        "so_ghe_trong_cuc_bo": 2962,
+        "so_gap_ghep_thanh_cong": 0,
+        "so_ve_ghep_nhieu_ghe": 0,
+        "ty_le_khach_doi_cho": 0.0,
+        "so_yeu_cau_tu_choi": 5482,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4380,
+          "HET_CHO": 1102
+        },
+        "cong_bang_gia_std_ratio": 0.1286,
+        "gia_tren_F0_bq": 0.9374,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
+      },
+      "AI": {
+        "so_ve_ban": 2819,
+        "doanh_thu": 1532480666,
+        "pax_km": 2053908,
+        "he_so_su_dung_pax_km": 0.5914,
+        "lf_binh_quan_doan": 0.5438,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 3318,
+        "so_gap_ghep_thanh_cong": 883,
+        "so_ve_ghep_nhieu_ghe": 53,
+        "ty_le_khach_doi_cho": 0.0188,
+        "so_yeu_cau_tu_choi": 5501,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4476,
+          "TU_CHOI_DOI_CHO": 24,
+          "HET_CHO": 546,
+          "QUOTA_NGAN": 455
+        },
+        "cong_bang_gia_std_ratio": 0.1417,
+        "gia_tren_F0_bq": 0.9519,
+        "toc_do_tinh_lai_p95_ms": 4.26,
+        "toc_do_tinh_lai_bq_ms": 3.36
+      },
+      "so_sanh": {
+        "tang_doanh_thu": 0.0249,
+        "tang_pax_km": 0.0132,
+        "tang_ve_ban": -0.0067,
+        "giam_ghe_trong_cuc_bo": -0.1202,
+        "giam_tu_choi_unmet": -0.0035,
+        "ty_le_doi_cho_ai": 0.0188,
+        "hieu_suat_vs_toi_uu_offline": 0.7077,
+        "fcfs_vs_toi_uu_offline": 0.6905
+      },
+      "z_opt_offline": 2165543000
+    },
+    "2026-06-27": {
+      "FCFS": {
+        "so_ve_ban": 2741,
+        "doanh_thu": 1472376774,
+        "pax_km": 2003612,
+        "he_so_su_dung_pax_km": 0.577,
+        "lf_binh_quan_doan": 0.53,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 2924,
+        "so_gap_ghep_thanh_cong": 0,
+        "so_ve_ghep_nhieu_ghe": 0,
+        "ty_le_khach_doi_cho": 0.0,
+        "so_yeu_cau_tu_choi": 5408,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4347,
+          "HET_CHO": 1061
+        },
+        "cong_bang_gia_std_ratio": 0.1173,
+        "gia_tren_F0_bq": 0.943,
+        "toc_do_tinh_lai_p95_ms": 0.03,
+        "toc_do_tinh_lai_bq_ms": 0.01
+      },
+      "AI": {
+        "so_ve_ban": 2715,
+        "doanh_thu": 1488837292,
+        "pax_km": 2000447,
+        "he_so_su_dung_pax_km": 0.576,
+        "lf_binh_quan_doan": 0.5296,
+        "so_doan_lf_cao": 11,
+        "so_ghe_trong_cuc_bo": 3248,
+        "so_gap_ghep_thanh_cong": 818,
+        "so_ve_ghep_nhieu_ghe": 48,
+        "ty_le_khach_doi_cho": 0.0177,
+        "so_yeu_cau_tu_choi": 5434,
+        "ly_do_tu_choi": {
+          "BO_VI_GIA": 4479,
+          "TU_CHOI_DOI_CHO": 24,
+          "HET_CHO": 475,
+          "QUOTA_NGAN": 456
+        },
+        "cong_bang_gia_std_ratio": 0.1325,
+        "gia_tren_F0_bq": 0.9574,
+        "toc_do_tinh_lai_p95_ms": 4.28,
+        "toc_do_tinh_lai_bq_ms": 3.4
+      },
+      "so_sanh": {
+        "tang_doanh_thu": 0.0112,
+        "tang_pax_km": -0.0016,
+        "tang_ve_ban": -0.0095,
+        "giam_ghe_trong_cuc_bo": -0.1108,
+        "giam_tu_choi_unmet": -0.0048,
+        "ty_le_doi_cho_ai": 0.0177,
+        "hieu_suat_vs_toi_uu_offline": 0.7003,
+        "fcfs_vs_toi_uu_offline": 0.6925
+      },
+      "z_opt_offline": 2126133000
     }
   }
 }

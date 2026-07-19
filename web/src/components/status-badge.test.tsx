@@ -21,7 +21,7 @@ describe("StatusBadge", () => {
 });
 
 describe("PriceBreakdown", () => {
-  it("hiển thị đủ 3 mức giá và cờ kẹp chính sách", () => {
+  it("chỉ hiển thị giá thân thiện với hành khách", () => {
     render(
       <PriceBreakdown
         pricing={{
@@ -36,12 +36,13 @@ describe("PriceBreakdown", () => {
         }}
       />,
     );
-    expect(screen.getByText("Giá gốc")).toBeInTheDocument();
+    expect(screen.getByText("Giá cơ sở")).toBeInTheDocument();
+    expect(screen.getByText("AI đề xuất")).toBeInTheDocument();
+    expect(screen.getByText("Giá đã duyệt")).toBeInTheDocument();
     expect(screen.getByText("285.000 ₫")).toBeInTheDocument();
-    expect(screen.getByText("Giá niêm yết")).toBeInTheDocument();
     expect(screen.getByText("314.000 ₫")).toBeInTheDocument();
-    expect(screen.getByText("Giá cuối")).toBeInTheDocument();
     expect(screen.getByText("330.000 ₫")).toBeInTheDocument();
-    expect(screen.getByText("Đã kẹp theo chính sách")).toBeInTheDocument();
+    expect(screen.queryByText("Giá niêm yết")).not.toBeInTheDocument();
+    expect(screen.queryByText("Đã kẹp theo chính sách")).not.toBeInTheDocument();
   });
 });

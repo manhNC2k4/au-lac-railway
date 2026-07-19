@@ -9,7 +9,9 @@ test.beforeEach(async ({ request }) => {
 
 test("hành khách đặt vé qua offer, hold và confirm", async ({ page }) => {
   await page.goto("/booking");
-  await page.getByLabel("Tên hành khách").fill("Nguyễn Văn A");
+  await page.getByLabel("Ga đi").fill("Thanh Hóa");
+  await page.getByLabel("Ga đến").fill("Đồng Hới");
+  await page.getByLabel("Ngày đi").fill("2026-06-15");
   await page.getByRole("button", { name: "Tìm phương án" }).click();
   await expect(page).toHaveURL(/\/booking\/offer/);
   await expect(page.getByText("C01-S017", { exact: true })).toBeVisible();

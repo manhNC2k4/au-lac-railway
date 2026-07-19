@@ -8,19 +8,23 @@ import json
 
 from ..adapters import model_adapter
 from ..api.deps import SEED_DIR
-from ..forecast import network
+from ..forecast.topology import get_run_topology
 
 
 def quote_group(ssm, service_run_id: str, origin: str, dest: str, seat_class: str,
                 n_khach: int) -> dict:
     from app.group_seating import plan_group
 
-    from integration.ssm_from_postgres import build_shim
+    from integration.ssm_from_postgres import build_runtime_shim, build_shim
 
-    scenario = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
-    seatmap = ssm.get_seatmap(service_run_id)
-    matrix, seat_ids = model_adapter.seatmap_to_matrix(seatmap, network.N_SEGMENTS)
-    shim = build_shim(scenario, matrix)
+    topology = get_run_topology(service_run_id)
+    seatmap = ssm.get_seatmap(service_run_id, seat_class)
+    matrix, seat_ids = model_adapter.seatmap_to_matrix(seatmap, topology["n_segments"])
+    if topology["data_source"] == "MODEL_SIMULATION":
+        shim = build_runtime_shim(topology, {seat_class: matrix})
+    else:
+        scenario = json.loads((SEED_DIR / "scenario.json").read_text(encoding="utf-8"))
+        shim = build_shim(scenario, matrix)
 
     result = plan_group(shim, shim.chuyen_id, seat_class, origin, dest, n_khach)
     plan = result["plan"]

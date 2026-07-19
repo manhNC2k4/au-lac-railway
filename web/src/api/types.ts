@@ -87,12 +87,34 @@ export interface OfferRequest {
   priority_passenger: boolean;
 }
 
+export type BookingRequestStatus =
+  | "SUBMITTED"
+  | "AI_PROCESSING"
+  | "PENDING_ADMIN"
+  | "APPROVED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "SELECTED"
+  | "CONFIRMED";
+
+export type BookingCandidateStatus =
+  | "AI_SUGGESTED"
+  | "APPROVED"
+  | "REJECTED"
+  | "PRICE_OVERRIDDEN"
+  | "SELECTED";
+
+export interface BookingRequestCreate extends OfferRequest {
+  passenger_name?: string;
+}
+
 export interface SeatPlanItem {
   seat_id: string;
   segment_from: number;
   segment_to: number;
   reused_gap: boolean;
   requires_seat_change: boolean;
+  passenger_no?: number;
 }
 
 export interface PricingBlock {
@@ -104,6 +126,105 @@ export interface PricingBlock {
   clamped: boolean;
   csxh_doi_tuong: string;
   che_do_gia: string;
+  unit_price_vnd?: number;
+  quantity?: number;
+}
+
+export interface BookingCandidateData {
+  candidate_id: string;
+  offer_id: string;
+  decision_record_id: string;
+  rank: number;
+  ai_recommended: boolean;
+  status: BookingCandidateStatus;
+  seat_plan: SeatPlanItem[];
+  pricing: PricingBlock;
+  explanation: string;
+  approved_price_vnd: number | null;
+  admin_note: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  matrix_version: number;
+  forecast_version: number;
+  policy_version: number;
+  decision: OfferDecision;
+  expires_at: string;
+  requires_customer_consent: boolean;
+}
+
+export interface BookingRequestData extends BookingRequestCreate {
+  request_id: string;
+  status: BookingRequestStatus;
+  selected_candidate_id: string | null;
+  hold_id: string | null;
+  booking_id: string | null;
+  reject_code: string | null;
+  reject_reason: string | null;
+  submitted_at: string;
+  processing_started_at: string | null;
+  ready_for_review_at: string | null;
+  approved_at: string | null;
+  decided_by: string | null;
+  selected_at: string | null;
+  confirmed_at: string | null;
+  expires_at: string;
+  updated_at: string;
+  candidates: BookingCandidateData[];
+}
+
+export interface BookingCandidateApproval {
+  candidate_id: string;
+  override_price_vnd?: number;
+  reason?: string;
+}
+
+export interface BookingApprovalRequest {
+  decided_by: string;
+  approved_candidates: BookingCandidateApproval[];
+  note?: string;
+}
+
+export interface BookingQueueData {
+  requests: BookingRequestData[];
+  total: number;
+}
+
+export type SeatLayoutState = "AVAILABLE" | "BOOKED" | "UNAVAILABLE";
+
+export interface TrainSeatLayoutItem {
+  seat_id: string;
+  seat_index: number;
+  seat_number: number;
+  row_number: number;
+  column_code: string;
+  position_code: string;
+  compartment_number: number | null;
+  berth_level: "LOWER" | "MIDDLE" | "UPPER" | null;
+  is_accessible: boolean;
+  state: SeatLayoutState;
+  ai_recommended: boolean;
+  approved_option: boolean;
+}
+
+export interface TrainCoachLayout {
+  coach_number: number;
+  coach_label: string;
+  seat_class: string;
+  layout_type: "SEATED_2X2" | "SLEEPER_6" | "SLEEPER_4";
+  capacity: number;
+  data_source: string;
+  seats: TrainSeatLayoutItem[];
+}
+
+export interface BookingSeatLayoutData {
+  request_id: string;
+  train_id: string;
+  seat_class: string;
+  quantity: number;
+  segment_from: number;
+  segment_to: number;
+  layout_source: string;
+  coaches: TrainCoachLayout[];
 }
 
 export interface OfferData {
