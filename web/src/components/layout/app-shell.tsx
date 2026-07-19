@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   Grid3X3,
@@ -92,7 +92,17 @@ function RunPicker() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface">{children}</div>}>
+      <AppShellContent>{children}</AppShellContent>
+    </Suspense>
+  );
+}
+
+function AppShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeAnalyticsTab = searchParams.get("tab") ?? "demand";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [forecastOpen, setForecastOpen] = useState(true);
@@ -147,14 +157,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {!compact && item.children && forecastOpen && (
               <div className="ml-6 mt-1 flex flex-col gap-0.5 border-l border-line pl-3">
                 {item.children.map((c) => (
-                  <Link
-                    key={c.href}
-                    href={c.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-lg px-3 py-2 text-[13.5px] text-muted hover:bg-primary-soft hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
-                  >
-                    {c.label}
-                  </Link>
+                  (() => {
+                    const childTab = new URLSearchParams(c.href.split("?")[1] ?? "").get("tab") ?? "demand";
+                    const childActive = pathname === item.href && childTab === activeAnalyticsTab;
+                    return (
+                      <Link
+                        key={c.href}
+                        href={c.href}
+                        onClick={() => setMobileOpen(false)}
+                        aria-current={childActive ? "page" : undefined}
+                        className={cn(
+                          "relative flex min-h-[38px] items-center rounded-lg px-3 py-2 text-[13.5px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary",
+                          childActive
+                            ? "bg-primary-soft font-semibold text-primary"
+                            : "text-muted hover:bg-primary-soft/60 hover:text-ink",
+                        )}
+                      >
+                        {childActive && <span className="absolute -left-[13px] h-6 w-0.5 rounded-full bg-primary" aria-hidden />}
+                        <span className="flex-1">{c.label}</span>
+                        {childActive && <span className="ml-2 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />}
+                      </Link>
+                    );
+                  })()
                 ))}
               </div>
             )}
